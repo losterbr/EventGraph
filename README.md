@@ -55,6 +55,8 @@ The repository includes a quality script and a pre-commit hook:
 ./scripts/quality.sh
 ```
 
+The quality gate now runs tests with code coverage collection and requires line coverage of at least 90% for the production code paths.
+
 ## Notes
 
 - The sample uses Math.NET for random sampling.

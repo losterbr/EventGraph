@@ -5,10 +5,12 @@ namespace EventGraph
     public class Listener
     {
         private readonly bool quiet;
+        private readonly ConsoleColor basketColor;
 
-        public Listener(bool quiet = false)
+        public Listener(bool quiet = false, ConsoleColor basketColor = ConsoleColor.Cyan)
         {
             this.quiet = quiet;
+            this.basketColor = basketColor;
         }
 
         public void Subscribe(SimulatedSpot quote)
@@ -16,7 +18,7 @@ namespace EventGraph
             quote.Tick += SpotTicked;
             if (!quiet)
             {
-                Console.WriteLine($"Subscribed to {quote.Name}");
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Subscribed to {quote.Name}");
             }
         }
 
@@ -25,7 +27,7 @@ namespace EventGraph
             quote.Tick += SpotTicked;
             if (!quiet)
             {
-                Console.WriteLine($"Subscribed to {quote.Name}");
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Subscribed to Basket({quote.Name})");
             }
         }
 
@@ -33,7 +35,18 @@ namespace EventGraph
         {
             if (!quiet)
             {
-                Console.WriteLine($"Quote {e.Name, -10} updated to {e.Value:0.##}");
+                var isBasketUpdate = sender is BasketSpot;
+                if (isBasketUpdate)
+                {
+                    Console.ForegroundColor = basketColor;
+                }
+
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Quote {e.Name, -10} updated to {e.Value:0.##}");
+
+                if (isBasketUpdate)
+                {
+                    Console.ResetColor();
+                }
             }
         }
     }

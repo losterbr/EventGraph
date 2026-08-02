@@ -21,7 +21,7 @@ namespace EventGraph
                 .Select((symbol, index) => new SimulatedSpot(symbol, 800.0 + index * 100.0, 0.2 + index * 0.05, 3.0 + index))
                 .ToList();
 
-            var listener = new Listener(options.Quiet);
+            var listener = new Listener(options.Quiet, options.BasketColor);
             quotes.ForEach(listener.Subscribe);
 
             var basketQuote = new BasketSpot(quotes);
@@ -39,6 +39,7 @@ namespace EventGraph
             Console.WriteLine("  --ticks <n>      Number of ticks each simulated spot emits (default: 5)");
             Console.WriteLine("  --quiet         Suppress subscription and quote output");
             Console.WriteLine("  --symbols A,B,C Comma-separated list of symbols to simulate");
+            Console.WriteLine("  --basket-color <color>  Console color for basket updates (default: Cyan)");
             Console.WriteLine("  --help          Show this help message");
         }
     }

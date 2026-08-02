@@ -40,7 +40,10 @@ namespace EventGraph
 
         public async Task Start(int tickCount = 1, CancellationToken cancellationToken = default)
         {
-            var poissonDist = new MathNet.Numerics.Distributions.Poisson(meanTickTimeSeconds * 1000.0);
+            var poissonLambda = Math.Max(0.0, meanTickTimeSeconds * 1000.0);
+            var poissonDist = poissonLambda <= 0.0
+                ? null
+                : new MathNet.Numerics.Distributions.Poisson(poissonLambda);
             var normalDist = new MathNet.Numerics.Distributions.Normal(0.0, 1.0);
             var spotMessage = new SpotMessage(name, currentValue);
 
@@ -51,7 +54,7 @@ namespace EventGraph
                 int emittedTicks = 1;
                 while (!cancellationToken.IsCancellationRequested && (tickCount <= 0 || emittedTicks < tickCount))
                 {
-                    double timeStepMilliSeconds = poissonDist.Sample();
+                    double timeStepMilliSeconds = poissonDist?.Sample() ?? 0.0;
                     double stdDev = IncrStdDev(timeStepMilliSeconds);
                     double logDriftAdjustment = -0.5 * stdDev * stdDev;
 
@@ -63,6 +66,21 @@ namespace EventGraph
                     Sleep(timeStepMilliSeconds);
                     Tick?.Invoke(this, spotMessage);
                     emittedTicks++;
+
+                    if (tickCount == 0)
+                    {
+                        try
+                        {
+                            if (Console.KeyAvailable)
+                            {
+                                break;
+                            }
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            // Running outside an interactive console (for example in tests) should not crash.
+                        }
+                    }
                 }
             }, cancellationToken);
         }

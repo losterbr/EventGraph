@@ -18,7 +18,7 @@ namespace EventGraph
         {
             this.constituents = constituents;
             numConstituents = constituents.Count;
-            name = string.Join("_", constituents.Select(x => x.Name));
+            name = string.Join(",", constituents.Select(x => x.Name));
 
             foreach (var constituent in constituents)
             {

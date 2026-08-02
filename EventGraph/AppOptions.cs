@@ -4,10 +4,11 @@ namespace EventGraph
 {
     public sealed class AppOptions
     {
-        public int TickCount { get; set; } = 5;
+        public int TickCount { get; set; } = 0;
         public bool Quiet { get; set; }
         public bool ShowHelp { get; set; }
         public string[] Symbols { get; set; } = { "TSLA", "GOOG", "AMZN" };
+        public ConsoleColor BasketColor { get; set; } = ConsoleColor.Cyan;
     }
 
     public static class AppOptionsParser
@@ -41,6 +42,21 @@ namespace EventGraph
 
                     case "--help":
                         options.ShowHelp = true;
+                        break;
+
+                    case "--basket-color":
+                        if (i + 1 >= args.Length)
+                        {
+                            throw new ArgumentException("--basket-color requires a value.");
+                        }
+
+                        if (!Enum.TryParse(args[i + 1], true, out ConsoleColor basketColor))
+                        {
+                            throw new ArgumentException("--basket-color must be a valid console color.");
+                        }
+
+                        options.BasketColor = basketColor;
+                        i++;
                         break;
 
                     case "--symbols":
