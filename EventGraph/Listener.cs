@@ -39,14 +39,14 @@ namespace EventGraph
                 if (isBasketUpdate)
                 {
                     Console.ForegroundColor = basketColor;
+                    var basket = (BasketSpot)sender;
+                    var weights = basket.GetWeights();
+                    Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] B {e.Name}={e.Value:0.##} [{weights}]");
+                    Console.ResetColor();
+                    return;
                 }
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Quote {e.Name, -10} updated to {e.Value:0.##}");
-
-                if (isBasketUpdate)
-                {
-                    Console.ResetColor();
-                }
             }
         }
     }

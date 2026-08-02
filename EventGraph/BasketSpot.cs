@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -9,39 +10,79 @@ namespace EventGraph
         public event TickHandler Tick;
         public delegate void TickHandler(BasketSpot q, SpotMessage s);
 
+        private const double Epsilon = 1e-9;
+
         private readonly IReadOnlyList<SimulatedSpot> constituents;
         private readonly Dictionary<string, double> spots = new();
+        private readonly Dictionary<string, double> weights = new();
         private readonly int numConstituents;
         private readonly string name;
 
-        public BasketSpot(IReadOnlyList<SimulatedSpot> constituents)
+        public BasketSpot(IReadOnlyList<SimulatedSpot> constituents, IReadOnlyList<double> weights = null)
         {
+            if (constituents == null || constituents.Count == 0)
+            {
+                throw new ArgumentException("Basket must have at least one constituent.", nameof(constituents));
+            }
+
             this.constituents = constituents;
             numConstituents = constituents.Count;
             name = string.Join(",", constituents.Select(x => x.Name));
 
-            foreach (var constituent in constituents)
+            if (weights != null)
             {
-                constituent.Tick += SpotTicked;
+                if (weights.Count != constituents.Count)
+                {
+                    throw new ArgumentException("The number of weights must match the number of constituents.", nameof(weights));
+                }
+
+                var weightSum = weights.Sum();
+                if (Math.Abs(weightSum - 1.0) > Epsilon)
+                {
+                    throw new ArgumentException("The sum of constituent weights must be 1 within epsilon.", nameof(weights));
+                }
+
+                for (int i = 0; i < constituents.Count; i++)
+                {
+                    if (Math.Abs(weights[i]) <= Epsilon)
+                    {
+                        continue;
+                    }
+
+                    this.weights[constituents[i].Name] = weights[i];
+                    constituents[i].Tick += SpotTicked;
+                }
+            }
+            else
+            {
+                foreach (var constituent in constituents)
+                {
+                    this.weights[constituent.Name] = 1.0 / constituents.Count;
+                    constituent.Tick += SpotTicked;
+                }
             }
         }
 
         public string Name => name;
 
+        public string GetWeights()
+        {
+            return string.Join(", ", weights.OrderBy(x => x.Key).Select(x => $"{x.Key}={x.Value:0.###}"));
+        }
+
         private bool AllSpotsAvailable()
         {
             lock (spots)
             {
-                return spots.Count == numConstituents;
+                return spots.Count == weights.Count;
             }
         }
 
         private double Spot()
         {
-            double weight = 1.0 / numConstituents;
             lock (spots)
             {
-                return spots.Values.Sum(x => weight * x);
+                return spots.Sum(x => weights[x.Key] * x.Value);
             }
         }
 
@@ -67,7 +108,10 @@ namespace EventGraph
                 {
                     foreach (var constituent in constituents)
                     {
-                        spots[constituent.Name] = constituent.CurrentValue;
+                        if (weights.ContainsKey(constituent.Name))
+                        {
+                            spots[constituent.Name] = constituent.CurrentValue;
+                        }
                     }
 
                     if (AllSpotsAvailable())

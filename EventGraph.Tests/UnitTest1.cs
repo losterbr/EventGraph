@@ -32,6 +32,57 @@ public class EventGraphTests
     }
 
     [Fact]
+    public async Task BasketSpotUsesProvidedWeights()
+    {
+        var quotes = new[]
+        {
+            new SimulatedSpot("A", 100.0, 0.0, 0.0),
+            new SimulatedSpot("B", 200.0, 0.0, 0.0)
+        };
+
+        var basket = new BasketSpot(quotes.ToList(), new[] { 0.25, 0.75 });
+
+        var updates = new List<SpotMessage>();
+        basket.Tick += (_, message) => updates.Add(message);
+
+        await basket.RunOnceAsync();
+
+        Assert.Single(updates);
+        Assert.Equal(175.0, updates[0].Value, 10);
+    }
+
+    [Fact]
+    public async Task BasketSpotSkipsZeroWeightConstituents()
+    {
+        var quotes = new[]
+        {
+            new SimulatedSpot("A", 100.0, 0.0, 0.0),
+            new SimulatedSpot("B", 200.0, 0.0, 0.0)
+        };
+
+        var basket = new BasketSpot(quotes.ToList(), new[] { 0.0, 1.0 });
+
+        var updates = new List<SpotMessage>();
+        basket.Tick += (_, message) => updates.Add(message);
+
+        await quotes[0].Start(1);
+
+        Assert.Empty(updates);
+    }
+
+    [Fact]
+    public void BasketSpotThrowsWhenWeightsDoNotSumToOne()
+    {
+        var quotes = new[]
+        {
+            new SimulatedSpot("A", 100.0, 0.0, 0.0),
+            new SimulatedSpot("B", 200.0, 0.0, 0.0)
+        };
+
+        Assert.Throws<ArgumentException>(() => new BasketSpot(quotes.ToList(), new[] { 0.6, 0.3 }));
+    }
+
+    [Fact]
     public void ParseArgumentsSupportsCustomTickCount()
     {
         var options = AppOptionsParser.Parse(new[] { "--ticks", "12" });
