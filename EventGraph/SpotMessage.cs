@@ -4,23 +4,26 @@ namespace EventGraph
 {
     public class SpotMessage : EventArgs
     {
-        private double spot;
-        private string name;
-        public SpotMessage(string name, double spot)
+        private readonly string name;
+        private double value;
+
+        public SpotMessage(string name, double value)
         {
-            if (String.IsNullOrEmpty(name))
-                throw new ArgumentException("Have to provide name for SpotMessage.");
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException("Have to provide name for SpotMessage.", nameof(name));
+            }
+
             this.name = name;
-            this.spot = spot;
+            this.value = value;
         }
-        public string Name
-        {
-            get { return name; }
-        }
+
+        public string Name => name;
+
         public double Value
         {
-            set { spot = value; }
-            get { return spot; }
+            get => value;
+            set => this.value = value;
         }
     }
 }

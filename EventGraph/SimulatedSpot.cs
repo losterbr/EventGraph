@@ -9,22 +9,26 @@ namespace EventGraph
         public event TickHandler Tick;
         public delegate void TickHandler(SimulatedSpot q, SpotMessage s);
 
-        private readonly string name;
-        private readonly double spot;
-        private readonly double vol;
-        private readonly double meanTickTimeSeconds;
-
         private const double MilliSecondsPerYear = 365.25 * 24.0 * 60.0 * 60.0 * 1000.0;
 
-        public string Name
-        {
-            get { return name; }
-        }
+        private readonly string name;
+        private readonly double vol;
+        private readonly double meanTickTimeSeconds;
+        private double currentValue;
 
         public SimulatedSpot(string name, double spot, double vol, double meanTickTimeSeconds = 1.0)
-        { this.name = name;  this.spot = spot; this.vol = vol;  this.meanTickTimeSeconds = meanTickTimeSeconds; }
+        {
+            this.name = name;
+            this.currentValue = spot;
+            this.vol = vol;
+            this.meanTickTimeSeconds = meanTickTimeSeconds;
+        }
 
-        private double IncrStdDev(double tMilliSeconds) 
+        public string Name => name;
+
+        public double CurrentValue => currentValue;
+
+        private double IncrStdDev(double tMilliSeconds)
         {
             return vol * Math.Sqrt(tMilliSeconds / MilliSecondsPerYear);
         }
@@ -34,27 +38,33 @@ namespace EventGraph
             Thread.Sleep((int)tMilliSeconds);
         }
 
-        public async Task Start()
+        public async Task Start(int tickCount = 1, CancellationToken cancellationToken = default)
         {
-            MathNet.Numerics.Distributions.Poisson poissonDist = new(meanTickTimeSeconds * 1000.0);
-            MathNet.Numerics.Distributions.Normal normalDist = new(0.0, 1.0);
+            var poissonDist = new MathNet.Numerics.Distributions.Poisson(meanTickTimeSeconds * 1000.0);
+            var normalDist = new MathNet.Numerics.Distributions.Normal(0.0, 1.0);
+            var spotMessage = new SpotMessage(name, currentValue);
 
-            var spotMessage = new SpotMessage(this.name, this.spot);
             await Task.Run(() =>
+            {
+                Tick?.Invoke(this, spotMessage);
+
+                int emittedTicks = 1;
+                while (!cancellationToken.IsCancellationRequested && (tickCount <= 0 || emittedTicks < tickCount))
                 {
-                    Tick(this, spotMessage);
                     double timeStepMilliSeconds = poissonDist.Sample();
-                    double stdDev = 0.0;
-                    while (true)
-                    {
-                        timeStepMilliSeconds = poissonDist.Sample();
-                        stdDev = IncrStdDev(timeStepMilliSeconds);
-                        spotMessage.Value *= Math.Exp(stdDev * normalDist.Sample() - 0.5 * stdDev*stdDev);
-                        Sleep(timeStepMilliSeconds);
-                        Tick(this, spotMessage);
-                    }
+                    double stdDev = IncrStdDev(timeStepMilliSeconds);
+                    double logDriftAdjustment = -0.5 * stdDev * stdDev;
+
+                    // This is the standard lognormal/Itô adjustment for a GBM-style spot process.
+                    // A separate convexity adjustment would be applied at the payoff/forward level,
+                    // not as an extra term in the underlying spot simulation itself.
+                    spotMessage.Value *= Math.Exp(stdDev * normalDist.Sample() + logDriftAdjustment);
+                    currentValue = spotMessage.Value;
+                    Sleep(timeStepMilliSeconds);
+                    Tick?.Invoke(this, spotMessage);
+                    emittedTicks++;
                 }
-                );
+            }, cancellationToken);
         }
     }
 }

@@ -1,65 +1,83 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-
-using System.Threading;
 using System.Threading.Tasks;
-
 
 namespace EventGraph
 {
     public class BasketSpot
     {
-        
         public event TickHandler Tick;
         public delegate void TickHandler(BasketSpot q, SpotMessage s);
 
-        public BasketSpot(List<SimulatedSpot> constituents)
-        {
-            spots = new();
-            numConstituents = constituents.Count;
-            name = constituents.Select(x => x.Name).Aggregate((a, b) => a + "_" + b);
-            foreach (SimulatedSpot constituent in constituents)
-            {
-                constituent.Tick += new SimulatedSpot.TickHandler(SpotTicked);
-            }
-        }
-
-        private Dictionary<string, double> spots;
+        private readonly IReadOnlyList<SimulatedSpot> constituents;
+        private readonly Dictionary<string, double> spots = new();
         private readonly int numConstituents;
         private readonly string name;
 
-        public string Name
+        public BasketSpot(IReadOnlyList<SimulatedSpot> constituents)
         {
-            get { return name; }
+            this.constituents = constituents;
+            numConstituents = constituents.Count;
+            name = string.Join("_", constituents.Select(x => x.Name));
+
+            foreach (var constituent in constituents)
+            {
+                constituent.Tick += SpotTicked;
+            }
         }
+
+        public string Name => name;
 
         private bool AllSpotsAvailable()
         {
-            lock (this.spots) { 
+            lock (spots)
+            {
                 return spots.Count == numConstituents;
             }
         }
 
         private double Spot()
         {
-            double weight = 1.0/((double) numConstituents);
-            lock ( this.spots) { 
-                return spots.Select(x => weight * x.Value).Sum();
+            double weight = 1.0 / numConstituents;
+            lock (spots)
+            {
+                return spots.Values.Sum(x => weight * x);
             }
         }
 
         private void SpotTicked(object sender, SpotMessage e)
         {
-            lock (this.spots) {                
+            lock (spots)
+            {
                 spots[e.Name] = e.Value;
                 if (AllSpotsAvailable())
                 {
-                    double spot = Spot();
-                    SpotMessage spotMessage = new(name,spot);
-                    Tick(this, spotMessage);
+                    var spot = Spot();
+                    var spotMessage = new SpotMessage(name, spot);
+                    Tick?.Invoke(this, spotMessage);
                 }
             }
+        }
+
+        public Task RunOnceAsync()
+        {
+            return Task.Run(() =>
+            {
+                lock (spots)
+                {
+                    foreach (var constituent in constituents)
+                    {
+                        spots[constituent.Name] = constituent.CurrentValue;
+                    }
+
+                    if (AllSpotsAvailable())
+                    {
+                        var spot = Spot();
+                        var spotMessage = new SpotMessage(name, spot);
+                        Tick?.Invoke(this, spotMessage);
+                    }
+                }
+            });
         }
     }
 }
