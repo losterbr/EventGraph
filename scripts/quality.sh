@@ -6,11 +6,13 @@ cd "$ROOT_DIR"
 
 echo "Running quality checks..."
 
-dotnet test EventGraph.Tests/EventGraph.Tests.csproj --collect:"XPlat Code Coverage" --results-directory ./TestResults
+mkdir -p ./coverage
+
+dotnet test EventGraph.Tests/EventGraph.Tests.csproj --collect:"XPlat Code Coverage" --results-directory ./coverage
 
 dotnet build EventGraph/EventGraph.csproj
 
-COVERAGE_FILE=$(find ./TestResults -name "coverage.cobertura.xml" -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1)
+COVERAGE_FILE=$(find ./coverage -name "coverage.cobertura.xml" -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1)
 if [[ -z "$COVERAGE_FILE" ]]; then
   echo "Coverage report was not generated." >&2
   exit 1
