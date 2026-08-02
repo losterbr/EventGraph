@@ -8,6 +8,10 @@ EventGraph is a small .NET sample that demonstrates a simple event-driven quote 
 - Subscribes a `Listener` to individual spots and to a basket aggregation.
 - Emits basket updates whenever all constituent prices have been observed.
 
+## Basket update behavior
+
+The basket does not emit a new value on every single constituent tick. Instead, it stores each constituent's latest value and only publishes a new basket value once all constituents have provided an update for the current cycle. This makes the basket behave like a synchronized aggregate over the constituent prices.
+
 ## How the spot simulation works
 
 Each simulated spot is modeled as a simple geometric Brownian motion (GBM)-style process. At each step, the code:
