@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,10 +8,9 @@ namespace EventGraph
     /// <summary>
     /// Simulates a market quote and raises tick events over time.
     /// </summary>
-    public class SimulatedQuoteSource
+    public class SimulatedQuoteSource : IQuoteNode
     {
-        public event TickHandler Tick;
-        public delegate void TickHandler(SimulatedQuoteSource q, QuoteTick s);
+        public event EventHandler<QuoteTick> Tick;
 
         private const double MilliSecondsPerYear = 365.25 * 24.0 * 60.0 * 60.0 * 1000.0;
 
@@ -50,6 +50,8 @@ namespace EventGraph
         public string Name => name;
 
         public double CurrentValue => currentValue;
+
+        public IReadOnlyList<IQuoteNode> Dependencies => Array.Empty<IQuoteNode>();
 
         private double IncrStdDev(double tMilliSeconds)
         {

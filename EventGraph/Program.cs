@@ -21,10 +21,11 @@ namespace EventGraph
                 .Select((symbol, index) => new SimulatedQuoteSource(symbol, 800.0 + index * 100.0, 0.2 + index * 0.05, 3.0 + index))
                 .ToList();
 
+            var basketQuote = new BasketAggregate(quotes);
+            GraphValidator.EnsureAcyclic(new IQuoteNode[] { basketQuote });
+
             var listener = new QuoteSubscriber(options.Quiet, options.BasketColor);
             quotes.ForEach(listener.Subscribe);
-
-            var basketQuote = new BasketAggregate(quotes);
             listener.Subscribe(basketQuote);
 
             var tasks = quotes.Select(quote => quote.Start(options.TickCount)).ToArray();

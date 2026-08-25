@@ -8,19 +8,18 @@ namespace EventGraph
     /// <summary>
     /// Aggregates multiple simulated quotes into a weighted basket value.
     /// </summary>
-    public class BasketAggregate
+    public class BasketAggregate : IQuoteNode
     {
-        public event TickHandler Tick;
-        public delegate void TickHandler(BasketAggregate q, QuoteTick s);
+        public event EventHandler<QuoteTick> Tick;
 
         private const double Epsilon = 1e-9;
 
-        private readonly IReadOnlyList<SimulatedQuoteSource> constituents;
+        private readonly IReadOnlyList<IQuoteNode> constituents;
         private readonly Dictionary<string, double> spots = new();
         private readonly Dictionary<string, double> weights = new();
         private readonly string name;
 
-        public BasketAggregate(IReadOnlyList<SimulatedQuoteSource> constituents, IReadOnlyList<double> weights = null)
+        public BasketAggregate(IReadOnlyList<IQuoteNode> constituents, IReadOnlyList<double> weights = null)
         {
             if (constituents == null || constituents.Count == 0)
             {
@@ -66,6 +65,10 @@ namespace EventGraph
 
         public string Name => name;
 
+        public double CurrentValue { get; private set; }
+
+        public IReadOnlyList<IQuoteNode> Dependencies => constituents;
+
         public string GetWeights()
         {
             return string.Join(", ", weights.OrderBy(x => x.Key).Select(x => $"{x.Key}={x.Value:0.###}"));
@@ -95,6 +98,7 @@ namespace EventGraph
                 if (AllSpotsAvailable())
                 {
                     var spot = Spot();
+                    CurrentValue = spot;
                     var quoteTick = new QuoteTick(name, spot);
                     Tick?.Invoke(this, quoteTick);
                 }
@@ -118,6 +122,7 @@ namespace EventGraph
                     if (AllSpotsAvailable())
                     {
                         var spot = Spot();
+                        CurrentValue = spot;
                         var quoteTick = new QuoteTick(name, spot);
                         Tick?.Invoke(this, quoteTick);
                     }
