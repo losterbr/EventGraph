@@ -7,6 +7,8 @@ namespace EventGraph
     /// </summary>
     public class QuoteSubscriber
     {
+        private const int NodeIdentifierWidth = 20;
+
         private readonly bool quiet;
         public QuoteSubscriber(bool quiet = false)
         {
@@ -46,15 +48,26 @@ namespace EventGraph
                     var basket = (BasketAggregate)sender;
                     Console.ForegroundColor = basket.Color;
                     var weights = basket.GetWeights();
-                    Console.WriteLine($" B {e.Name}={e.Value:0.##} [{weights}]");
+                    Console.WriteLine($" {FormatNodeIdentifier($"B {e.Name}")}={e.Value:0.##} [{weights}]");
                     Console.ResetColor();
                     return;
                 }
 
                 WriteTimestamp();
                 Console.ForegroundColor = ((IQuoteNode)sender).Color;
-                Console.WriteLine($" Quote {e.Name, -10} updated to {e.Value:0.##}");
+                Console.WriteLine($" {FormatNodeIdentifier($"Quote {e.Name}")} updated to {e.Value:0.##}");
+                Console.ResetColor();
             }
+        }
+
+        private static string FormatNodeIdentifier(string identifier)
+        {
+            if (identifier.Length > NodeIdentifierWidth)
+            {
+                return identifier[..(NodeIdentifierWidth - 3)] + "...";
+            }
+
+            return identifier.PadRight(NodeIdentifierWidth);
         }
 
         private static void WriteTimestamp()

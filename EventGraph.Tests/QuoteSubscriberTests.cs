@@ -34,6 +34,67 @@ public class QuoteSubscriberTests
     }
 
     [Fact]
+    public async Task QuoteSubscriberPadsShortNodeIdentifiersToTwentyCharacters()
+    {
+        var output = new StringWriter();
+        var originalOut = Console.Out;
+
+        try
+        {
+            Console.SetOut(output);
+            var subscriber = new QuoteSubscriber();
+            var source = new SimulatedQuoteSource("XYZ", 100.0, 0.0, 0.0);
+
+            subscriber.Subscribe(source);
+            await source.Start(1);
+
+            var updateLine = output.ToString().Split(Environment.NewLine)[1];
+            var identifier = updateLine.Substring(updateLine.IndexOf(']') + 2, 20);
+
+            Assert.Equal(20, identifier.Length);
+            Assert.Equal("Quote XYZ           ", identifier);
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+    }
+
+    [Fact]
+    public async Task QuoteSubscriberTruncatesLongBasketIdentifiersToTwentyCharacters()
+    {
+        var output = new StringWriter();
+        var originalOut = Console.Out;
+
+        try
+        {
+            Console.SetOut(output);
+            var subscriber = new QuoteSubscriber();
+            var sources = new[]
+            {
+                new SimulatedQuoteSource("TSLA", 100.0, 0.0, 0.0),
+                new SimulatedQuoteSource("GOOG", 200.0, 0.0, 0.0),
+                new SimulatedQuoteSource("AMZN", 300.0, 0.0, 0.0),
+                new SimulatedQuoteSource("MSFT", 400.0, 0.0, 0.0)
+            };
+            var basket = new BasketAggregate(sources);
+
+            subscriber.Subscribe(basket);
+            await basket.RunOnceAsync();
+
+            var updateLine = output.ToString().Split(Environment.NewLine)[1];
+            var identifier = updateLine.Substring(updateLine.IndexOf(']') + 2, 20);
+
+            Assert.Equal(20, identifier.Length);
+            Assert.Equal("B TSLA,GOOG,AMZN,...", identifier);
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+    }
+
+    [Fact]
     public async Task QuoteSubscriberCanSubscribeToAggregateWithCustomColor()
     {
         var output = new StringWriter();
