@@ -1,33 +1,41 @@
 # EventGraph
 
-EventGraph is a small .NET sample that demonstrates a simple event-driven quote pipeline.
+EventGraph is a small .NET sample that demonstrates an event-driven market quote pipeline using simulated instruments and basket aggregation.
 
-## What it does
+## Overview
 
-- Simulates a few stock-like price updates using `SimulatedSpot`.
-- Subscribes a `Listener` to individual spots and to a basket aggregation.
-- Emits basket updates whenever all constituent prices have been observed.
+- Simulates stock-like quotes with `SimulatedSpot`.
+- Subscribes the same `Listener` to both individual quotes and an aggregated basket.
+- Emits basket updates only after all constituent values are available for the current cycle.
+- Keeps the sample self-contained, deterministic enough for tests, and suitable for public release as a demo project.
 
-## Basket update behavior
+## How it works
 
-The basket does not emit a new value on every single constituent tick. Instead, it stores each constituent's latest value and only publishes a new basket value once all constituents have provided an update for the current cycle. This makes the basket behave like a synchronized aggregate over the constituent prices.
+### Quote simulation
 
-## How the spot simulation works
-
-Each simulated spot is modeled as a simple geometric Brownian motion (GBM)-style process. At each step, the code:
+Each simulated spot follows a GBM-style lognormal process. The model does this at each step:
 
 1. Samples a random time interval from a Poisson distribution.
-2. Converts that interval into a volatility scaling using the annualized volatility and the number of milliseconds per year.
-3. Applies a lognormal update using a standard normal shock.
-4. Includes the Itô drift correction term $-\frac{1}{2}\sigma^2$ so the process remains consistent with a lognormal spot model.
+2. Converts the interval into a volatility scaling over a year.
+3. Applies a normal shock and the Itô drift correction.
+4. Updates the current value and raises the tick event.
 
-The update is effectively:
+The underlying update is:
 
 $$
 S_{t+\Delta t} = S_t \exp\left(\sigma Z \sqrt{\Delta t} - \frac{1}{2}\sigma^2 \Delta t\right)
 $$
 
-This is the standard approach for a basic spot simulation. A separate convexity adjustment is not added inside the underlying spot generator; that type of adjustment is typically applied when pricing a specific payoff or forward contract, not when simulating the spot itself.
+This is the standard base-process approach for a spot simulation. It does not add a pricing-specific convexity adjustment, because that is a payoff-level consideration rather than a spot-generation concern.
+
+### Basket aggregation
+
+The basket does not publish on every constituent tick. Instead, it stores the latest values and emits a new basket value only after all constituents have provided an observation for the current cycle.
+
+## Prerequisites
+
+- .NET 8 SDK
+- A terminal with access to the repository root
 
 ## Run the sample
 
@@ -35,29 +43,43 @@ This is the standard approach for a basic spot simulation. A separate convexity 
 dotnet run --project EventGraph/EventGraph.csproj
 ```
 
-You can also customize the run with the available CLI options:
+Customise the run with CLI options:
 
 ```bash
 dotnet run --project EventGraph/EventGraph.csproj -- --ticks 3 --quiet --symbols A,B,C
 ```
 
-## Run the tests
+Available options:
+
+- `--ticks <n>`: Number of ticks to emit; defaults to continuous mode until interrupted
+- `--quiet`: Suppresses subscription and quote output
+- `--symbols A,B,C`: Comma-separated symbols to simulate
+- `--basket-color <color>`: Console color used for basket updates
+- `--help`: Displays usage information
+
+## Run tests and coverage
 
 ```bash
-dotnet test EventGraph.Tests/EventGraph.Tests.csproj
+dotnet test EventGraph.Tests/EventGraph.Tests.csproj --collect:"XPlat Code Coverage" --results-directory ./coverage
 ```
 
-## Quality checks
-
-The repository includes a quality script and a pre-commit hook:
+Quality gate:
 
 ```bash
 ./scripts/quality.sh
 ```
 
-The quality gate now runs tests with code coverage collection and requires line coverage of at least 90% for the production code paths.
+The repo enforces at least 95% line coverage for the production code path.
+
+## Public-repo readiness checklist
+
+- Source is organized around a single library and a focused test project.
+- Test naming follows production types (`AppOptions`, `BasketSpot`, `Listener`, `SimulatedSpot`, `SpotMessage`).
+- Coverage, quality checks, and clean test execution are included in the repo workflow.
+- The project includes a permissive open-source license in the root of the repository.
+- No secrets, credentials, or local-only environment artifacts are required to build or run the sample.
 
 ## Notes
 
 - The sample uses Math.NET for random sampling.
-- The current implementation runs a fixed number of ticks so the process completes predictably.
+- The default execution model is continuous mode unless `--ticks` is supplied.
