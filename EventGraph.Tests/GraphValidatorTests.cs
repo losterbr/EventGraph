@@ -62,6 +62,8 @@ public class GraphValidatorTests
 
         public string Name { get; }
 
+        public ConsoleColor Color => ConsoleColor.Green;
+
         public double CurrentValue => 0.0;
 
         public IReadOnlyList<IQuoteNode> Dependencies => dependencies;

@@ -19,7 +19,7 @@ namespace EventGraph
         private readonly Dictionary<string, double> weights = new();
         private readonly string name;
 
-        public BasketAggregate(IReadOnlyList<IQuoteNode> constituents, IReadOnlyList<double> weights = null)
+        public BasketAggregate(IReadOnlyList<IQuoteNode> constituents, IReadOnlyList<double> weights = null, ConsoleColor color = ConsoleColor.Cyan)
         {
             if (constituents == null || constituents.Count == 0)
             {
@@ -28,6 +28,7 @@ namespace EventGraph
 
             this.constituents = constituents;
             name = string.Join(",", constituents.Select(x => x.Name));
+            Color = color;
 
             if (weights != null)
             {
@@ -64,6 +65,8 @@ namespace EventGraph
         }
 
         public string Name => name;
+
+        public ConsoleColor Color { get; }
 
         public double CurrentValue { get; private set; }
 

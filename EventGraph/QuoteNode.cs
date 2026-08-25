@@ -12,6 +12,8 @@ namespace EventGraph
 
         string Name { get; }
 
+        ConsoleColor Color { get; }
+
         double CurrentValue { get; }
 
         IReadOnlyList<IQuoteNode> Dependencies { get; }

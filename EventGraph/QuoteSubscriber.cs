@@ -8,12 +8,9 @@ namespace EventGraph
     public class QuoteSubscriber
     {
         private readonly bool quiet;
-        private readonly ConsoleColor basketColor;
-
-        public QuoteSubscriber(bool quiet = false, ConsoleColor basketColor = ConsoleColor.Cyan)
+        public QuoteSubscriber(bool quiet = false)
         {
             this.quiet = quiet;
-            this.basketColor = basketColor;
         }
 
         public void Subscribe(SimulatedQuoteSource quote)
@@ -46,8 +43,8 @@ namespace EventGraph
                 if (isBasketUpdate)
                 {
                     WriteTimestamp();
-                    Console.ForegroundColor = basketColor;
                     var basket = (BasketAggregate)sender;
+                    Console.ForegroundColor = basket.Color;
                     var weights = basket.GetWeights();
                     Console.WriteLine($" B {e.Name}={e.Value:0.##} [{weights}]");
                     Console.ResetColor();
@@ -55,7 +52,7 @@ namespace EventGraph
                 }
 
                 WriteTimestamp();
-                Console.ResetColor();
+                Console.ForegroundColor = ((IQuoteNode)sender).Color;
                 Console.WriteLine($" Quote {e.Name, -10} updated to {e.Value:0.##}");
             }
         }

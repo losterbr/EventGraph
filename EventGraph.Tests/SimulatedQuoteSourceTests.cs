@@ -43,6 +43,14 @@ public class SimulatedQuoteSourceTests
     }
 
     [Fact]
+    public void SimulatedQuoteSourceRetainsItsColor()
+    {
+        var source = new SimulatedQuoteSource("COLOR", 100.0, 0.1, color: ConsoleColor.Blue);
+
+        Assert.Equal(ConsoleColor.Blue, source.Color);
+    }
+
+    [Fact]
     public void SimulatedQuoteSourceRejectsInvalidStartingSpot()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedQuoteSource("A", double.NaN, 0.1));
