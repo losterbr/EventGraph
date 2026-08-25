@@ -62,6 +62,8 @@ public class GraphValidatorTests
 
         public string Name { get; }
 
+        public string Type => "TestNode";
+
         public ConsoleColor Color => ConsoleColor.Green;
 
         public double CurrentValue => 0.0;
