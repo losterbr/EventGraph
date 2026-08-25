@@ -19,7 +19,7 @@ namespace EventGraph
         private readonly double meanTickTimeSeconds;
         private double currentValue;
 
-        public SimulatedQuoteSource(string name, double spot, double vol, double meanTickTimeSeconds = 1.0, ConsoleColor color = ConsoleColor.Green)
+        public SimulatedQuoteSource(string name, double spot, double vol, double meanTickTimeSeconds = 1.0)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -45,14 +45,11 @@ namespace EventGraph
             this.currentValue = spot;
             this.vol = vol;
             this.meanTickTimeSeconds = meanTickTimeSeconds;
-            Color = color;
         }
 
         public string Name => name;
 
         public string Type => "SimulatedSpot";
-
-        public ConsoleColor Color { get; }
 
         public double CurrentValue => currentValue;
 

@@ -43,14 +43,6 @@ public class SimulatedQuoteSourceTests
     }
 
     [Fact]
-    public void SimulatedQuoteSourceRetainsItsColor()
-    {
-        var source = new SimulatedQuoteSource("COLOR", 100.0, 0.1, color: ConsoleColor.Blue);
-
-        Assert.Equal(ConsoleColor.Blue, source.Color);
-    }
-
-    [Fact]
     public void SimulatedQuoteSourceHasTheExpectedType()
     {
         var source = new SimulatedQuoteSource("TYPE", 100.0, 0.1);

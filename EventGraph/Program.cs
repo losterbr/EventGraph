@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -17,14 +17,17 @@ namespace EventGraph
                 return;
             }
 
-            var quotes = options.Symbols
-                .Select((symbol, index) => new SimulatedQuoteSource(symbol, 800.0 + index * 100.0, 0.2 + index * 0.05, 3.0 + index, GetNodeColor(index)))
-                .ToList();
+            var definitionDirectory = Path.Combine(AppContext.BaseDirectory, "graph definition");
+            var nodes = GraphDefinitionLoader.LoadNodes(definitionDirectory);
+            var quotes = nodes.Cast<SimulatedQuoteSource>().ToList();
 
-            var listener = new QuoteSubscriber(options.Quiet);
-            quotes.ForEach(listener.Subscribe);
+            var listener = new QuoteSubscriber(options.Quiet, options.BasketColor);
+            foreach (var quote in quotes)
+            {
+                listener.Subscribe(quote);
+            }
 
-            var basketQuote = new BasketAggregate(quotes, color: options.BasketColor);
+            var basketQuote = new BasketAggregate(quotes);
             GraphValidator.EnsureAcyclic(new IQuoteNode[] { basketQuote });
             listener.Subscribe(basketQuote);
 
@@ -39,15 +42,8 @@ namespace EventGraph
             Console.WriteLine("Options:");
             Console.WriteLine("  --ticks <n>      Number of ticks each simulated spot emits (default: continuous until interrupted)");
             Console.WriteLine("  --quiet         Suppress subscription and quote output");
-            Console.WriteLine("  --symbols A,B,C Comma-separated list of symbols to simulate");
             Console.WriteLine("  --basket-color <color>  Console color for basket updates (default: Cyan)");
             Console.WriteLine("  --help          Show this help message");
-        }
-
-        private static ConsoleColor GetNodeColor(int index)
-        {
-            var colors = new[] { ConsoleColor.Green, ConsoleColor.Yellow, ConsoleColor.Blue, ConsoleColor.Magenta, ConsoleColor.Cyan };
-            return colors[index % colors.Length];
         }
     }
 }

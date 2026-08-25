@@ -10,7 +10,6 @@ namespace EventGraph
         public int TickCount { get; set; } = 0;
         public bool Quiet { get; set; }
         public bool ShowHelp { get; set; }
-        public string[] Symbols { get; set; } = { "TSLA", "GOOG", "AMZN" };
         public ConsoleColor BasketColor { get; set; } = ConsoleColor.Cyan;
     }
 
@@ -59,21 +58,6 @@ namespace EventGraph
                         }
 
                         options.BasketColor = basketColor;
-                        i++;
-                        break;
-
-                    case "--symbols":
-                        if (i + 1 >= args.Length)
-                        {
-                            throw new ArgumentException("--symbols requires a value.");
-                        }
-
-                        options.Symbols = args[i + 1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                        if (options.Symbols.Length == 0)
-                        {
-                            throw new ArgumentException("--symbols must contain at least one symbol.");
-                        }
-
                         i++;
                         break;
 

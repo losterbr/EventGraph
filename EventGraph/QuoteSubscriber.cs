@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace EventGraph
 {
@@ -9,22 +10,36 @@ namespace EventGraph
     {
         private const int NodeIdentifierWidth = 40;
         private static readonly object ConsoleLock = new();
+        private static readonly ConsoleColor[] SourceColors =
+        {
+            ConsoleColor.Green,
+            ConsoleColor.Yellow,
+            ConsoleColor.Blue,
+            ConsoleColor.Magenta,
+            ConsoleColor.Cyan
+        };
 
         private readonly bool quiet;
-        public QuoteSubscriber(bool quiet = false)
+        private readonly ConsoleColor basketColor;
+        private readonly Dictionary<IQuoteNode, ConsoleColor> nodeColors = new(ReferenceEqualityComparer.Instance);
+        private int nextSourceColor;
+
+        public QuoteSubscriber(bool quiet = false, ConsoleColor basketColor = ConsoleColor.Cyan)
         {
             this.quiet = quiet;
+            this.basketColor = basketColor;
         }
 
         public void Subscribe(SimulatedQuoteSource quote)
         {
             quote.Tick += SpotTicked;
+            nodeColors[quote] = SourceColors[nextSourceColor++ % SourceColors.Length];
             if (!quiet)
             {
                 lock (ConsoleLock)
                 {
                     WriteTimestamp();
-                    Console.ForegroundColor = quote.Color;
+                    Console.ForegroundColor = nodeColors[quote];
                     Console.WriteLine($" Subscribed to {quote.Name}");
                     Console.ResetColor();
                 }
@@ -34,12 +49,13 @@ namespace EventGraph
         public void Subscribe(BasketAggregate quote)
         {
             quote.Tick += SpotTicked;
+            nodeColors[quote] = basketColor;
             if (!quiet)
             {
                 lock (ConsoleLock)
                 {
                     WriteTimestamp();
-                    Console.ForegroundColor = quote.Color;
+                    Console.ForegroundColor = nodeColors[quote];
                     Console.WriteLine($" Subscribed to {quote.Name}");
                     Console.ResetColor();
                 }
@@ -54,7 +70,7 @@ namespace EventGraph
                 {
                     WriteTimestamp();
                     var node = (IQuoteNode)sender;
-                    Console.ForegroundColor = node.Color;
+                    Console.ForegroundColor = nodeColors[node];
                     Console.WriteLine($" {FormatNodeIdentifier($"{node.Type} {node.Name}")} updated to {e.Value:0.##}");
                     Console.ResetColor();
                 }

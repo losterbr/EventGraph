@@ -23,12 +23,11 @@ public class AppOptionsTests
     }
 
     [Fact]
-    public void ParseArgumentsSupportsQuietAndSymbols()
+    public void ParseArgumentsSupportsQuiet()
     {
-        var options = AppOptionsParser.Parse(new[] { "--quiet", "--symbols", "A,B,C" });
+        var options = AppOptionsParser.Parse(new[] { "--quiet" });
 
         Assert.True(options.Quiet);
-        Assert.Equal(new[] { "A", "B", "C" }, options.Symbols);
     }
 
     [Fact]
@@ -47,7 +46,6 @@ public class AppOptionsTests
         Assert.Equal(0, options.TickCount);
         Assert.False(options.Quiet);
         Assert.False(options.ShowHelp);
-        Assert.Equal(new[] { "TSLA", "GOOG", "AMZN" }, options.Symbols);
         Assert.Equal(ConsoleColor.Cyan, options.BasketColor);
     }
 
@@ -73,18 +71,6 @@ public class AppOptionsTests
     public void ParseArgumentsThrowsForInvalidBasketColor()
     {
         Assert.Throws<ArgumentException>(() => AppOptionsParser.Parse(new[] { "--basket-color", "not-a-color" }));
-    }
-
-    [Fact]
-    public void ParseArgumentsThrowsForMissingSymbolsValue()
-    {
-        Assert.Throws<ArgumentException>(() => AppOptionsParser.Parse(new[] { "--symbols" }));
-    }
-
-    [Fact]
-    public void ParseArgumentsThrowsForEmptySymbols()
-    {
-        Assert.Throws<ArgumentException>(() => AppOptionsParser.Parse(new[] { "--symbols", "" }));
     }
 
     [Fact]

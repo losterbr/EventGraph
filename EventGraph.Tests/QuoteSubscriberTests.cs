@@ -184,13 +184,13 @@ public class QuoteSubscriberTests
         try
         {
             Console.SetOut(output);
-            var subscriber = new QuoteSubscriber(quiet: false);
+            var subscriber = new QuoteSubscriber(quiet: false, basketColor: ConsoleColor.Red);
             var sources = new[]
             {
                 new SimulatedQuoteSource("A", 100.0, 0.0, 0.0),
                 new SimulatedQuoteSource("B", 200.0, 0.0, 0.0)
             };
-            var basket = new BasketAggregate(sources, color: ConsoleColor.Red);
+            var basket = new BasketAggregate(sources);
 
             subscriber.Subscribe(basket);
             await basket.RunOnceAsync();

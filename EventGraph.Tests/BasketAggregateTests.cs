@@ -101,19 +101,6 @@ public class BasketAggregateTests
     }
 
     [Fact]
-    public void BasketAggregateRetainsItsColor()
-    {
-        var quotes = new[]
-        {
-            new SimulatedQuoteSource("A", 100.0, 0.0, 0.0)
-        };
-
-        var basket = new BasketAggregate(quotes, color: ConsoleColor.Red);
-
-        Assert.Equal(ConsoleColor.Red, basket.Color);
-    }
-
-    [Fact]
     public void BasketAggregateHasTheExpectedType()
     {
         var quotes = new[]

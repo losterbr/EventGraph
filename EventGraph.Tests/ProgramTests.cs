@@ -14,7 +14,7 @@ public class ProgramTests
         var programType = typeof(AppOptions).Assembly.GetType("EventGraph.Program");
         var method = programType!.GetMethod("Main", BindingFlags.NonPublic | BindingFlags.Static);
 
-        var task = (Task)method!.Invoke(null, new object[] { new[] { "--ticks", "1", "--quiet", "--symbols", "A,B,C", "--basket-color", "Yellow" } })!;
+        var task = (Task)method!.Invoke(null, new object[] { new[] { "--ticks", "1", "--quiet", "--basket-color", "Yellow" } })!;
         await task;
     }
 

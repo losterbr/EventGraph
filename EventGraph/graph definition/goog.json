@@ -1,0 +1,7 @@
+{
+  "type": "SimulatedQuoteSource",
+  "name": "GOOG",
+  "spot": 190.0,
+  "volatility": 0.3,
+  "meanTickTimeSeconds": 4.0
+}

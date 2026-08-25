@@ -1,0 +1,7 @@
+{
+  "type": "SimulatedQuoteSource",
+  "name": "TSLA",
+  "spot": 350.0,
+  "volatility": 0.55,
+  "meanTickTimeSeconds": 3.0
+}
