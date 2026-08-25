@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using EventGraph;
 using Xunit;
@@ -53,6 +54,44 @@ public class QuoteSubscriberTests
 
             Assert.Equal(20, identifier.Length);
             Assert.Equal("Quote XYZ           ", identifier);
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+    }
+
+    [Fact]
+    public async Task QuoteSubscriberKeepsConcurrentUpdatesOnSeparateLines()
+    {
+        var output = new StringWriter();
+        var originalOut = Console.Out;
+
+        try
+        {
+            Console.SetOut(output);
+            var subscriber = new QuoteSubscriber();
+            var sources = new[]
+            {
+                new SimulatedQuoteSource("A", 100.0, 0.0, 0.0),
+                new SimulatedQuoteSource("B", 200.0, 0.0, 0.0),
+                new SimulatedQuoteSource("C", 300.0, 0.0, 0.0)
+            };
+
+            foreach (var source in sources)
+            {
+                subscriber.Subscribe(source);
+            }
+
+            await Task.WhenAll(sources.Select(source => source.Start(1)));
+
+            var updateLines = output.ToString()
+                .Split(Environment.NewLine)
+                .Where(line => line.Contains("Quote A") || line.Contains("Quote B") || line.Contains("Quote C"))
+                .ToArray();
+            Assert.Equal(3, updateLines.Length);
+            Assert.All(updateLines, line => Assert.StartsWith("[", line));
+            Assert.All(updateLines, line => Assert.Contains("updated to", line));
         }
         finally
         {

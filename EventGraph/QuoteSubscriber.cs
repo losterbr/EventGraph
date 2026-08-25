@@ -8,6 +8,7 @@ namespace EventGraph
     public class QuoteSubscriber
     {
         private const int NodeIdentifierWidth = 20;
+        private static readonly object ConsoleLock = new();
 
         private readonly bool quiet;
         public QuoteSubscriber(bool quiet = false)
@@ -20,9 +21,12 @@ namespace EventGraph
             quote.Tick += SpotTicked;
             if (!quiet)
             {
-                WriteTimestamp();
-                Console.ResetColor();
-                Console.WriteLine($" Subscribed to {quote.Name}");
+                lock (ConsoleLock)
+                {
+                    WriteTimestamp();
+                    Console.ResetColor();
+                    Console.WriteLine($" Subscribed to {quote.Name}");
+                }
             }
         }
 
@@ -31,9 +35,12 @@ namespace EventGraph
             quote.Tick += SpotTicked;
             if (!quiet)
             {
-                WriteTimestamp();
-                Console.ResetColor();
-                Console.WriteLine($" Subscribed to Basket({quote.Name})");
+                lock (ConsoleLock)
+                {
+                    WriteTimestamp();
+                    Console.ResetColor();
+                    Console.WriteLine($" Subscribed to Basket({quote.Name})");
+                }
             }
         }
 
@@ -41,22 +48,25 @@ namespace EventGraph
         {
             if (!quiet)
             {
-                var isBasketUpdate = sender is BasketAggregate;
-                if (isBasketUpdate)
+                lock (ConsoleLock)
                 {
-                    WriteTimestamp();
-                    var basket = (BasketAggregate)sender;
-                    Console.ForegroundColor = basket.Color;
-                    var weights = basket.GetWeights();
-                    Console.WriteLine($" {FormatNodeIdentifier($"B {e.Name}")}={e.Value:0.##} [{weights}]");
-                    Console.ResetColor();
-                    return;
-                }
+                    var isBasketUpdate = sender is BasketAggregate;
+                    if (isBasketUpdate)
+                    {
+                        WriteTimestamp();
+                        var basket = (BasketAggregate)sender;
+                        Console.ForegroundColor = basket.Color;
+                        var weights = basket.GetWeights();
+                        Console.WriteLine($" {FormatNodeIdentifier($"B {e.Name}")}={e.Value:0.##} [{weights}]");
+                        Console.ResetColor();
+                        return;
+                    }
 
-                WriteTimestamp();
-                Console.ForegroundColor = ((IQuoteNode)sender).Color;
-                Console.WriteLine($" {FormatNodeIdentifier($"Quote {e.Name}")} updated to {e.Value:0.##}");
-                Console.ResetColor();
+                    WriteTimestamp();
+                    Console.ForegroundColor = ((IQuoteNode)sender).Color;
+                    Console.WriteLine($" {FormatNodeIdentifier($"Quote {e.Name}")} updated to {e.Value:0.##}");
+                    Console.ResetColor();
+                }
             }
         }
 
