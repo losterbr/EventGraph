@@ -10,6 +10,22 @@ EventGraph is a small .NET sample that demonstrates an event-driven market quote
 - Validates the quote-node dependency graph at startup and rejects cycles before processing begins.
 - Keeps the sample self-contained, deterministic enough for tests, and suitable for public release as a demo project.
 
+### Graph definitions
+
+Each JSON file in `EventGraph/graph definition` defines one `SimulatedQuoteSource`. The required fields are:
+
+```json
+{
+	"type": "SimulatedQuoteSource",
+	"name": "TSLA",
+	"spot": 800.0,
+	"volatility": 0.2,
+	"meanTickTimeSeconds": 3.0
+}
+```
+
+The `type` field selects the node implementation. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
+
 ## How it works
 
 ### Quote simulation
@@ -47,14 +63,13 @@ dotnet run --project EventGraph/EventGraph.csproj
 Customise the run with CLI options:
 
 ```bash
-dotnet run --project EventGraph/EventGraph.csproj -- --ticks 3 --quiet --symbols A,B,C
+dotnet run --project EventGraph/EventGraph.csproj -- --ticks 3 --quiet
 ```
 
 Available options:
 
 - `--ticks <n>`: Number of ticks to emit; defaults to continuous mode until interrupted
 - `--quiet`: Suppresses subscription and quote output
-- `--symbols A,B,C`: Comma-separated symbols to simulate
 - `--basket-color <color>`: Console color used for basket updates
 - `--help`: Displays usage information
 
