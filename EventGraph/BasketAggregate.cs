@@ -27,7 +27,7 @@ namespace EventGraph
             }
 
             this.constituents = constituents;
-            name = string.Join(",", constituents.Select(x => x.Name));
+            name = $"B {string.Join(",", constituents.Select(x => x.Name))}";
             Color = color;
 
             if (weights != null)
