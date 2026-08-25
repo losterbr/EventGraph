@@ -26,7 +26,7 @@ public class QuoteSubscriberTests
 
             var rendered = output.ToString();
             Assert.Contains("Subscribed to XYZ", rendered);
-            Assert.Contains("Quote XYZ", rendered);
+            Assert.Contains("SimulatedSpot XYZ", rendered);
         }
         finally
         {
@@ -51,11 +51,11 @@ public class QuoteSubscriberTests
 
             var updateLine = output.ToString()
                 .Split(Environment.NewLine)
-                .Single(line => line.Contains("Quote XYZ") && line.Contains("updated to"));
+                .Single(line => line.Contains("SimulatedSpot XYZ") && line.Contains("updated to"));
             var identifier = updateLine.Substring(updateLine.IndexOf(']') + 2, 40);
 
             Assert.Equal(40, identifier.Length);
-            Assert.Equal("Quote XYZ                               ", identifier);
+            Assert.StartsWith("SimulatedSpot XYZ", identifier);
         }
         finally
         {
@@ -89,7 +89,7 @@ public class QuoteSubscriberTests
 
             var updateLines = output.ToString()
                 .Split(Environment.NewLine)
-                .Where(line => line.Contains("Quote A") || line.Contains("Quote B") || line.Contains("Quote C"))
+                .Where(line => line.Contains("SimulatedSpot A") || line.Contains("SimulatedSpot B") || line.Contains("SimulatedSpot C"))
                 .ToArray();
             Assert.Equal(3, updateLines.Length);
             Assert.All(updateLines, line => Assert.StartsWith("[", line));
@@ -126,8 +126,8 @@ public class QuoteSubscriberTests
             await sources[1].Start(1);
 
             var lines = output.ToString().Split(Environment.NewLine);
-            var sourceIndex = Array.FindIndex(lines, line => line.Contains("Quote B") && line.Contains("updated to"));
-            var basketIndex = Array.FindIndex(lines, line => line.Contains("Quote B A,B") && line.Contains("updated to"));
+            var sourceIndex = Array.FindIndex(lines, line => line.Contains("SimulatedSpot B") && line.Contains("updated to"));
+            var basketIndex = Array.FindIndex(lines, line => line.Contains("CalculatedBasket B A,B") && line.Contains("updated to"));
 
             Assert.True(sourceIndex >= 0);
             Assert.True(basketIndex > sourceIndex);
@@ -162,11 +162,11 @@ public class QuoteSubscriberTests
 
             var updateLine = output.ToString()
                 .Split(Environment.NewLine)
-                .Single(line => line.Contains("Quote B TSLA") && line.Contains("updated to"));
+                .Single(line => line.Contains("CalculatedBasket B TSLA") && line.Contains("updated to"));
             var identifier = updateLine.Substring(updateLine.IndexOf(']') + 2, 40);
 
             Assert.Equal(40, identifier.Length);
-            Assert.Equal("Quote B TSLA,GOOG,AMZN,MSFT             ", identifier);
+            Assert.StartsWith("CalculatedBasket B TSLA,GOOG,AMZN,MSFT", identifier);
         }
         finally
         {

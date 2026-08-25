@@ -53,8 +53,9 @@ namespace EventGraph
                 lock (ConsoleLock)
                 {
                     WriteTimestamp();
-                    Console.ForegroundColor = ((IQuoteNode)sender).Color;
-                    Console.WriteLine($" {FormatNodeIdentifier($"Quote {e.Name}")} updated to {e.Value:0.##}");
+                    var node = (IQuoteNode)sender;
+                    Console.ForegroundColor = node.Color;
+                    Console.WriteLine($" {FormatNodeIdentifier($"{node.Type} {node.Name}")} updated to {e.Value:0.##}");
                     Console.ResetColor();
                 }
             }

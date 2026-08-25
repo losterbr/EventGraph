@@ -12,6 +12,8 @@ namespace EventGraph
 
         string Name { get; }
 
+        string Type { get; }
+
         ConsoleColor Color { get; }
 
         double CurrentValue { get; }

@@ -50,6 +50,8 @@ namespace EventGraph
 
         public string Name => name;
 
+        public string Type => "SimulatedSpot";
+
         public ConsoleColor Color { get; }
 
         public double CurrentValue => currentValue;

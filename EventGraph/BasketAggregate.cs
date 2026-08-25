@@ -66,6 +66,8 @@ namespace EventGraph
 
         public string Name => name;
 
+        public string Type => "CalculatedBasket";
+
         public ConsoleColor Color { get; }
 
         public double CurrentValue { get; private set; }
