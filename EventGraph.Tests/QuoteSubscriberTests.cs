@@ -102,6 +102,43 @@ public class QuoteSubscriberTests
     }
 
     [Fact]
+    public async Task QuoteSubscriberLogsConstituentBeforeBasketUpdate()
+    {
+        var output = new StringWriter();
+        var originalOut = Console.Out;
+
+        try
+        {
+            Console.SetOut(output);
+            var subscriber = new QuoteSubscriber();
+            var sources = new[]
+            {
+                new SimulatedQuoteSource("A", 100.0, 0.0, 0.0),
+                new SimulatedQuoteSource("B", 200.0, 0.0, 0.0)
+            };
+
+            subscriber.Subscribe(sources[0]);
+            subscriber.Subscribe(sources[1]);
+            var basket = new BasketAggregate(sources);
+            subscriber.Subscribe(basket);
+
+            await sources[0].Start(1);
+            await sources[1].Start(1);
+
+            var lines = output.ToString().Split(Environment.NewLine);
+            var sourceIndex = Array.FindIndex(lines, line => line.Contains("Quote B") && line.Contains("updated to"));
+            var basketIndex = Array.FindIndex(lines, line => line.Contains("Quote B A,B") && line.Contains("updated to"));
+
+            Assert.True(sourceIndex >= 0);
+            Assert.True(basketIndex > sourceIndex);
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+    }
+
+    [Fact]
     public async Task QuoteSubscriberPadsBasketIdentifiersToFortyCharacters()
     {
         var output = new StringWriter();
