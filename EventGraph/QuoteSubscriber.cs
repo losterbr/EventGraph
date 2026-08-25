@@ -7,7 +7,7 @@ namespace EventGraph
     /// </summary>
     public class QuoteSubscriber
     {
-        private const int NodeIdentifierWidth = 20;
+        private const int NodeIdentifierWidth = 40;
         private static readonly object ConsoleLock = new();
 
         private readonly bool quiet;
@@ -24,8 +24,9 @@ namespace EventGraph
                 lock (ConsoleLock)
                 {
                     WriteTimestamp();
-                    Console.ResetColor();
+                    Console.ForegroundColor = quote.Color;
                     Console.WriteLine($" Subscribed to {quote.Name}");
+                    Console.ResetColor();
                 }
             }
         }
@@ -38,8 +39,9 @@ namespace EventGraph
                 lock (ConsoleLock)
                 {
                     WriteTimestamp();
+                    Console.ForegroundColor = quote.Color;
+                    Console.WriteLine($" Subscribed to {quote.Name}");
                     Console.ResetColor();
-                    Console.WriteLine($" Subscribed to Basket({quote.Name})");
                 }
             }
         }
@@ -50,18 +52,6 @@ namespace EventGraph
             {
                 lock (ConsoleLock)
                 {
-                    var isBasketUpdate = sender is BasketAggregate;
-                    if (isBasketUpdate)
-                    {
-                        WriteTimestamp();
-                        var basket = (BasketAggregate)sender;
-                        Console.ForegroundColor = basket.Color;
-                        var weights = basket.GetWeights();
-                        Console.WriteLine($" {FormatNodeIdentifier($"B {e.Name}")}={e.Value:0.##} [{weights}]");
-                        Console.ResetColor();
-                        return;
-                    }
-
                     WriteTimestamp();
                     Console.ForegroundColor = ((IQuoteNode)sender).Color;
                     Console.WriteLine($" {FormatNodeIdentifier($"Quote {e.Name}")} updated to {e.Value:0.##}");

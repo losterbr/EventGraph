@@ -35,7 +35,7 @@ public class QuoteSubscriberTests
     }
 
     [Fact]
-    public async Task QuoteSubscriberPadsShortNodeIdentifiersToTwentyCharacters()
+    public async Task QuoteSubscriberPadsShortNodeIdentifiersToFortyCharacters()
     {
         var output = new StringWriter();
         var originalOut = Console.Out;
@@ -49,11 +49,13 @@ public class QuoteSubscriberTests
             subscriber.Subscribe(source);
             await source.Start(1);
 
-            var updateLine = output.ToString().Split(Environment.NewLine)[1];
-            var identifier = updateLine.Substring(updateLine.IndexOf(']') + 2, 20);
+            var updateLine = output.ToString()
+                .Split(Environment.NewLine)
+                .Single(line => line.Contains("Quote XYZ") && line.Contains("updated to"));
+            var identifier = updateLine.Substring(updateLine.IndexOf(']') + 2, 40);
 
-            Assert.Equal(20, identifier.Length);
-            Assert.Equal("Quote XYZ           ", identifier);
+            Assert.Equal(40, identifier.Length);
+            Assert.Equal("Quote XYZ                               ", identifier);
         }
         finally
         {
@@ -100,7 +102,7 @@ public class QuoteSubscriberTests
     }
 
     [Fact]
-    public async Task QuoteSubscriberTruncatesLongBasketIdentifiersToTwentyCharacters()
+    public async Task QuoteSubscriberPadsBasketIdentifiersToFortyCharacters()
     {
         var output = new StringWriter();
         var originalOut = Console.Out;
@@ -121,11 +123,13 @@ public class QuoteSubscriberTests
             subscriber.Subscribe(basket);
             await basket.RunOnceAsync();
 
-            var updateLine = output.ToString().Split(Environment.NewLine)[1];
-            var identifier = updateLine.Substring(updateLine.IndexOf(']') + 2, 20);
+            var updateLine = output.ToString()
+                .Split(Environment.NewLine)
+                .Single(line => line.Contains("Quote B TSLA") && line.Contains("updated to"));
+            var identifier = updateLine.Substring(updateLine.IndexOf(']') + 2, 40);
 
-            Assert.Equal(20, identifier.Length);
-            Assert.Equal("B TSLA,GOOG,AMZN,...", identifier);
+            Assert.Equal(40, identifier.Length);
+            Assert.Equal("Quote B TSLA,GOOG,AMZN,MSFT             ", identifier);
         }
         finally
         {
@@ -154,7 +158,7 @@ public class QuoteSubscriberTests
             subscriber.Subscribe(basket);
             await basket.RunOnceAsync();
 
-            Assert.Contains("Subscribed to Basket(A,B)", output.ToString());
+            Assert.Contains("Subscribed to B A,B", output.ToString());
         }
         finally
         {
