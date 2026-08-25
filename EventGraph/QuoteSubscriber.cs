@@ -21,7 +21,9 @@ namespace EventGraph
             quote.Tick += SpotTicked;
             if (!quiet)
             {
-                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Subscribed to {quote.Name}");
+                WriteTimestamp();
+                Console.ResetColor();
+                Console.WriteLine($" Subscribed to {quote.Name}");
             }
         }
 
@@ -30,7 +32,9 @@ namespace EventGraph
             quote.Tick += SpotTicked;
             if (!quiet)
             {
-                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Subscribed to Basket({quote.Name})");
+                WriteTimestamp();
+                Console.ResetColor();
+                Console.WriteLine($" Subscribed to Basket({quote.Name})");
             }
         }
 
@@ -41,16 +45,25 @@ namespace EventGraph
                 var isBasketUpdate = sender is BasketAggregate;
                 if (isBasketUpdate)
                 {
+                    WriteTimestamp();
                     Console.ForegroundColor = basketColor;
                     var basket = (BasketAggregate)sender;
                     var weights = basket.GetWeights();
-                    Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] B {e.Name}={e.Value:0.##} [{weights}]");
+                    Console.WriteLine($" B {e.Name}={e.Value:0.##} [{weights}]");
                     Console.ResetColor();
                     return;
                 }
 
-                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Quote {e.Name, -10} updated to {e.Value:0.##}");
+                WriteTimestamp();
+                Console.ResetColor();
+                Console.WriteLine($" Quote {e.Name, -10} updated to {e.Value:0.##}");
             }
+        }
+
+        private static void WriteTimestamp()
+        {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write($"[{DateTime.Now:HH:mm:ss.fff}]");
         }
     }
 }
