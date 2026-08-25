@@ -36,7 +36,7 @@ namespace EventGraph
             Console.WriteLine("Usage: dotnet run --project EventGraph/EventGraph.csproj -- [options]");
             Console.WriteLine();
             Console.WriteLine("Options:");
-            Console.WriteLine("  --ticks <n>      Number of ticks each simulated spot emits (default: 5)");
+            Console.WriteLine("  --ticks <n>      Number of ticks each simulated spot emits (default: continuous until interrupted)");
             Console.WriteLine("  --quiet         Suppress subscription and quote output");
             Console.WriteLine("  --symbols A,B,C Comma-separated list of symbols to simulate");
             Console.WriteLine("  --basket-color <color>  Console color for basket updates (default: Cyan)");

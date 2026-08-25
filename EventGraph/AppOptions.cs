@@ -2,6 +2,9 @@ using System;
 
 namespace EventGraph
 {
+    /// <summary>
+    /// Stores the runtime configuration for the simulated market graph.
+    /// </summary>
     public sealed class AppOptions
     {
         public int TickCount { get; set; } = 0;

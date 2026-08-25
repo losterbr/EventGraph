@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 
 namespace EventGraph
 {
+    /// <summary>
+    /// Simulates a market quote and raises tick events over time.
+    /// </summary>
     public class SimulatedSpot
     {
         public event TickHandler Tick;
@@ -18,6 +21,26 @@ namespace EventGraph
 
         public SimulatedSpot(string name, double spot, double vol, double meanTickTimeSeconds = 1.0)
         {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException("Spot name cannot be empty.", nameof(name));
+            }
+
+            if (double.IsNaN(spot) || double.IsInfinity(spot))
+            {
+                throw new ArgumentOutOfRangeException(nameof(spot), "Spot must be a finite number.");
+            }
+
+            if (vol < 0.0 || double.IsNaN(vol) || double.IsInfinity(vol))
+            {
+                throw new ArgumentOutOfRangeException(nameof(vol), "Volatility must be a non-negative finite number.");
+            }
+
+            if (meanTickTimeSeconds < 0.0 || double.IsNaN(meanTickTimeSeconds) || double.IsInfinity(meanTickTimeSeconds))
+            {
+                throw new ArgumentOutOfRangeException(nameof(meanTickTimeSeconds), "Mean tick time must be a non-negative finite number.");
+            }
+
             this.name = name;
             this.currentValue = spot;
             this.vol = vol;

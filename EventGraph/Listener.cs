@@ -2,6 +2,9 @@
 
 namespace EventGraph
 {
+    /// <summary>
+    /// Subscribes to quote updates and prints them to the console.
+    /// </summary>
     public class Listener
     {
         private readonly bool quiet;

@@ -2,6 +2,9 @@
 
 namespace EventGraph
 {
+    /// <summary>
+    /// Represents a single quote update carrying a symbol and value.
+    /// </summary>
     public class SpotMessage : EventArgs
     {
         private readonly string name;
@@ -23,7 +26,15 @@ namespace EventGraph
         public double Value
         {
             get => value;
-            set => this.value = value;
+            set
+            {
+                if (!double.IsFinite(value))
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), "Spot values must be finite numbers.");
+                }
+
+                this.value = value;
+            }
         }
     }
 }

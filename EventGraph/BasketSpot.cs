@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 
 namespace EventGraph
 {
+    /// <summary>
+    /// Aggregates multiple simulated quotes into a weighted basket value.
+    /// </summary>
     public class BasketSpot
     {
         public event TickHandler Tick;
@@ -15,7 +18,6 @@ namespace EventGraph
         private readonly IReadOnlyList<SimulatedSpot> constituents;
         private readonly Dictionary<string, double> spots = new();
         private readonly Dictionary<string, double> weights = new();
-        private readonly int numConstituents;
         private readonly string name;
 
         public BasketSpot(IReadOnlyList<SimulatedSpot> constituents, IReadOnlyList<double> weights = null)
@@ -26,7 +28,6 @@ namespace EventGraph
             }
 
             this.constituents = constituents;
-            numConstituents = constituents.Count;
             name = string.Join(",", constituents.Select(x => x.Name));
 
             if (weights != null)
