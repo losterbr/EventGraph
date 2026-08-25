@@ -114,6 +114,19 @@ public class BasketAggregateTests
     }
 
     [Fact]
+    public void BasketAggregateHasTheExpectedType()
+    {
+        var quotes = new[]
+        {
+            new SimulatedQuoteSource("A", 100.0, 0.0, 0.0)
+        };
+
+        var basket = new BasketAggregate(quotes);
+
+        Assert.Equal("CalculatedBasket", basket.Type);
+    }
+
+    [Fact]
     public async Task BasketAggregatePublishesAggregateOnlyWhenAllConstituentsAreAvailable()
     {
         var quotes = new[]

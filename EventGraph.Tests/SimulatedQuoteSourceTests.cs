@@ -51,6 +51,14 @@ public class SimulatedQuoteSourceTests
     }
 
     [Fact]
+    public void SimulatedQuoteSourceHasTheExpectedType()
+    {
+        var source = new SimulatedQuoteSource("TYPE", 100.0, 0.1);
+
+        Assert.Equal("SimulatedSpot", source.Type);
+    }
+
+    [Fact]
     public void SimulatedQuoteSourceRejectsInvalidStartingSpot()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedQuoteSource("A", double.NaN, 0.1));
