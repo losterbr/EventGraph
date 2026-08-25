@@ -5,18 +5,18 @@ namespace EventGraph
     /// <summary>
     /// Subscribes to quote updates and prints them to the console.
     /// </summary>
-    public class Listener
+    public class QuoteSubscriber
     {
         private readonly bool quiet;
         private readonly ConsoleColor basketColor;
 
-        public Listener(bool quiet = false, ConsoleColor basketColor = ConsoleColor.Cyan)
+        public QuoteSubscriber(bool quiet = false, ConsoleColor basketColor = ConsoleColor.Cyan)
         {
             this.quiet = quiet;
             this.basketColor = basketColor;
         }
 
-        public void Subscribe(SimulatedSpot quote)
+        public void Subscribe(SimulatedQuoteSource quote)
         {
             quote.Tick += SpotTicked;
             if (!quiet)
@@ -25,7 +25,7 @@ namespace EventGraph
             }
         }
 
-        public void Subscribe(BasketSpot quote)
+        public void Subscribe(BasketAggregate quote)
         {
             quote.Tick += SpotTicked;
             if (!quiet)
@@ -34,15 +34,15 @@ namespace EventGraph
             }
         }
 
-        private void SpotTicked(object sender, SpotMessage e)
+        private void SpotTicked(object sender, QuoteTick e)
         {
             if (!quiet)
             {
-                var isBasketUpdate = sender is BasketSpot;
+                var isBasketUpdate = sender is BasketAggregate;
                 if (isBasketUpdate)
                 {
                     Console.ForegroundColor = basketColor;
-                    var basket = (BasketSpot)sender;
+                    var basket = (BasketAggregate)sender;
                     var weights = basket.GetWeights();
                     Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] B {e.Name}={e.Value:0.##} [{weights}]");
                     Console.ResetColor();

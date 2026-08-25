@@ -6,10 +6,10 @@ using Xunit;
 
 namespace EventGraph.Tests;
 
-public class ListenerTests
+public class QuoteSubscriberTests
 {
     [Fact]
-    public async Task ListenerSubscribesToSpotAndWritesOutput()
+    public async Task QuoteSubscriberSubscribesToSourceAndWritesOutput()
     {
         var output = new StringWriter();
         var originalOut = Console.Out;
@@ -17,11 +17,11 @@ public class ListenerTests
         try
         {
             Console.SetOut(output);
-            var listener = new Listener();
-            var spot = new SimulatedSpot("XYZ", 100.0, 0.0, 0.0);
+            var subscriber = new QuoteSubscriber();
+            var source = new SimulatedQuoteSource("XYZ", 100.0, 0.0, 0.0);
 
-            listener.Subscribe(spot);
-            await spot.Start(1);
+            subscriber.Subscribe(source);
+            await source.Start(1);
 
             var rendered = output.ToString();
             Assert.Contains("Subscribed to XYZ", rendered);
@@ -34,7 +34,7 @@ public class ListenerTests
     }
 
     [Fact]
-    public async Task ListenerCanSubscribeToBasketWithCustomColor()
+    public async Task QuoteSubscriberCanSubscribeToAggregateWithCustomColor()
     {
         var output = new StringWriter();
         var originalOut = Console.Out;
@@ -43,15 +43,15 @@ public class ListenerTests
         try
         {
             Console.SetOut(output);
-            var listener = new Listener(quiet: false, basketColor: ConsoleColor.Red);
-            var quotes = new[]
+            var subscriber = new QuoteSubscriber(quiet: false, basketColor: ConsoleColor.Red);
+            var sources = new[]
             {
-                new SimulatedSpot("A", 100.0, 0.0, 0.0),
-                new SimulatedSpot("B", 200.0, 0.0, 0.0)
+                new SimulatedQuoteSource("A", 100.0, 0.0, 0.0),
+                new SimulatedQuoteSource("B", 200.0, 0.0, 0.0)
             };
-            var basket = new BasketSpot(quotes);
+            var basket = new BasketAggregate(sources);
 
-            listener.Subscribe(basket);
+            subscriber.Subscribe(basket);
             await basket.RunOnceAsync();
 
             Assert.Contains("Subscribed to Basket(A,B)", output.ToString());
@@ -64,7 +64,7 @@ public class ListenerTests
     }
 
     [Fact]
-    public async Task ListenerDoesNotWriteWhenQuietModeIsEnabled()
+    public async Task QuoteSubscriberDoesNotWriteWhenQuietModeIsEnabled()
     {
         var output = new StringWriter();
         var originalOut = Console.Out;
@@ -72,12 +72,12 @@ public class ListenerTests
         try
         {
             Console.SetOut(output);
-            var listener = new Listener(quiet: true);
-            var spot = new SimulatedSpot("XYZ", 100.0, 0.0, 0.0);
+            var subscriber = new QuoteSubscriber(quiet: true);
+            var source = new SimulatedQuoteSource("XYZ", 100.0, 0.0, 0.0);
 
-            listener.Subscribe(spot);
-            spot.Tick += (_, _) => { };
-            await spot.Start(1);
+            subscriber.Subscribe(source);
+            source.Tick += (_, _) => { };
+            await source.Start(1);
 
             Assert.Empty(output.ToString());
         }

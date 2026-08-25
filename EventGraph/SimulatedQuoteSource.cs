@@ -7,10 +7,10 @@ namespace EventGraph
     /// <summary>
     /// Simulates a market quote and raises tick events over time.
     /// </summary>
-    public class SimulatedSpot
+    public class SimulatedQuoteSource
     {
         public event TickHandler Tick;
-        public delegate void TickHandler(SimulatedSpot q, SpotMessage s);
+        public delegate void TickHandler(SimulatedQuoteSource q, QuoteTick s);
 
         private const double MilliSecondsPerYear = 365.25 * 24.0 * 60.0 * 60.0 * 1000.0;
 
@@ -19,7 +19,7 @@ namespace EventGraph
         private readonly double meanTickTimeSeconds;
         private double currentValue;
 
-        public SimulatedSpot(string name, double spot, double vol, double meanTickTimeSeconds = 1.0)
+        public SimulatedQuoteSource(string name, double spot, double vol, double meanTickTimeSeconds = 1.0)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -68,11 +68,11 @@ namespace EventGraph
                 ? null
                 : new MathNet.Numerics.Distributions.Poisson(poissonLambda);
             var normalDist = new MathNet.Numerics.Distributions.Normal(0.0, 1.0);
-            var spotMessage = new SpotMessage(name, currentValue);
+            var quoteTick = new QuoteTick(name, currentValue);
 
             await Task.Run(() =>
             {
-                Tick?.Invoke(this, spotMessage);
+                Tick?.Invoke(this, quoteTick);
 
                 int emittedTicks = 1;
                 while (!cancellationToken.IsCancellationRequested && (tickCount <= 0 || emittedTicks < tickCount))
@@ -84,10 +84,10 @@ namespace EventGraph
                     // This is the standard lognormal/Itô adjustment for a GBM-style spot process.
                     // A separate convexity adjustment would be applied at the payoff/forward level,
                     // not as an extra term in the underlying spot simulation itself.
-                    spotMessage.Value *= Math.Exp(stdDev * normalDist.Sample() + logDriftAdjustment);
-                    currentValue = spotMessage.Value;
+                    quoteTick.Value *= Math.Exp(stdDev * normalDist.Sample() + logDriftAdjustment);
+                    currentValue = quoteTick.Value;
                     Sleep(timeStepMilliSeconds);
-                    Tick?.Invoke(this, spotMessage);
+                    Tick?.Invoke(this, quoteTick);
                     emittedTicks++;
 
                     if (tickCount == 0)

@@ -8,19 +8,19 @@ namespace EventGraph
     /// <summary>
     /// Aggregates multiple simulated quotes into a weighted basket value.
     /// </summary>
-    public class BasketSpot
+    public class BasketAggregate
     {
         public event TickHandler Tick;
-        public delegate void TickHandler(BasketSpot q, SpotMessage s);
+        public delegate void TickHandler(BasketAggregate q, QuoteTick s);
 
         private const double Epsilon = 1e-9;
 
-        private readonly IReadOnlyList<SimulatedSpot> constituents;
+        private readonly IReadOnlyList<SimulatedQuoteSource> constituents;
         private readonly Dictionary<string, double> spots = new();
         private readonly Dictionary<string, double> weights = new();
         private readonly string name;
 
-        public BasketSpot(IReadOnlyList<SimulatedSpot> constituents, IReadOnlyList<double> weights = null)
+        public BasketAggregate(IReadOnlyList<SimulatedQuoteSource> constituents, IReadOnlyList<double> weights = null)
         {
             if (constituents == null || constituents.Count == 0)
             {
@@ -87,7 +87,7 @@ namespace EventGraph
             }
         }
 
-        private void SpotTicked(object sender, SpotMessage e)
+        private void SpotTicked(object sender, QuoteTick e)
         {
             lock (spots)
             {
@@ -95,8 +95,8 @@ namespace EventGraph
                 if (AllSpotsAvailable())
                 {
                     var spot = Spot();
-                    var spotMessage = new SpotMessage(name, spot);
-                    Tick?.Invoke(this, spotMessage);
+                    var quoteTick = new QuoteTick(name, spot);
+                    Tick?.Invoke(this, quoteTick);
                 }
             }
         }
@@ -118,8 +118,8 @@ namespace EventGraph
                     if (AllSpotsAvailable())
                     {
                         var spot = Spot();
-                        var spotMessage = new SpotMessage(name, spot);
-                        Tick?.Invoke(this, spotMessage);
+                        var quoteTick = new QuoteTick(name, spot);
+                        Tick?.Invoke(this, quoteTick);
                     }
                 }
             });

@@ -3,12 +3,12 @@ using Xunit;
 
 namespace EventGraph.Tests;
 
-public class SpotMessageTests
+public class QuoteTickTests
 {
     [Fact]
     public void ValueSetterUpdatesTheStoredValue()
     {
-        var message = new SpotMessage("AAPL", 42.5);
+        var message = new QuoteTick("AAPL", 42.5);
 
         message.Value = 99.0;
 
@@ -18,14 +18,14 @@ public class SpotMessageTests
     [Fact]
     public void ConstructorRejectsNullOrWhitespaceNames()
     {
-        Assert.Throws<ArgumentException>(() => new SpotMessage(null!, 42.5));
-        Assert.Throws<ArgumentException>(() => new SpotMessage("   ", 42.5));
+        Assert.Throws<ArgumentException>(() => new QuoteTick(null!, 42.5));
+        Assert.Throws<ArgumentException>(() => new QuoteTick("   ", 42.5));
     }
 
     [Fact]
     public void ValueSetterRejectsNonFiniteValues()
     {
-        var message = new SpotMessage("AAPL", 42.5);
+        var message = new QuoteTick("AAPL", 42.5);
 
         Assert.Throws<ArgumentOutOfRangeException>(() => message.Value = double.NaN);
         Assert.Throws<ArgumentOutOfRangeException>(() => message.Value = double.PositiveInfinity);
