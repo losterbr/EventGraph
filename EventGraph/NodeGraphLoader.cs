@@ -86,7 +86,7 @@ namespace EventGraph
 
         private static bool DependenciesAreSatisfied(
             IReadOnlyDictionary<string, JsonElement> definition,
-            IReadOnlyDictionary<string, IQuoteNode> nodesByName,
+            Dictionary<string, IQuoteNode> nodesByName,
             IReadOnlyDictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByName)
         {
             var dependencies = GetDependencies(definition);

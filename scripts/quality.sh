@@ -10,7 +10,7 @@ mkdir -p ./coverage
 
 dotnet test EventGraph.Tests/EventGraph.Tests.csproj --collect:"XPlat Code Coverage" --results-directory ./coverage
 
-dotnet build EventGraph/EventGraph.csproj
+dotnet build EventGraph.sln -warnaserror:CA1510,CA1859
 
 COVERAGE_FILE=$(find ./coverage -name "coverage.cobertura.xml" -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1)
 if [[ -z "$COVERAGE_FILE" ]]; then
