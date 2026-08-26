@@ -30,8 +30,6 @@ namespace EventGraph
     /// </summary>
     public interface IVolQuoteNode : IGraphNode
     {
-        event EventHandler<QuoteTick> VolatilityTick;
-
         double Volatility { get; }
     }
 

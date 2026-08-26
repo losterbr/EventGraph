@@ -14,12 +14,6 @@ namespace EventGraph
     {
         public event EventHandler<QuoteTick> SpotTick;
 
-        public event EventHandler<QuoteTick> VolatilityTick
-        {
-            add { }
-            remove { }
-        }
-
         private const double MilliSecondsPerYear = 365.25 * 24.0 * 60.0 * 60.0 * 1000.0;
         private readonly double meanTickTimeSeconds;
 
