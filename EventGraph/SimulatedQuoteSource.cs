@@ -55,7 +55,7 @@ namespace EventGraph
             }
 
             Name = name;
-            CurrentValue = spot;
+            Spot = spot;
             Volatility = vol;
             this.meanTickTimeSeconds = meanTickTimeSeconds;
         }
@@ -64,9 +64,7 @@ namespace EventGraph
 
         public string Type => "SimulatedSpot";
 
-        public double CurrentValue { get; private set; }
-
-        public double Spot => CurrentValue;
+        public double Spot { get; private set; }
 
         public double Volatility { get; }
 
@@ -103,7 +101,7 @@ namespace EventGraph
                 ? null
                 : new MathNet.Numerics.Distributions.Poisson(poissonLambda);
             var normalDist = new MathNet.Numerics.Distributions.Normal(0.0, 1.0);
-            var quoteTick = new QuoteTick(Name, CurrentValue);
+            var quoteTick = new QuoteTick(Name, Spot);
 
             await Task.Run(() =>
             {
@@ -120,7 +118,7 @@ namespace EventGraph
                     // A separate convexity adjustment would be applied at the payoff/forward level,
                     // not as an extra term in the underlying spot simulation itself.
                     quoteTick.Value *= Math.Exp((stdDev * normalDist.Sample()) + logDriftAdjustment);
-                    CurrentValue = quoteTick.Value;
+                    Spot = quoteTick.Value;
                     Sleep(timeStepMilliSeconds);
                     SpotTick?.Invoke(this, quoteTick);
                     emittedTicks++;

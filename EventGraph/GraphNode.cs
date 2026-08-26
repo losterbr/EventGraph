@@ -16,14 +16,6 @@ namespace EventGraph
     }
 
     /// <summary>
-    /// Represents a graph node that produces a typed value.
-    /// </summary>
-    public interface IGraphNode<out TResult> : IGraphNode
-    {
-        TResult CurrentValue { get; }
-    }
-
-    /// <summary>
     /// Represents the spot quote-producing node type.
     /// </summary>
     public interface ISpotQuoteNode : IGraphNode

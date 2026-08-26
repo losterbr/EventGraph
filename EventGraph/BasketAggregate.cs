@@ -104,9 +104,7 @@ namespace EventGraph
 
         public string Type => "CalculatedBasket";
 
-        public double CurrentValue { get; private set; }
-
-        public double Spot => CurrentValue;
+        public double Spot { get; private set; }
 
         public IReadOnlyList<IGraphNode> Dependencies => constituents;
 
@@ -225,7 +223,7 @@ namespace EventGraph
                 if (availableConstituentCount == requiredConstituentCount)
                 {
                     var spot = CalculateSpot();
-                    CurrentValue = spot;
+                    Spot = spot;
                     var quoteTick = new QuoteTick(Name, spot);
                     SpotTick?.Invoke(this, quoteTick);
                 }
@@ -254,7 +252,7 @@ namespace EventGraph
                     if (availableConstituentCount == requiredConstituentCount)
                     {
                         var spot = CalculateSpot();
-                        CurrentValue = spot;
+                        Spot = spot;
                         var quoteTick = new QuoteTick(Name, spot);
                         SpotTick?.Invoke(this, quoteTick);
                     }

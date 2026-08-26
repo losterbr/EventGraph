@@ -59,7 +59,7 @@ namespace EventGraph.Tests
 
             _ = Assert.Single(updates);
             Assert.Equal(190.0, updates[0].Value, 10);
-            Assert.Equal(190.0, basket.CurrentValue, 10);
+            Assert.Equal(190.0, basket.Spot, 10);
         }
 
         [Fact]
