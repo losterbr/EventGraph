@@ -20,14 +20,15 @@ namespace EventGraph
         };
 
         private readonly bool quiet;
-        private readonly ConsoleColor basketColor;
+        private readonly ConsoleColor? basketColorOverride;
         private readonly Dictionary<IQuoteNode, ConsoleColor> nodeColors = new(ReferenceEqualityComparer.Instance);
         private int nextSourceColor;
+        private int nextBasketColor;
 
-        public QuoteSubscriber(bool quiet = false, ConsoleColor basketColor = ConsoleColor.Cyan)
+        public QuoteSubscriber(bool quiet = false, ConsoleColor? basketColor = null)
         {
             this.quiet = quiet;
-            this.basketColor = basketColor;
+            this.basketColorOverride = basketColor;
         }
 
         public void Subscribe(SimulatedQuoteSource quote)
@@ -49,7 +50,7 @@ namespace EventGraph
         public void Subscribe(BasketAggregate quote)
         {
             quote.Tick += SpotTicked;
-            nodeColors[quote] = basketColor;
+            nodeColors[quote] = basketColorOverride ?? SourceColors[nextBasketColor++ % SourceColors.Length];
             if (!quiet)
             {
                 lock (ConsoleLock)

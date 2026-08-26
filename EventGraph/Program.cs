@@ -26,7 +26,9 @@ namespace EventGraph
                 .OrderBy(basket => basket.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            var listener = new QuoteSubscriber(options.Quiet, options.BasketColor);
+            var listener = new QuoteSubscriber(
+                options.Quiet,
+                options.BasketColorSpecified ? options.BasketColor : null);
             foreach (var quote in quotes)
             {
                 listener.Subscribe(quote);

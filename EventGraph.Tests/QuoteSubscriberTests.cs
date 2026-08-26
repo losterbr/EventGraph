@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using EventGraph;
 using Xunit;
@@ -151,6 +153,40 @@ public class QuoteSubscriberTests
         {
             Console.SetOut(originalOut);
         }
+    }
+
+    [Fact]
+    public void QuoteSubscriberCyclesDefaultColorsAcrossSourcesAndBaskets()
+    {
+        var subscriber = new QuoteSubscriber();
+        var sources = new[]
+        {
+            new SimulatedQuoteSource("A", 100.0, 0.0, 0.0),
+            new SimulatedQuoteSource("B", 200.0, 0.0, 0.0),
+            new SimulatedQuoteSource("C", 300.0, 0.0, 0.0)
+        };
+        var baskets = new[]
+        {
+            new BasketAggregate("PARENT_A", new IQuoteNode[] { sources[0] }),
+            new BasketAggregate("PARENT_B", new IQuoteNode[] { sources[1] }),
+            new BasketAggregate("PARENT_C", new IQuoteNode[] { sources[2] })
+        };
+
+        foreach (var source in sources)
+        {
+            subscriber.Subscribe(source);
+        }
+
+        foreach (var basket in baskets)
+        {
+            subscriber.Subscribe(basket);
+        }
+
+        var colorsField = typeof(QuoteSubscriber).GetField("nodeColors", BindingFlags.Instance | BindingFlags.NonPublic);
+        var nodeColors = (IDictionary<IQuoteNode, ConsoleColor>)colorsField!.GetValue(subscriber)!;
+
+        Assert.Equal(3, nodeColors.Where(pair => sources.Contains(pair.Key)).Select(pair => pair.Value).Distinct().Count());
+        Assert.Equal(3, nodeColors.Where(pair => baskets.Contains(pair.Key)).Select(pair => pair.Value).Distinct().Count());
     }
 
     [Fact]

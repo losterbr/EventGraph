@@ -10,6 +10,7 @@ namespace EventGraph
         public int TickCount { get; set; } = 0;
         public bool Quiet { get; set; }
         public bool ShowHelp { get; set; }
+        public bool BasketColorSpecified { get; set; }
         public ConsoleColor BasketColor { get; set; } = ConsoleColor.Cyan;
     }
 
@@ -57,6 +58,7 @@ namespace EventGraph
                             throw new ArgumentException("--basket-color must be a valid console color.");
                         }
 
+                        options.BasketColorSpecified = true;
                         options.BasketColor = basketColor;
                         i++;
                         break;
