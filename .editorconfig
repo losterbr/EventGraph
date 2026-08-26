@@ -1,0 +1,12 @@
+root = true
+
+[*.cs]
+dotnet_analyzer_diagnostic.severity = warning
+
+dotnet_diagnostic.IDE0007.severity = none
+dotnet_diagnostic.IDE0008.severity = none
+dotnet_diagnostic.IDE0210.severity = none
+dotnet_diagnostic.CA1710.severity = none
+
+[EventGraph.Tests/*.cs]
+dotnet_diagnostic.CA1861.severity = none
