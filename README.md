@@ -12,7 +12,7 @@ EventGraph is a small .NET sample that demonstrates an event-driven market quote
 
 ### Graph definitions
 
-Each JSON file in `EventGraph/graph definition` defines one `SimulatedQuoteSource`. The required fields are:
+Each JSON file in `EventGraph/graph-definition` defines one `SimulatedQuoteSource`. The required fields are:
 
 ```json
 {

@@ -1,0 +1,7 @@
+{
+  "type": "SimulatedQuoteSource",
+  "name": "NVDA",
+  "spot": 180.0,
+  "volatility": 0.45,
+  "meanTickTimeSeconds": 3.5
+}

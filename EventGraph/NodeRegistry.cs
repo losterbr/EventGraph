@@ -8,7 +8,7 @@ namespace EventGraph
 {
     /// <summary>
     /// Central registry of supported quote-node implementations.
-    /// New node types should be added here, not in GraphDefinitionLoader.
+    /// New node types should be added here, not in NodeGraphLoader.
     /// </summary>
     public static class NodeRegistry
     {

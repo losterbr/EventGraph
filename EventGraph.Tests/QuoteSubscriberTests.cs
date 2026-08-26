@@ -193,7 +193,7 @@ public class QuoteSubscriberTests
     }
 
     [Fact]
-    public void GraphDefinitionLoaderResolvesBasketDependenciesRecursively()
+    public void NodeGraphLoaderResolvesBasketDependenciesRecursively()
     {
         var directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(directory);
@@ -204,7 +204,7 @@ public class QuoteSubscriberTests
             File.WriteAllText(Path.Combine(directory, "b.json"), "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"names\":[\"A\"],\"weights\":[1.0]}");
             File.WriteAllText(Path.Combine(directory, "c.json"), "{\"type\":\"BasketAggregate\",\"name\":\"C\",\"names\":[\"B\"],\"weights\":[1.0]}");
 
-            var nodes = GraphDefinitionLoader.LoadNodes(directory);
+            var nodes = NodeGraphLoader.LoadNodes(directory);
 
             var nodeByName = nodes.ToDictionary(node => node.Name, StringComparer.OrdinalIgnoreCase);
             Assert.True(nodeByName.ContainsKey("A"));
@@ -224,7 +224,7 @@ public class QuoteSubscriberTests
     }
 
     [Fact]
-    public void GraphDefinitionLoaderResolvesAllNodesBeforeAnyDependentNodeIsBuilt()
+    public void NodeGraphLoaderResolvesAllNodesBeforeAnyDependentNodeIsBuilt()
     {
         var directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(directory);
@@ -236,7 +236,7 @@ public class QuoteSubscriberTests
             File.WriteAllText(Path.Combine(directory, "mix.json"), "{\"type\":\"BasketAggregate\",\"name\":\"MIX\",\"names\":[\"ALPHA\",\"BETA\"],\"weights\":[0.5,0.5]}");
             File.WriteAllText(Path.Combine(directory, "combo.json"), "{\"type\":\"BasketAggregate\",\"name\":\"COMBO\",\"names\":[\"MIX\"],\"weights\":[1.0]}");
 
-            var nodes = GraphDefinitionLoader.LoadNodes(directory);
+            var nodes = NodeGraphLoader.LoadNodes(directory);
             var order = nodes.Select(node => node.Name).ToList();
 
             Assert.True(order.IndexOf("ALPHA") < order.IndexOf("MIX"));

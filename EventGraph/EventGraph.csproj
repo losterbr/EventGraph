@@ -13,6 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="graph definition/*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="graph-definition/*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
