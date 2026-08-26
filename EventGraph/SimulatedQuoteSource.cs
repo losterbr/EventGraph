@@ -10,7 +10,7 @@ namespace EventGraph
     /// <summary>
     /// Simulates a market quote and raises tick events over time.
     /// </summary>
-    public class SimulatedQuoteSource : IGraphNode
+    public class SimulatedQuoteSource : IQuoteTickNode
     {
         public event EventHandler<QuoteTick> Tick;
 

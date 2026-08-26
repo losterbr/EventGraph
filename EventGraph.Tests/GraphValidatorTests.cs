@@ -47,17 +47,9 @@ namespace EventGraph.Tests
 
         private sealed class TestNode(string name, params IGraphNode[] dependencies) : IGraphNode
         {
-            public event EventHandler<QuoteTick> Tick
-            {
-                add { }
-                remove { }
-            }
-
             public string Name { get; } = name;
 
             public string Type => "TestNode";
-
-            public double CurrentValue => 0.0;
 
             public IReadOnlyList<IGraphNode> Dependencies { get; private set; } = dependencies;
 

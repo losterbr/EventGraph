@@ -4,18 +4,30 @@ using System.Collections.Generic;
 namespace EventGraph
 {
     /// <summary>
-    /// Represents a graph node that can publish quote ticks and depend on other graph nodes.
+    /// Represents a node in the dependency graph.
     /// </summary>
     public interface IGraphNode
     {
-        event EventHandler<QuoteTick> Tick;
-
         string Name { get; }
 
         string Type { get; }
 
-        double CurrentValue { get; }
-
         IReadOnlyList<IGraphNode> Dependencies { get; }
+    }
+
+    /// <summary>
+    /// Represents a graph node that produces a typed value.
+    /// </summary>
+    public interface IGraphNode<out TResult> : IGraphNode
+    {
+        TResult CurrentValue { get; }
+    }
+
+    /// <summary>
+    /// Represents the current quote-tick-producing node type.
+    /// </summary>
+    public interface IQuoteTickNode : IGraphNode<double>
+    {
+        event EventHandler<QuoteTick> Tick;
     }
 }

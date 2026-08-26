@@ -31,7 +31,7 @@ namespace EventGraph.Tests
         }
         """);
 
-            var node = NodeRegistry.CreateNode(ToDictionary(definition), new Dictionary<string, IGraphNode>());
+            var node = NodeRegistry.CreateNode(ToDictionary(definition), new Dictionary<string, IQuoteTickNode>());
 
             var source = Assert.IsType<SimulatedQuoteSource>(node);
             Assert.Equal("A", source.Name);
@@ -52,7 +52,7 @@ namespace EventGraph.Tests
 
             var node = NodeRegistry.CreateNode(
                 ToDictionary(definition),
-                new Dictionary<string, IGraphNode> { [source.Name] = source });
+                new Dictionary<string, IQuoteTickNode> { [source.Name] = source });
 
             var basket = Assert.IsType<BasketAggregate>(node);
             Assert.Equal("BASKET", basket.Name);
@@ -62,7 +62,7 @@ namespace EventGraph.Tests
         public void CreateNodeRejectsNullDefinitions()
         {
             _ = Assert.Throws<ArgumentNullException>(() =>
-                NodeRegistry.CreateNode(null, new Dictionary<string, IGraphNode>()));
+                NodeRegistry.CreateNode(null, new Dictionary<string, IQuoteTickNode>()));
         }
 
         [Fact]
@@ -71,7 +71,7 @@ namespace EventGraph.Tests
             using var definition = JsonDocument.Parse("{} ");
 
             _ = Assert.Throws<InvalidDataException>(() =>
-                NodeRegistry.CreateNode(ToDictionary(definition), new Dictionary<string, IGraphNode>()));
+                NodeRegistry.CreateNode(ToDictionary(definition), new Dictionary<string, IQuoteTickNode>()));
         }
 
         [Fact]
@@ -80,7 +80,7 @@ namespace EventGraph.Tests
             using var definition = JsonDocument.Parse("{\"type\":\"UnknownNode\"}");
 
             var exception = Assert.Throws<InvalidDataException>(() =>
-                NodeRegistry.CreateNode(ToDictionary(definition), new Dictionary<string, IGraphNode>()));
+                NodeRegistry.CreateNode(ToDictionary(definition), new Dictionary<string, IQuoteTickNode>()));
 
             Assert.Contains("Unsupported graph node type", exception.Message);
         }
