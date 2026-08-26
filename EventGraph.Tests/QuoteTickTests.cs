@@ -1,34 +1,33 @@
-using EventGraph;
-using Xunit;
-
-namespace EventGraph.Tests;
-
-public class QuoteTickTests
+namespace EventGraph.Tests
 {
-    [Fact]
-    public void ValueSetterUpdatesTheStoredValue()
+    public class QuoteTickTests
     {
-        var message = new QuoteTick("AAPL", 42.5);
+        [Fact]
+        public void ValueSetterUpdatesTheStoredValue()
+        {
+            var message = new QuoteTick("AAPL", 42.5)
+            {
+                Value = 99.0
+            };
 
-        message.Value = 99.0;
+            Assert.Equal(99.0, message.Value);
+        }
 
-        Assert.Equal(99.0, message.Value);
-    }
+        [Fact]
+        public void ConstructorRejectsNullOrWhitespaceNames()
+        {
+            _ = Assert.Throws<ArgumentException>(() => new QuoteTick(null, 42.5));
+            _ = Assert.Throws<ArgumentException>(() => new QuoteTick("   ", 42.5));
+        }
 
-    [Fact]
-    public void ConstructorRejectsNullOrWhitespaceNames()
-    {
-        Assert.Throws<ArgumentException>(() => new QuoteTick(null!, 42.5));
-        Assert.Throws<ArgumentException>(() => new QuoteTick("   ", 42.5));
-    }
+        [Fact]
+        public void ValueSetterRejectsNonFiniteValues()
+        {
+            var message = new QuoteTick("AAPL", 42.5);
 
-    [Fact]
-    public void ValueSetterRejectsNonFiniteValues()
-    {
-        var message = new QuoteTick("AAPL", 42.5);
-
-        Assert.Throws<ArgumentOutOfRangeException>(() => message.Value = double.NaN);
-        Assert.Throws<ArgumentOutOfRangeException>(() => message.Value = double.PositiveInfinity);
-        Assert.Throws<ArgumentOutOfRangeException>(() => message.Value = double.NegativeInfinity);
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => message.Value = double.NaN);
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => message.Value = double.PositiveInfinity);
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => message.Value = double.NegativeInfinity);
+        }
     }
 }

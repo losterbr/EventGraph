@@ -1,82 +1,70 @@
-using System;
-using System.Collections.Generic;
-using EventGraph;
-using Xunit;
-
-namespace EventGraph.Tests;
-
-public class GraphValidatorTests
+namespace EventGraph.Tests
 {
-    [Fact]
-    public void EnsureAcyclicAcceptsAnAcyclicGraph()
+    public class GraphValidatorTests
     {
-        var source = new TestNode("Source");
-        var left = new TestNode("Left", source);
-        var right = new TestNode("Right", source);
-
-        GraphValidator.EnsureAcyclic(new[] { left, right });
-    }
-
-    [Fact]
-    public void EnsureAcyclicRejectsASelfCycle()
-    {
-        var node = new TestNode("Self");
-        node.SetDependencies(node);
-
-        var exception = Assert.Throws<InvalidOperationException>(() => GraphValidator.EnsureAcyclic(new[] { node }));
-
-        Assert.Contains("Self", exception.Message);
-    }
-
-    [Fact]
-    public void EnsureAcyclicRejectsAnIndirectCycle()
-    {
-        var first = new TestNode("First");
-        var second = new TestNode("Second", first);
-        first.SetDependencies(second);
-
-        Assert.Throws<InvalidOperationException>(() => GraphValidator.EnsureAcyclic(new[] { first }));
-    }
-
-    [Fact]
-    public void EnsureAcyclicRejectsNullRoots()
-    {
-        Assert.Throws<ArgumentNullException>(() => GraphValidator.EnsureAcyclic(null!));
-    }
-
-    [Fact]
-    public void EnsureAcyclicRejectsNullNodes()
-    {
-        Assert.Throws<ArgumentException>(() => GraphValidator.EnsureAcyclic(new IQuoteNode?[] { null! }));
-    }
-
-    private sealed class TestNode : IQuoteNode
-    {
-        private IReadOnlyList<IQuoteNode> dependencies;
-
-        public TestNode(string name, params IQuoteNode[] dependencies)
+        [Fact]
+        public void EnsureAcyclicAcceptsAnAcyclicGraph()
         {
-            Name = name;
-            this.dependencies = dependencies;
+            var source = new TestNode("Source");
+            var left = new TestNode("Left", source);
+            var right = new TestNode("Right", source);
+
+            GraphValidator.EnsureAcyclic([left, right]);
         }
 
-        public event EventHandler<QuoteTick> Tick
+        [Fact]
+        public void EnsureAcyclicRejectsASelfCycle()
         {
-            add { }
-            remove { }
+            var node = new TestNode("Self");
+            node.SetDependencies(node);
+
+            var exception = Assert.Throws<InvalidOperationException>(() => GraphValidator.EnsureAcyclic([node]));
+
+            Assert.Contains("Self", exception.Message);
         }
 
-        public string Name { get; }
-
-        public string Type => "TestNode";
-
-        public double CurrentValue => 0.0;
-
-        public IReadOnlyList<IQuoteNode> Dependencies => dependencies;
-
-        public void SetDependencies(params IQuoteNode[] dependencies)
+        [Fact]
+        public void EnsureAcyclicRejectsAnIndirectCycle()
         {
-            this.dependencies = dependencies;
+            var first = new TestNode("First");
+            var second = new TestNode("Second", first);
+            first.SetDependencies(second);
+
+            _ = Assert.Throws<InvalidOperationException>(() => GraphValidator.EnsureAcyclic([first]));
+        }
+
+        [Fact]
+        public void EnsureAcyclicRejectsNullRoots()
+        {
+            _ = Assert.Throws<ArgumentNullException>(() => GraphValidator.EnsureAcyclic(null));
+        }
+
+        [Fact]
+        public void EnsureAcyclicRejectsNullNodes()
+        {
+            _ = Assert.Throws<ArgumentException>(() => GraphValidator.EnsureAcyclic([null]));
+        }
+
+        private sealed class TestNode(string name, params IQuoteNode[] dependencies) : IQuoteNode
+        {
+            public event EventHandler<QuoteTick> Tick
+            {
+                add { }
+                remove { }
+            }
+
+            public string Name { get; } = name;
+
+            public string Type => "TestNode";
+
+            public double CurrentValue => 0.0;
+
+            public IReadOnlyList<IQuoteNode> Dependencies { get; private set; } = dependencies;
+
+            public void SetDependencies(params IQuoteNode[] dependencies)
+            {
+                Dependencies = dependencies;
+            }
         }
     }
 }
