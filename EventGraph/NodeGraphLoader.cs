@@ -11,7 +11,7 @@ namespace EventGraph
     /// </summary>
     public static class NodeGraphLoader
     {
-        public static IReadOnlyList<IQuoteTickNode> LoadNodes(string directoryPath)
+        public static IReadOnlyList<ISpotQuoteNode> LoadNodes(string directoryPath)
         {
             return LoadGraph(directoryPath).QuoteNodes;
         }
@@ -77,8 +77,8 @@ namespace EventGraph
                 }
             }
 
-            var nodesByName = new Dictionary<string, IQuoteTickNode>(StringComparer.OrdinalIgnoreCase);
-            var resolvedOrder = new List<IQuoteTickNode>();
+            var nodesByName = new Dictionary<string, ISpotQuoteNode>(StringComparer.OrdinalIgnoreCase);
+            var resolvedOrder = new List<ISpotQuoteNode>();
             var readyNames = new SortedSet<string>(
                 inDegreeByName.Where(pair => pair.Value == 0).Select(pair => pair.Key),
                 StringComparer.OrdinalIgnoreCase);

@@ -24,10 +24,22 @@ namespace EventGraph
     }
 
     /// <summary>
-    /// Represents the current quote-tick-producing node type.
+    /// Represents the spot quote-producing node type.
     /// </summary>
-    public interface IQuoteTickNode : IGraphNode<double>
+    public interface ISpotQuoteNode : IGraphNode
     {
-        event EventHandler<QuoteTick> Tick;
+        event EventHandler<QuoteTick> SpotTick;
+
+        double Spot { get; }
+    }
+
+    /// <summary>
+    /// Represents a graph node that provides a volatility quote.
+    /// </summary>
+    public interface IVolQuoteNode : IGraphNode
+    {
+        event EventHandler<QuoteTick> VolatilityTick;
+
+        double Volatility { get; }
     }
 }

@@ -10,12 +10,17 @@ namespace EventGraph
     /// <summary>
     /// Simulates a market quote and raises tick events over time.
     /// </summary>
-    public class SimulatedQuoteSource : IQuoteTickNode
+    public class SimulatedQuoteSource : ISpotQuoteNode, IVolQuoteNode
     {
-        public event EventHandler<QuoteTick> Tick;
+        public event EventHandler<QuoteTick> SpotTick;
+
+        public event EventHandler<QuoteTick> VolatilityTick
+        {
+            add { }
+            remove { }
+        }
 
         private const double MilliSecondsPerYear = 365.25 * 24.0 * 60.0 * 60.0 * 1000.0;
-        private readonly double vol;
         private readonly double meanTickTimeSeconds;
 
         public SimulatedQuoteSource(IReadOnlyDictionary<string, JsonElement> definition)
@@ -51,7 +56,7 @@ namespace EventGraph
 
             Name = name;
             CurrentValue = spot;
-            this.vol = vol;
+            Volatility = vol;
             this.meanTickTimeSeconds = meanTickTimeSeconds;
         }
 
@@ -60,6 +65,10 @@ namespace EventGraph
         public string Type => "SimulatedSpot";
 
         public double CurrentValue { get; private set; }
+
+        public double Spot => CurrentValue;
+
+        public double Volatility { get; }
 
         public IReadOnlyList<IGraphNode> Dependencies => [];
 
@@ -79,7 +88,7 @@ namespace EventGraph
 
         private double IncrStdDev(double tMilliSeconds)
         {
-            return vol * Math.Sqrt(tMilliSeconds / MilliSecondsPerYear);
+            return Volatility * Math.Sqrt(tMilliSeconds / MilliSecondsPerYear);
         }
 
         private static void Sleep(double tMilliSeconds)
@@ -98,7 +107,7 @@ namespace EventGraph
 
             await Task.Run(() =>
             {
-                Tick?.Invoke(this, quoteTick);
+                SpotTick?.Invoke(this, quoteTick);
 
                 int emittedTicks = 1;
                 while (!cancellationToken.IsCancellationRequested && (tickCount <= 0 || emittedTicks < tickCount))
@@ -113,7 +122,7 @@ namespace EventGraph
                     quoteTick.Value *= Math.Exp((stdDev * normalDist.Sample()) + logDriftAdjustment);
                     CurrentValue = quoteTick.Value;
                     Sleep(timeStepMilliSeconds);
-                    Tick?.Invoke(this, quoteTick);
+                    SpotTick?.Invoke(this, quoteTick);
                     emittedTicks++;
 
                     if (tickCount == 0)

@@ -9,7 +9,7 @@ namespace EventGraph.Tests
         {
             var updates = new List<QuoteTick>();
             var source = new SimulatedQuoteSource("XYZ", 100.0, 0.2, 0.0);
-            source.Tick += (_, message) => updates.Add(message);
+            source.SpotTick += (_, message) => updates.Add(message);
 
             await source.Start(2);
 
@@ -22,7 +22,7 @@ namespace EventGraph.Tests
             var updates = new List<QuoteTick>();
             var source = new SimulatedQuoteSource("CONT", 50.0, 0.1, 0.0);
             using var cts = new CancellationTokenSource();
-            source.Tick += (_, message) =>
+            source.SpotTick += (_, message) =>
             {
                 updates.Add(message);
                 cts.Cancel();
@@ -65,6 +65,17 @@ namespace EventGraph.Tests
         }
 
         [Fact]
+        public void SimulatedQuoteSourceExposesVolatilityQuote()
+        {
+            var source = new SimulatedQuoteSource("VOL", 100.0, 0.25);
+
+            var volNode = Assert.IsAssignableFrom<IVolQuoteNode>(source);
+            var spotNode = Assert.IsAssignableFrom<ISpotQuoteNode>(source);
+            Assert.Equal(0.25, volNode.Volatility, 10);
+            Assert.Equal(100.0, spotNode.Spot, 10);
+        }
+
+        [Fact]
         public void SimulatedQuoteSourceRejectsInvalidStartingSpot()
         {
             _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedQuoteSource("A", double.NaN, 0.1));
@@ -87,7 +98,7 @@ namespace EventGraph.Tests
         {
             var source = new SimulatedQuoteSource("INIT", 100.0, 0.0, 0.0);
             QuoteTick? message = null;
-            source.Tick += (_, update) => message = update;
+            source.SpotTick += (_, update) => message = update;
 
             await source.Start(1);
 

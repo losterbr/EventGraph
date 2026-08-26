@@ -11,7 +11,7 @@ namespace EventGraph
     {
         private readonly Dictionary<string, int> nodeIndexByName;
 
-        public QuoteGraph(IReadOnlyList<IQuoteTickNode> nodes)
+        public QuoteGraph(IReadOnlyList<ISpotQuoteNode> nodes)
         {
             ArgumentNullException.ThrowIfNull(nodes);
 
@@ -45,7 +45,7 @@ namespace EventGraph
 
         public IReadOnlyList<IGraphNode> Nodes { get; }
 
-        public IReadOnlyList<IQuoteTickNode> QuoteNodes { get; }
+        public IReadOnlyList<ISpotQuoteNode> QuoteNodes { get; }
 
         public IReadOnlyDictionary<string, int> NodeIndexByName => nodeIndexByName;
 

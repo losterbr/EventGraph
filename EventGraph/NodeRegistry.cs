@@ -11,8 +11,8 @@ namespace EventGraph
     /// </summary>
     public static class NodeRegistry
     {
-        private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IQuoteTickNode>, IQuoteTickNode>> Factories =
-            new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IQuoteTickNode>, IQuoteTickNode>>(StringComparer.OrdinalIgnoreCase)
+        private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, ISpotQuoteNode>, ISpotQuoteNode>> Factories =
+            new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, ISpotQuoteNode>, ISpotQuoteNode>>(StringComparer.OrdinalIgnoreCase)
             {
                 [nameof(SimulatedQuoteSource)] = (definition, _) => new SimulatedQuoteSource(definition),
                 [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName)
@@ -25,9 +25,9 @@ namespace EventGraph
             return !string.IsNullOrWhiteSpace(type) && Factories.ContainsKey(type);
         }
 
-        public static IQuoteTickNode CreateNode(
+        public static ISpotQuoteNode CreateNode(
             IReadOnlyDictionary<string, JsonElement> definition,
-            IReadOnlyDictionary<string, IQuoteTickNode> nodesByName)
+            IReadOnlyDictionary<string, ISpotQuoteNode> nodesByName)
         {
             ArgumentNullException.ThrowIfNull(definition);
 

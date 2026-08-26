@@ -36,7 +36,7 @@ namespace EventGraph
 
         public void Subscribe(SimulatedQuoteSource quote)
         {
-            quote.Tick += SpotTicked;
+            quote.SpotTick += SpotTicked;
             nodeColors[quote] = SourceColors[nextSourceColor++ % SourceColors.Length];
             if (!quiet)
             {
@@ -52,7 +52,7 @@ namespace EventGraph
 
         public void Subscribe(BasketAggregate quote)
         {
-            quote.Tick += SpotTicked;
+            quote.SpotTick += SpotTicked;
             nodeColors[quote] = basketColorOverride ?? SourceColors[nextBasketColor++ % SourceColors.Length];
             if (!quiet)
             {

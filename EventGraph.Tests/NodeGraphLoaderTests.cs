@@ -24,7 +24,7 @@ namespace EventGraph.Tests
                 var source = Assert.Single(sources);
                 Assert.Equal("JSON", source.Name);
                 Assert.Equal("SimulatedSpot", source.Type);
-                Assert.Equal(123.0, source.CurrentValue);
+                Assert.Equal(123.0, source.Spot);
             }
             finally
             {
