@@ -83,7 +83,7 @@ namespace EventGraph.Tests
                     [sourceB.Name] = sourceB
                 });
             var updates = new List<QuoteTick>();
-                basket.SpotTick += (_, message) => updates.Add(message);
+            basket.SpotTick += (_, message) => updates.Add(message);
 
             await basket.RunOnceAsync();
 
