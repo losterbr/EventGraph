@@ -72,7 +72,14 @@ namespace EventGraph
                     }
 
                     this.weights[constituents[i].Name] = weights[i];
-                    constituents[i].Tick += SpotTicked;
+                    if (constituents[i] is BasketAggregate basket)
+                    {
+                        basket.Tick += SpotTicked;
+                    }
+                    else
+                    {
+                        constituents[i].Tick += SpotTicked;
+                    }
                 }
             }
             else
@@ -80,7 +87,14 @@ namespace EventGraph
                 foreach (var constituent in constituents)
                 {
                     this.weights[constituent.Name] = 1.0 / constituents.Count;
-                    constituent.Tick += SpotTicked;
+                    if (constituent is BasketAggregate basket)
+                    {
+                        basket.Tick += SpotTicked;
+                    }
+                    else
+                    {
+                        constituent.Tick += SpotTicked;
+                    }
                 }
             }
         }
@@ -151,14 +165,18 @@ namespace EventGraph
         {
             foreach (var constituent in constituents)
             {
-                constituent.Tick -= SpotTicked;
-            }
-
-            foreach (var constituent in constituents)
-            {
-                if (weights.ContainsKey(constituent.Name))
+                if (constituent is BasketAggregate basket)
                 {
-                    constituent.Tick += SpotTicked;
+                    basket.Tick -= SpotTicked;
+                    basket.Tick += SpotTicked;
+                }
+                else
+                {
+                    constituent.Tick -= SpotTicked;
+                    if (weights.ContainsKey(constituent.Name))
+                    {
+                        constituent.Tick += SpotTicked;
+                    }
                 }
             }
         }
