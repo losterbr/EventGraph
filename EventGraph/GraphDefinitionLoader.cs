@@ -11,11 +11,6 @@ namespace EventGraph
     /// </summary>
     public static class GraphDefinitionLoader
     {
-        private static readonly JsonSerializerOptions SerializerOptions = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
         public static IReadOnlyList<IQuoteNode> LoadNodes(string directoryPath)
         {
             if (string.IsNullOrWhiteSpace(directoryPath))
@@ -39,80 +34,55 @@ namespace EventGraph
                 throw new InvalidOperationException($"No JSON graph definitions were found in: {directoryPath}");
             }
 
-            var unsupportedType = definitions.FirstOrDefault(definition =>
-                definition.Type != "SimulatedQuoteSource" && definition.Type != "BasketAggregate");
+            var types = definitions.Select(GetType).ToList();
+            var unsupportedType = types.FirstOrDefault(type => type != "SimulatedQuoteSource" && type != "BasketAggregate");
             if (unsupportedType != null)
             {
-                throw new InvalidDataException($"Unsupported graph node type: '{unsupportedType.Type}'.");
+                throw new InvalidDataException($"Unsupported graph node type: '{unsupportedType}'.");
             }
 
             var sources = definitions
-                .Where(definition => definition.Type == "SimulatedQuoteSource")
-                .Select(CreateSource)
+                .Where(definition => GetType(definition) == "SimulatedQuoteSource")
+                .Select(definition => new SimulatedQuoteSource(definition))
                 .ToList();
-            var nodesByName = sources.ToDictionary(source => source.Name, StringComparer.OrdinalIgnoreCase);
+            var nodesByName = sources.Cast<IQuoteNode>().ToDictionary(source => source.Name, StringComparer.OrdinalIgnoreCase);
             var baskets = definitions
-                .Where(definition => definition.Type == "BasketAggregate")
-                .Select(definition => CreateBasket(definition, nodesByName))
+                .Where(definition => GetType(definition) == "BasketAggregate")
+                .Select(definition => new BasketAggregate(definition, nodesByName))
                 .ToList();
 
             return sources.Cast<IQuoteNode>().Concat(baskets).ToList();
         }
 
-        private static SimulatedQuoteSource CreateSource(SimulatedQuoteSourceDefinition definition)
+        private static string GetType(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            return new SimulatedQuoteSource(
-                definition.Name,
-                definition.Spot,
-                definition.Volatility,
-                definition.MeanTickTimeSeconds);
-        }
-
-        private static BasketAggregate CreateBasket(
-            SimulatedQuoteSourceDefinition definition,
-            IReadOnlyDictionary<string, SimulatedQuoteSource> nodesByName)
-        {
-            if (definition.Names == null || definition.Names.Count == 0)
+            if (!definition.TryGetValue("type", out var type) || type.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(type.GetString()))
             {
-                throw new InvalidDataException($"Basket '{definition.Name}' must define at least one source name.");
+                throw new InvalidDataException("Every graph definition must provide a non-empty string type.");
             }
 
-            var constituents = definition.Names.Select(name =>
-            {
-                if (!nodesByName.TryGetValue(name, out var source))
-                {
-                    throw new InvalidDataException($"Basket '{definition.Name}' references unknown source '{name}'.");
-                }
-
-                return (IQuoteNode)source;
-            }).ToList();
-
-            return new BasketAggregate(definition.Name, constituents, definition.Weights);
+            return type.GetString();
         }
 
-        private static SimulatedQuoteSourceDefinition LoadDefinition(string path)
+        private static IReadOnlyDictionary<string, JsonElement> LoadDefinition(string path)
         {
             try
             {
                 using var stream = File.OpenRead(path);
-                return JsonSerializer.Deserialize<SimulatedQuoteSourceDefinition>(stream, SerializerOptions)
-                    ?? throw new InvalidDataException($"Graph definition is empty: {path}");
+                using var document = JsonDocument.Parse(stream);
+                if (document.RootElement.ValueKind != JsonValueKind.Object)
+                {
+                    throw new InvalidDataException($"Graph definition must be a JSON object: {path}");
+                }
+
+                return document.RootElement
+                    .EnumerateObject()
+                    .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
             }
             catch (JsonException exception)
             {
                 throw new InvalidDataException($"Graph definition is invalid: {path}", exception);
             }
-        }
-
-        private sealed class SimulatedQuoteSourceDefinition
-        {
-            public string Type { get; set; }
-            public string Name { get; set; }
-            public double Spot { get; set; }
-            public double Volatility { get; set; }
-            public double MeanTickTimeSeconds { get; set; }
-            public List<string> Names { get; set; }
-            public List<double> Weights { get; set; }
         }
     }
 }

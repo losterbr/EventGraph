@@ -19,7 +19,8 @@ public class GraphDefinitionLoaderTests
               "name": "JSON",
               "spot": 123.0,
               "volatility": 0.15,
-              "meanTickTimeSeconds": 2.0
+              "meanTickTimeSeconds": 2.0,
+              "futureProperty": "owned by the source node"
             }
             """);
 
@@ -94,6 +95,43 @@ public class GraphDefinitionLoaderTests
             File.WriteAllText(Path.Combine(directory, "basket.json"), "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"names\":[\"Missing\"],\"weights\":[1]}");
 
             Assert.Throws<InvalidDataException>(() => GraphDefinitionLoader.LoadNodes(directory));
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    [Fact]
+    public void LoadNodesReportsMissingSourcePropertyFromSourceNode()
+    {
+        var directory = CreateDirectory();
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "source.json"), "{\"type\":\"SimulatedQuoteSource\",\"name\":\"A\",\"spot\":100}");
+
+            var exception = Assert.Throws<InvalidDataException>(() => GraphDefinitionLoader.LoadNodes(directory));
+
+            Assert.Contains("volatility", exception.Message);
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    [Fact]
+    public void LoadNodesReportsMissingBasketPropertyFromBasketNode()
+    {
+        var directory = CreateDirectory();
+        try
+        {
+            WriteDefinition(directory, "source.json", "A");
+            File.WriteAllText(Path.Combine(directory, "basket.json"), "{\"type\":\"BasketAggregate\",\"name\":\"Basket\",\"names\":[\"A\"]}");
+
+            var exception = Assert.Throws<InvalidDataException>(() => GraphDefinitionLoader.LoadNodes(directory));
+
+            Assert.Contains("weights", exception.Message);
         }
         finally
         {

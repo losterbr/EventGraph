@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace EventGraph
 {
@@ -18,6 +20,15 @@ namespace EventGraph
         private readonly double vol;
         private readonly double meanTickTimeSeconds;
         private double currentValue;
+
+        public SimulatedQuoteSource(IReadOnlyDictionary<string, JsonElement> definition)
+            : this(
+                GetString(definition, "name"),
+                GetDouble(definition, "spot"),
+                GetDouble(definition, "volatility"),
+                GetDouble(definition, "meanTickTimeSeconds"))
+        {
+        }
 
         public SimulatedQuoteSource(string name, double spot, double vol, double meanTickTimeSeconds = 1.0)
         {
@@ -54,6 +65,26 @@ namespace EventGraph
         public double CurrentValue => currentValue;
 
         public IReadOnlyList<IQuoteNode> Dependencies => Array.Empty<IQuoteNode>();
+
+        private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
+        {
+            if (definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString()))
+            {
+                throw new InvalidDataException($"SimulatedQuoteSource requires a non-empty '{propertyName}' property.");
+            }
+
+            return property.GetString();
+        }
+
+        private static double GetDouble(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
+        {
+            if (definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.Number || !property.TryGetDouble(out var value))
+            {
+                throw new InvalidDataException($"SimulatedQuoteSource requires a numeric '{propertyName}' property.");
+            }
+
+            return value;
+        }
 
         private double IncrStdDev(double tMilliSeconds)
         {

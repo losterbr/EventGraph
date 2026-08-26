@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace EventGraph
 {
@@ -18,6 +20,16 @@ namespace EventGraph
         private readonly Dictionary<string, double> spots = new();
         private readonly Dictionary<string, double> weights = new();
         private readonly string name;
+
+        public BasketAggregate(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, IQuoteNode> nodesByName)
+            : this(
+                GetString(definition, "name"),
+                GetConstituents(definition, nodesByName),
+                GetWeights(definition))
+        {
+        }
 
         public BasketAggregate(IReadOnlyList<IQuoteNode> constituents, IReadOnlyList<double> weights = null)
             : this(constituents == null ? null : $"B {string.Join(",", constituents.Select(x => x.Name))}", constituents, weights)
@@ -80,6 +92,60 @@ namespace EventGraph
         public double CurrentValue { get; private set; }
 
         public IReadOnlyList<IQuoteNode> Dependencies => constituents;
+
+        private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
+        {
+            if (definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString()))
+            {
+                throw new InvalidDataException($"BasketAggregate requires a non-empty '{propertyName}' property.");
+            }
+
+            return property.GetString();
+        }
+
+        private static IReadOnlyList<IQuoteNode> GetConstituents(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, IQuoteNode> nodesByName)
+        {
+            if (definition == null || !definition.TryGetValue("names", out var names) || names.ValueKind != JsonValueKind.Array)
+            {
+                throw new InvalidDataException("BasketAggregate requires a names array.");
+            }
+
+            var constituents = new List<IQuoteNode>();
+            foreach (var name in names.EnumerateArray())
+            {
+                if (name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString()) || !nodesByName.TryGetValue(name.GetString(), out var constituent))
+                {
+                    throw new InvalidDataException($"BasketAggregate references an unknown source '{name}'.");
+                }
+
+                constituents.Add(constituent);
+            }
+
+            return constituents;
+        }
+
+        private static IReadOnlyList<double> GetWeights(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            if (definition == null || !definition.TryGetValue("weights", out var weights) || weights.ValueKind != JsonValueKind.Array)
+            {
+                throw new InvalidDataException("BasketAggregate requires a weights array.");
+            }
+
+            var values = new List<double>();
+            foreach (var weight in weights.EnumerateArray())
+            {
+                if (weight.ValueKind != JsonValueKind.Number || !weight.TryGetDouble(out var value))
+                {
+                    throw new InvalidDataException("BasketAggregate weights must be numeric.");
+                }
+
+                values.Add(value);
+            }
+
+            return values;
+        }
 
         public void Connect()
         {
