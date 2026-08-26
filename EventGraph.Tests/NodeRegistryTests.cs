@@ -1,0 +1,100 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using EventGraph;
+using Xunit;
+
+namespace EventGraph.Tests;
+
+public class NodeRegistryTests
+{
+    [Fact]
+    public void SupportedTypesIncludeRegisteredNodeTypes()
+    {
+        Assert.Contains(nameof(SimulatedQuoteSource), NodeRegistry.SupportedTypes);
+        Assert.Contains(nameof(BasketAggregate), NodeRegistry.SupportedTypes);
+    }
+
+    [Fact]
+    public void IsSupportedTypeRejectsBlankNamesAndMatchesCaseInsensitively()
+    {
+        Assert.False(NodeRegistry.IsSupportedType(" "));
+        Assert.True(NodeRegistry.IsSupportedType("simulatedquotesource"));
+    }
+
+    [Fact]
+    public void CreateNodeCreatesSimulatedQuoteSource()
+    {
+        using var definition = JsonDocument.Parse("""
+        {
+          "type": "SimulatedQuoteSource",
+          "name": "A",
+          "spot": 100,
+          "volatility": 0.2,
+          "meanTickTimeSeconds": 1
+        }
+        """);
+
+        var node = NodeRegistry.CreateNode(ToDictionary(definition), new Dictionary<string, IQuoteNode>());
+
+        var source = Assert.IsType<SimulatedQuoteSource>(node);
+        Assert.Equal("A", source.Name);
+    }
+
+    [Fact]
+    public void CreateNodeCreatesBasketAggregate()
+    {
+        var source = new SimulatedQuoteSource("A", 100.0, 0.0, 0.0);
+        using var definition = JsonDocument.Parse("""
+        {
+          "type": "BasketAggregate",
+          "name": "BASKET",
+          "names": ["A"],
+          "weights": [1]
+        }
+        """);
+
+        var node = NodeRegistry.CreateNode(
+            ToDictionary(definition),
+            new Dictionary<string, IQuoteNode> { [source.Name] = source });
+
+        var basket = Assert.IsType<BasketAggregate>(node);
+        Assert.Equal("BASKET", basket.Name);
+    }
+
+    [Fact]
+    public void CreateNodeRejectsNullDefinitions()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            NodeRegistry.CreateNode(null!, new Dictionary<string, IQuoteNode>()));
+    }
+
+    [Fact]
+    public void CreateNodeRejectsMissingTypes()
+    {
+        using var definition = JsonDocument.Parse("{} ");
+
+        Assert.Throws<InvalidDataException>(() =>
+            NodeRegistry.CreateNode(ToDictionary(definition), new Dictionary<string, IQuoteNode>()));
+    }
+
+    [Fact]
+    public void CreateNodeRejectsUnsupportedTypes()
+    {
+        using var definition = JsonDocument.Parse("{\"type\":\"UnknownNode\"}");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            NodeRegistry.CreateNode(ToDictionary(definition), new Dictionary<string, IQuoteNode>()));
+
+        Assert.Contains("Unsupported graph node type", exception.Message);
+    }
+
+    private static IReadOnlyDictionary<string, JsonElement> ToDictionary(JsonDocument document)
+    {
+        return document.RootElement
+            .EnumerateObject()
+            .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
+    }
+}

@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using EventGraph;
@@ -43,6 +46,23 @@ public class SimulatedQuoteSourceTests
     }
 
     [Fact]
+    public void SimulatedQuoteSourceRejectsDefinitionsWithoutNames()
+    {
+        using var definition = JsonDocument.Parse("""
+        {
+          "spot": 100,
+          "volatility": 0.2,
+          "meanTickTimeSeconds": 1
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            new SimulatedQuoteSource(ToDictionary(definition)));
+
+        Assert.Contains("name", exception.Message);
+    }
+
+    [Fact]
     public void SimulatedQuoteSourceHasTheExpectedType()
     {
         var source = new SimulatedQuoteSource("TYPE", 100.0, 0.1);
@@ -80,5 +100,12 @@ public class SimulatedQuoteSourceTests
         Assert.NotNull(message);
         Assert.Equal("INIT", message!.Name);
         Assert.Equal(100.0, message.Value, 10);
+    }
+
+    private static IReadOnlyDictionary<string, JsonElement> ToDictionary(JsonDocument document)
+    {
+        return document.RootElement
+            .EnumerateObject()
+            .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
     }
 }

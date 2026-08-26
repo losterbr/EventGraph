@@ -44,6 +44,12 @@ public class GraphValidatorTests
         Assert.Throws<ArgumentNullException>(() => GraphValidator.EnsureAcyclic(null!));
     }
 
+    [Fact]
+    public void EnsureAcyclicRejectsNullNodes()
+    {
+        Assert.Throws<ArgumentException>(() => GraphValidator.EnsureAcyclic(new IQuoteNode?[] { null! }));
+    }
+
     private sealed class TestNode : IQuoteNode
     {
         private IReadOnlyList<IQuoteNode> dependencies;

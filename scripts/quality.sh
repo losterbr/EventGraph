@@ -33,8 +33,8 @@ echo "Line coverage: ${COVERAGE}%"
 python3 - "$COVERAGE" <<'PY'
 import sys
 coverage = float(sys.argv[1])
-if coverage < 95.0:
-    raise SystemExit("Coverage below 95% threshold.")
+if coverage < 97.0:
+  raise SystemExit("Coverage below 97% threshold.")
 PY
 
 echo "Quality checks completed successfully."
