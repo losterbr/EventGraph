@@ -57,6 +57,51 @@ public class GraphDefinitionLoaderTests
     }
 
     [Fact]
+    public void LoadNodesCreatesBasketFromNamedSourcesAndWeights()
+    {
+        var directory = CreateDirectory();
+        try
+        {
+            WriteDefinition(directory, "a.json", "A");
+            WriteDefinition(directory, "b.json", "B");
+            File.WriteAllText(Path.Combine(directory, "basket.json"), """
+            {
+              "type": "BasketAggregate",
+              "name": "EquityBasket",
+              "names": ["A", "B"],
+              "weights": [0.25, 0.75]
+            }
+            """);
+
+            var nodes = GraphDefinitionLoader.LoadNodes(directory);
+
+            var basket = Assert.IsType<BasketAggregate>(nodes[2]);
+            Assert.Equal("EquityBasket", basket.Name);
+            Assert.Equal("A=0.25, B=0.75", basket.GetWeights());
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    [Fact]
+    public void LoadNodesRejectsBasketWithUnknownSource()
+    {
+        var directory = CreateDirectory();
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "basket.json"), "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"names\":[\"Missing\"],\"weights\":[1]}");
+
+            Assert.Throws<InvalidDataException>(() => GraphDefinitionLoader.LoadNodes(directory));
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    [Fact]
     public void LoadNodesRejectsMissingDirectory()
     {
         Assert.Throws<DirectoryNotFoundException>(() =>

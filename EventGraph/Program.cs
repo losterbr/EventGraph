@@ -19,7 +19,8 @@ namespace EventGraph
 
             var definitionDirectory = Path.Combine(AppContext.BaseDirectory, "graph definition");
             var nodes = GraphDefinitionLoader.LoadNodes(definitionDirectory);
-            var quotes = nodes.Cast<SimulatedQuoteSource>().ToList();
+            var quotes = nodes.OfType<SimulatedQuoteSource>().ToList();
+            var baskets = nodes.OfType<BasketAggregate>().ToList();
 
             var listener = new QuoteSubscriber(options.Quiet, options.BasketColor);
             foreach (var quote in quotes)
@@ -27,9 +28,16 @@ namespace EventGraph
                 listener.Subscribe(quote);
             }
 
-            var basketQuote = new BasketAggregate(quotes);
-            GraphValidator.EnsureAcyclic(new IQuoteNode[] { basketQuote });
-            listener.Subscribe(basketQuote);
+            foreach (var basket in baskets)
+            {
+                basket.Connect();
+            }
+
+            GraphValidator.EnsureAcyclic(nodes);
+            foreach (var basket in baskets)
+            {
+                listener.Subscribe(basket);
+            }
 
             var tasks = quotes.Select(quote => quote.Start(options.TickCount)).ToArray();
             await Task.WhenAll(tasks);

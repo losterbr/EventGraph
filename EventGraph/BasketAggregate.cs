@@ -20,14 +20,24 @@ namespace EventGraph
         private readonly string name;
 
         public BasketAggregate(IReadOnlyList<IQuoteNode> constituents, IReadOnlyList<double> weights = null)
+            : this(constituents == null ? null : $"B {string.Join(",", constituents.Select(x => x.Name))}", constituents, weights)
         {
+        }
+
+        public BasketAggregate(string name, IReadOnlyList<IQuoteNode> constituents, IReadOnlyList<double> weights = null)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException("Basket name cannot be empty.", nameof(name));
+            }
+
             if (constituents == null || constituents.Count == 0)
             {
                 throw new ArgumentException("Basket must have at least one constituent.", nameof(constituents));
             }
 
             this.constituents = constituents;
-            name = $"B {string.Join(",", constituents.Select(x => x.Name))}";
+            this.name = name;
 
             if (weights != null)
             {
@@ -70,6 +80,22 @@ namespace EventGraph
         public double CurrentValue { get; private set; }
 
         public IReadOnlyList<IQuoteNode> Dependencies => constituents;
+
+        public void Connect()
+        {
+            foreach (var constituent in constituents)
+            {
+                constituent.Tick -= SpotTicked;
+            }
+
+            foreach (var constituent in constituents)
+            {
+                if (weights.ContainsKey(constituent.Name))
+                {
+                    constituent.Tick += SpotTicked;
+                }
+            }
+        }
 
         public string GetWeights()
         {
