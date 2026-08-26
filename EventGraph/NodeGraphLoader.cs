@@ -13,6 +13,11 @@ namespace EventGraph
     {
         public static IReadOnlyList<IQuoteNode> LoadNodes(string directoryPath)
         {
+            return LoadGraph(directoryPath).Nodes;
+        }
+
+        public static QuoteGraph LoadGraph(string directoryPath)
+        {
             if (string.IsNullOrWhiteSpace(directoryPath))
             {
                 throw new ArgumentException("A graph definition directory is required.", nameof(directoryPath));
@@ -81,7 +86,7 @@ namespace EventGraph
             while (readyNames.Count > 0)
             {
                 var name = readyNames.Min;
-                readyNames.Remove(name);
+                _ = readyNames.Remove(name);
 
                 var definition = definitionsByName[name];
                 var node = NodeRegistry.CreateNode(definition, nodesByName);
@@ -93,7 +98,7 @@ namespace EventGraph
                     inDegreeByName[dependentName]--;
                     if (inDegreeByName[dependentName] == 0)
                     {
-                        readyNames.Add(dependentName);
+                        _ = readyNames.Add(dependentName);
                     }
 
                 }
@@ -105,34 +110,28 @@ namespace EventGraph
                 throw new InvalidOperationException($"Unable to satisfy node dependencies for: {unresolvedNames}. Check for missing or cyclic references.");
             }
 
-            return resolvedOrder;
+            return new QuoteGraph(resolvedOrder);
         }
 
         private static string GetType(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            if (!definition.TryGetValue("type", out var type) || type.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(type.GetString()))
-            {
-                throw new InvalidDataException("Every graph definition must provide a non-empty string type.");
-            }
-
-            return type.GetString();
+            return !definition.TryGetValue("type", out var type) || type.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(type.GetString())
+                ? throw new InvalidDataException("Every graph definition must provide a non-empty string type.")
+                : type.GetString();
         }
 
         private static string GetName(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            if (!definition.TryGetValue("name", out var name) || name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString()))
-            {
-                throw new InvalidDataException("Every graph definition must provide a non-empty string name.");
-            }
-
-            return name.GetString();
+            return !definition.TryGetValue("name", out var name) || name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString())
+                ? throw new InvalidDataException("Every graph definition must provide a non-empty string name.")
+                : name.GetString();
         }
 
-        private static IReadOnlyList<string> GetDependencies(IReadOnlyDictionary<string, JsonElement> definition)
+        private static List<string> GetDependencies(IReadOnlyDictionary<string, JsonElement> definition)
         {
             if (!definition.TryGetValue("names", out var names) || names.ValueKind != JsonValueKind.Array)
             {
-                return Array.Empty<string>();
+                return [];
             }
 
             var dependencies = new List<string>();
@@ -153,12 +152,9 @@ namespace EventGraph
             {
                 using var stream = File.OpenRead(path);
                 using var document = JsonDocument.Parse(stream);
-                if (document.RootElement.ValueKind != JsonValueKind.Object)
-                {
-                    throw new InvalidDataException($"Graph definition must be a JSON object: {path}");
-                }
-
-                return document.RootElement
+                return document.RootElement.ValueKind != JsonValueKind.Object
+                    ? throw new InvalidDataException($"Graph definition must be a JSON object: {path}")
+                    : (IReadOnlyDictionary<string, JsonElement>)document.RootElement
                     .EnumerateObject()
                     .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
             }

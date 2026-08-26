@@ -18,7 +18,8 @@ namespace EventGraph
             }
 
             var definitionDirectory = Path.Combine(AppContext.BaseDirectory, "graph-definition");
-            var nodes = NodeGraphLoader.LoadNodes(definitionDirectory);
+            var graph = NodeGraphLoader.LoadGraph(definitionDirectory);
+            var nodes = graph.Nodes;
             var quotes = nodes.OfType<SimulatedQuoteSource>()
                 .OrderBy(quote => quote.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();

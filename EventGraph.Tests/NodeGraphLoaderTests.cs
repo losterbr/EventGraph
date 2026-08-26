@@ -1,19 +1,14 @@
-using System;
-using System.IO;
-using EventGraph;
-using Xunit;
-
-namespace EventGraph.Tests;
-
-public class NodeGraphLoaderTests
+namespace EventGraph.Tests
 {
-    [Fact]
-    public void LoadNodesCreatesNodesFromJson()
+    public class NodeGraphLoaderTests
     {
-        var directory = CreateDirectory();
-        try
+        [Fact]
+        public void LoadNodesCreatesNodesFromJson()
         {
-            File.WriteAllText(Path.Combine(directory, "source.json"), """
+            var directory = CreateDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ """
             {
                             "type": "SimulatedQuoteSource",
               "name": "JSON",
@@ -24,69 +19,69 @@ public class NodeGraphLoaderTests
             }
             """);
 
-            var sources = NodeGraphLoader.LoadNodes(directory);
+                var sources = NodeGraphLoader.LoadNodes(directory);
 
-            var source = Assert.Single(sources);
-            Assert.Equal("JSON", source.Name);
-            Assert.Equal("SimulatedSpot", source.Type);
-            Assert.Equal(123.0, source.CurrentValue);
+                var source = Assert.Single(sources);
+                Assert.Equal("JSON", source.Name);
+                Assert.Equal("SimulatedSpot", source.Type);
+                Assert.Equal(123.0, source.CurrentValue);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
         }
-        finally
-        {
-            Directory.Delete(directory, true);
-        }
-    }
 
-    [Fact]
-    public void GraphDefinitionLoaderDelegatesToNodeGraphLoader()
-    {
-        var directory = CreateDirectory();
-        try
+        [Fact]
+        public void GraphDefinitionLoaderDelegatesToNodeGraphLoader()
         {
-            WriteDefinition(directory, "source.json", "A");
+            var directory = CreateDirectory();
+            try
+            {
+                WriteDefinition(directory, "source.json", "A");
 
 #pragma warning disable CS0618
-            var nodes = GraphDefinitionLoader.LoadNodes(directory);
+                var nodes = GraphDefinitionLoader.LoadNodes(directory);
 #pragma warning restore CS0618
 
-            var source = Assert.Single(nodes);
-            Assert.Equal("A", source.Name);
+                var source = Assert.Single(nodes);
+                Assert.Equal("A", source.Name);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
         }
-        finally
+
+        [Fact]
+        public void LoadNodesReadsFilesInStableOrder()
         {
-            Directory.Delete(directory, true);
+            var directory = CreateDirectory();
+            try
+            {
+                WriteDefinition(directory, "b.json", "B");
+                WriteDefinition(directory, "a.json", "A");
+
+                var sources = NodeGraphLoader.LoadNodes(directory);
+
+                Assert.Equal("A", sources[0].Name);
+                Assert.Equal("B", sources[1].Name);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
         }
-    }
 
-    [Fact]
-    public void LoadNodesReadsFilesInStableOrder()
-    {
-        var directory = CreateDirectory();
-        try
+        [Fact]
+        public void LoadNodesCreatesBasketFromNamedSourcesAndWeights()
         {
-            WriteDefinition(directory, "b.json", "B");
-            WriteDefinition(directory, "a.json", "A");
-
-            var sources = NodeGraphLoader.LoadNodes(directory);
-
-            Assert.Equal("A", sources[0].Name);
-            Assert.Equal("B", sources[1].Name);
-        }
-        finally
-        {
-            Directory.Delete(directory, true);
-        }
-    }
-
-    [Fact]
-    public void LoadNodesCreatesBasketFromNamedSourcesAndWeights()
-    {
-        var directory = CreateDirectory();
-        try
-        {
-            WriteDefinition(directory, "a.json", "A");
-            WriteDefinition(directory, "b.json", "B");
-            File.WriteAllText(Path.Combine(directory, "basket.json"), """
+            var directory = CreateDirectory();
+            try
+            {
+                WriteDefinition(directory, "a.json", "A");
+                WriteDefinition(directory, "b.json", "B");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ """
             {
               "type": "BasketAggregate",
               "name": "EquityBasket",
@@ -95,216 +90,248 @@ public class NodeGraphLoaderTests
             }
             """);
 
-            var nodes = NodeGraphLoader.LoadNodes(directory);
+                var nodes = NodeGraphLoader.LoadNodes(directory);
 
-            var basket = Assert.IsType<BasketAggregate>(nodes[2]);
-            Assert.Equal("EquityBasket", basket.Name);
-            Assert.Equal("A=0.25, B=0.75", basket.GetWeights());
+                var basket = Assert.IsType<BasketAggregate>(nodes[2]);
+                Assert.Equal("EquityBasket", basket.Name);
+                Assert.Equal("A=0.25, B=0.75", basket.GetWeights());
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
         }
-        finally
+
+        [Fact]
+        public void LoadGraphAssignsStableNodeIndicesAndDependencyIndices()
         {
-            Directory.Delete(directory, true);
-        }
-    }
+            var directory = CreateDirectory();
+            try
+            {
+                WriteDefinition(directory, "b.json", "B");
+                WriteDefinition(directory, "a.json", "A");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ """
+            {
+              "type": "BasketAggregate",
+              "name": "EquityBasket",
+              "names": ["A", "B"],
+              "weights": [0.25, 0.75]
+            }
+            """);
 
-    [Fact]
-    public void LoadNodesRejectsBasketWithUnknownSource()
-    {
-        var directory = CreateDirectory();
-        try
+                var graph = NodeGraphLoader.LoadGraph(directory);
+
+                Assert.Equal(["A", "B", "EquityBasket"], graph.Nodes.Select(node => node.Name));
+                Assert.Equal(0, graph.GetIndex("a"));
+                Assert.Equal(1, graph.NodeIndexByName["B"]);
+                Assert.Equal([0, 1], graph.DependenciesByNode[graph.GetIndex("EquityBasket")]);
+                Assert.Empty(graph.DependenciesByNode[graph.GetIndex("A")]);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
+        [Fact]
+        public void LoadNodesRejectsBasketWithUnknownSource()
         {
-            File.WriteAllText(Path.Combine(directory, "basket.json"), "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"names\":[\"Missing\"],\"weights\":[1]}");
+            var directory = CreateDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"names\":[\"Missing\"],\"weights\":[1]}");
 
-            Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+                _ = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
         }
-        finally
+
+        [Fact]
+        public void LoadNodesReportsMissingSourcePropertyFromSourceNode()
         {
-            Directory.Delete(directory, true);
-        }
-    }
+            var directory = CreateDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedQuoteSource\",\"name\":\"A\",\"spot\":100}");
 
-    [Fact]
-    public void LoadNodesReportsMissingSourcePropertyFromSourceNode()
-    {
-        var directory = CreateDirectory();
-        try
+                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+
+                Assert.Contains("volatility", exception.Message);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
+        [Fact]
+        public void LoadNodesReportsMissingBasketPropertyFromBasketNode()
         {
-            File.WriteAllText(Path.Combine(directory, "source.json"), "{\"type\":\"SimulatedQuoteSource\",\"name\":\"A\",\"spot\":100}");
+            var directory = CreateDirectory();
+            try
+            {
+                WriteDefinition(directory, "source.json", "A");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"Basket\",\"names\":[\"A\"]}");
 
-            var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
 
-            Assert.Contains("volatility", exception.Message);
+                Assert.Contains("weights", exception.Message);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
         }
-        finally
+
+        [Fact]
+        public void LoadNodesRejectsMissingDirectory()
         {
-            Directory.Delete(directory, true);
+            _ = Assert.Throws<DirectoryNotFoundException>(() =>
+                NodeGraphLoader.LoadNodes(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString())));
         }
-    }
 
-    [Fact]
-    public void LoadNodesReportsMissingBasketPropertyFromBasketNode()
-    {
-        var directory = CreateDirectory();
-        try
+        [Fact]
+        public void LoadNodesRejectsBlankDirectoryPath()
         {
-            WriteDefinition(directory, "source.json", "A");
-            File.WriteAllText(Path.Combine(directory, "basket.json"), "{\"type\":\"BasketAggregate\",\"name\":\"Basket\",\"names\":[\"A\"]}");
-
-            var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
-
-            Assert.Contains("weights", exception.Message);
+            _ = Assert.Throws<ArgumentException>(() => NodeGraphLoader.LoadNodes(" "));
         }
-        finally
+
+        [Fact]
+        public void LoadNodesRejectsDuplicateNames()
         {
-            Directory.Delete(directory, true);
+            var directory = CreateDirectory();
+            try
+            {
+                WriteDefinition(directory, "a.json", "DUPLICATE");
+                WriteDefinition(directory, "b.json", "duplicate");
+
+                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+
+                Assert.Contains("Duplicate graph node name", exception.Message);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
         }
-    }
 
-    [Fact]
-    public void LoadNodesRejectsMissingDirectory()
-    {
-        Assert.Throws<DirectoryNotFoundException>(() =>
-            NodeGraphLoader.LoadNodes(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString())));
-    }
-
-    [Fact]
-    public void LoadNodesRejectsBlankDirectoryPath()
-    {
-        Assert.Throws<ArgumentException>(() => NodeGraphLoader.LoadNodes(" "));
-    }
-
-    [Fact]
-    public void LoadNodesRejectsDuplicateNames()
-    {
-        var directory = CreateDirectory();
-        try
+        [Fact]
+        public void LoadNodesRejectsDefinitionsWithoutTypes()
         {
-            WriteDefinition(directory, "a.json", "DUPLICATE");
-            WriteDefinition(directory, "b.json", "duplicate");
+            var directory = CreateDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ "{\"name\":\"A\"}");
 
-            var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
 
-            Assert.Contains("Duplicate graph node name", exception.Message);
+                Assert.Contains("type", exception.Message);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
         }
-        finally
+
+        [Fact]
+        public void LoadNodesRejectsCyclicDependenciesBeforeCreatingNodes()
         {
-            Directory.Delete(directory, true);
-        }
-    }
+            var directory = CreateDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(directory, "a.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"A\",\"names\":[\"B\"],\"weights\":[1]}");
+                File.WriteAllText(Path.Combine(directory, "b.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"names\":[\"A\"],\"weights\":[1]}");
 
-    [Fact]
-    public void LoadNodesRejectsDefinitionsWithoutTypes()
-    {
-        var directory = CreateDirectory();
-        try
+                var exception = Assert.Throws<InvalidOperationException>(() => NodeGraphLoader.LoadNodes(directory));
+
+                Assert.Contains("Unable to satisfy node dependencies", exception.Message);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
+        [Fact]
+        public void LoadNodesRejectsEmptyDirectory()
         {
-            File.WriteAllText(Path.Combine(directory, "source.json"), "{\"name\":\"A\"}");
-
-            var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
-
-            Assert.Contains("type", exception.Message);
+            var directory = CreateDirectory();
+            try
+            {
+                _ = Assert.Throws<InvalidOperationException>(() =>
+                    NodeGraphLoader.LoadNodes(directory));
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
         }
-        finally
+
+        [Fact]
+        public void LoadNodesRejectsInvalidJson()
         {
-            Directory.Delete(directory, true);
-        }
-    }
+            var directory = CreateDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(directory, "source.json"), "not json");
 
-    [Fact]
-    public void LoadNodesRejectsCyclicDependenciesBeforeCreatingNodes()
-    {
-        var directory = CreateDirectory();
-        try
+                _ = Assert.Throws<InvalidDataException>(() =>
+                    NodeGraphLoader.LoadNodes(directory));
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
+        [Fact]
+        public void LoadNodesRejectsJsonArrays()
         {
-            File.WriteAllText(Path.Combine(directory, "a.json"), "{\"type\":\"BasketAggregate\",\"name\":\"A\",\"names\":[\"B\"],\"weights\":[1]}");
-            File.WriteAllText(Path.Combine(directory, "b.json"), "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"names\":[\"A\"],\"weights\":[1]}");
+            var directory = CreateDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(directory, "source.json"), "[]");
 
-            var exception = Assert.Throws<InvalidOperationException>(() => NodeGraphLoader.LoadNodes(directory));
+                var exception = Assert.Throws<InvalidDataException>(() =>
+                    NodeGraphLoader.LoadNodes(directory));
 
-            Assert.Contains("Unable to satisfy node dependencies", exception.Message);
+                Assert.Contains("JSON object", exception.Message);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
         }
-        finally
+
+        [Fact]
+        public void LoadNodesRejectsUnsupportedTypes()
         {
-            Directory.Delete(directory, true);
-        }
-    }
+            var directory = CreateDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ "{\"type\":\"UnknownNode\",\"name\":\"A\"}");
 
-    [Fact]
-    public void LoadNodesRejectsEmptyDirectory()
-    {
-        var directory = CreateDirectory();
-        try
+                _ = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
+        private static string CreateDirectory()
         {
-            Assert.Throws<InvalidOperationException>(() =>
-                NodeGraphLoader.LoadNodes(directory));
+            var directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            _ = Directory.CreateDirectory(directory);
+            return directory;
         }
-        finally
+
+        private static void WriteDefinition(string directory, string fileName, string name)
         {
-            Directory.Delete(directory, true);
+            File.WriteAllText(Path.Combine(directory, fileName), $"{{\"type\":\"SimulatedQuoteSource\",\"name\":\"{name}\",\"spot\":100,\"volatility\":0.2,\"meanTickTimeSeconds\":1}}");
         }
-    }
-
-    [Fact]
-    public void LoadNodesRejectsInvalidJson()
-    {
-        var directory = CreateDirectory();
-        try
-        {
-            File.WriteAllText(Path.Combine(directory, "source.json"), "not json");
-
-            Assert.Throws<InvalidDataException>(() =>
-                NodeGraphLoader.LoadNodes(directory));
-        }
-        finally
-        {
-            Directory.Delete(directory, true);
-        }
-    }
-
-    [Fact]
-    public void LoadNodesRejectsJsonArrays()
-    {
-        var directory = CreateDirectory();
-        try
-        {
-            File.WriteAllText(Path.Combine(directory, "source.json"), "[]");
-
-            var exception = Assert.Throws<InvalidDataException>(() =>
-                NodeGraphLoader.LoadNodes(directory));
-
-            Assert.Contains("JSON object", exception.Message);
-        }
-        finally
-        {
-            Directory.Delete(directory, true);
-        }
-    }
-
-    [Fact]
-    public void LoadNodesRejectsUnsupportedTypes()
-    {
-        var directory = CreateDirectory();
-        try
-        {
-            File.WriteAllText(Path.Combine(directory, "source.json"), "{\"type\":\"UnknownNode\",\"name\":\"A\"}");
-
-            Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
-        }
-        finally
-        {
-            Directory.Delete(directory, true);
-        }
-    }
-
-    private static string CreateDirectory()
-    {
-        var directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(directory);
-        return directory;
-    }
-
-    private static void WriteDefinition(string directory, string fileName, string name)
-    {
-        File.WriteAllText(Path.Combine(directory, fileName), $"{{\"type\":\"SimulatedQuoteSource\",\"name\":\"{name}\",\"spot\":100,\"volatility\":0.2,\"meanTickTimeSeconds\":1}}");
     }
 }
