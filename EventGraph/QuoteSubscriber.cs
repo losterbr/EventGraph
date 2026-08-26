@@ -71,7 +71,7 @@ namespace EventGraph
                     WriteTimestamp();
                     var node = (IQuoteNode)sender;
                     Console.ForegroundColor = nodeColors[node];
-                    Console.WriteLine($" {FormatNodeIdentifier($"{node.Type} {node.Name}")} updated to {e.Value:0.##}");
+                    Console.WriteLine($" {FormatNodeIdentifier($"{node.Type}::{node.Name}")} updated to {e.Value:0.##}");
                     Console.ResetColor();
                 }
             }

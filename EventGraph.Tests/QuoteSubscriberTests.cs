@@ -9,8 +9,26 @@ namespace EventGraph.Tests;
 
 public class QuoteSubscriberTests
 {
+    private static string[] GetOutputLines(StringWriter output)
+    {
+        return output.ToString()
+            .Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    private static string GetIdentifier(string line)
+    {
+        var timestampEnd = line.IndexOf(']');
+        Assert.True(timestampEnd >= 0, $"Expected timestamp prefix in line: '{line}'");
+
+        var contentStart = timestampEnd + 2;
+        var contentEnd = line.IndexOf(" updated to", contentStart, StringComparison.Ordinal);
+        Assert.True(contentEnd > contentStart, $"Expected update marker in line: '{line}'");
+
+        return line.Substring(contentStart, contentEnd - contentStart);
+    }
+
     [Fact]
-    public async Task QuoteSubscriberSubscribesToSourceAndWritesOutput()
+    public async Task QuoteSubscriberSubscribesAndFormatsIdentifiers()
     {
         var output = new StringWriter();
         var originalOut = Console.Out;
@@ -26,36 +44,33 @@ public class QuoteSubscriberTests
 
             var rendered = output.ToString();
             Assert.Contains("Subscribed to XYZ", rendered);
-            Assert.Contains("SimulatedSpot XYZ", rendered);
-        }
-        finally
-        {
-            Console.SetOut(originalOut);
-        }
-    }
+            Assert.Contains("SimulatedSpot::XYZ", rendered);
 
-    [Fact]
-    public async Task QuoteSubscriberPadsShortNodeIdentifiersToFortyCharacters()
-    {
-        var output = new StringWriter();
-        var originalOut = Console.Out;
+            var sourceLine = GetOutputLines(output)
+                .Single(line => line.Contains("SimulatedSpot::XYZ") && line.Contains("updated to"));
+            var sourceIdentifier = GetIdentifier(sourceLine);
 
-        try
-        {
-            Console.SetOut(output);
-            var subscriber = new QuoteSubscriber();
-            var source = new SimulatedQuoteSource("XYZ", 100.0, 0.0, 0.0);
+            Assert.Equal(40, sourceIdentifier.Length);
+            Assert.StartsWith("SimulatedSpot::XYZ", sourceIdentifier);
 
-            subscriber.Subscribe(source);
-            await source.Start(1);
+            var sources = new[]
+            {
+                new SimulatedQuoteSource("TSLA", 100.0, 0.0, 0.0),
+                new SimulatedQuoteSource("GOOG", 200.0, 0.0, 0.0),
+                new SimulatedQuoteSource("AMZN", 300.0, 0.0, 0.0),
+                new SimulatedQuoteSource("MSFT", 400.0, 0.0, 0.0)
+            };
 
-            var updateLine = output.ToString()
-                .Split(Environment.NewLine)
-                .Single(line => line.Contains("SimulatedSpot XYZ") && line.Contains("updated to"));
-            var identifier = updateLine.Substring(updateLine.IndexOf(']') + 2, 40);
+            var basket = new BasketAggregate(sources);
+            subscriber.Subscribe(basket);
+            await basket.RunOnceAsync();
 
-            Assert.Equal(40, identifier.Length);
-            Assert.StartsWith("SimulatedSpot XYZ", identifier);
+            var basketLine = GetOutputLines(output)
+                .Single(line => line.Contains("CalculatedBasket::B TSLA,GOOG,AMZN,MSFT") && line.Contains("updated to"));
+            var basketIdentifier = GetIdentifier(basketLine);
+
+            Assert.Equal(40, basketIdentifier.Length);
+            Assert.StartsWith("CalculatedBasket::B TSLA,GOOG,AMZN,MSFT", basketIdentifier);
         }
         finally
         {
@@ -87,10 +102,10 @@ public class QuoteSubscriberTests
 
             await Task.WhenAll(sources.Select(source => source.Start(1)));
 
-            var updateLines = output.ToString()
-                .Split(Environment.NewLine)
-                .Where(line => line.Contains("SimulatedSpot A") || line.Contains("SimulatedSpot B") || line.Contains("SimulatedSpot C"))
+            var updateLines = GetOutputLines(output)
+                .Where(line => line.Contains("SimulatedSpot::A") || line.Contains("SimulatedSpot::B") || line.Contains("SimulatedSpot::C"))
                 .ToArray();
+
             Assert.Equal(3, updateLines.Length);
             Assert.All(updateLines, line => Assert.StartsWith("[", line));
             Assert.All(updateLines, line => Assert.Contains("updated to", line));
@@ -125,9 +140,9 @@ public class QuoteSubscriberTests
             await sources[0].Start(1);
             await sources[1].Start(1);
 
-            var lines = output.ToString().Split(Environment.NewLine);
-            var sourceIndex = Array.FindIndex(lines, line => line.Contains("SimulatedSpot B") && line.Contains("updated to"));
-            var basketIndex = Array.FindIndex(lines, line => line.Contains("CalculatedBasket B A,B") && line.Contains("updated to"));
+            var lines = GetOutputLines(output);
+            var sourceIndex = Array.FindIndex(lines, line => line.Contains("SimulatedSpot::B") && line.Contains("updated to"));
+            var basketIndex = Array.FindIndex(lines, line => line.Contains("CalculatedBasket::B A,B") && line.Contains("updated to"));
 
             Assert.True(sourceIndex >= 0);
             Assert.True(basketIndex > sourceIndex);
@@ -139,43 +154,7 @@ public class QuoteSubscriberTests
     }
 
     [Fact]
-    public async Task QuoteSubscriberPadsBasketIdentifiersToFortyCharacters()
-    {
-        var output = new StringWriter();
-        var originalOut = Console.Out;
-
-        try
-        {
-            Console.SetOut(output);
-            var subscriber = new QuoteSubscriber();
-            var sources = new[]
-            {
-                new SimulatedQuoteSource("TSLA", 100.0, 0.0, 0.0),
-                new SimulatedQuoteSource("GOOG", 200.0, 0.0, 0.0),
-                new SimulatedQuoteSource("AMZN", 300.0, 0.0, 0.0),
-                new SimulatedQuoteSource("MSFT", 400.0, 0.0, 0.0)
-            };
-            var basket = new BasketAggregate(sources);
-
-            subscriber.Subscribe(basket);
-            await basket.RunOnceAsync();
-
-            var updateLine = output.ToString()
-                .Split(Environment.NewLine)
-                .Single(line => line.Contains("CalculatedBasket B TSLA") && line.Contains("updated to"));
-            var identifier = updateLine.Substring(updateLine.IndexOf(']') + 2, 40);
-
-            Assert.Equal(40, identifier.Length);
-            Assert.StartsWith("CalculatedBasket B TSLA,GOOG,AMZN,MSFT", identifier);
-        }
-        finally
-        {
-            Console.SetOut(originalOut);
-        }
-    }
-
-    [Fact]
-    public async Task QuoteSubscriberCanSubscribeToAggregateWithCustomColor()
+    public async Task QuoteSubscriberHandlesQuietAndCustomColorModes()
     {
         var output = new StringWriter();
         var originalOut = Console.Out;
@@ -184,7 +163,16 @@ public class QuoteSubscriberTests
         try
         {
             Console.SetOut(output);
-            var subscriber = new QuoteSubscriber(quiet: false, basketColor: ConsoleColor.Red);
+            var quietSubscriber = new QuoteSubscriber(quiet: true);
+            var source = new SimulatedQuoteSource("XYZ", 100.0, 0.0, 0.0);
+
+            quietSubscriber.Subscribe(source);
+            await source.Start(1);
+            Assert.Empty(output.ToString());
+
+            output.GetStringBuilder().Clear();
+
+            var coloredSubscriber = new QuoteSubscriber(quiet: false, basketColor: ConsoleColor.Red);
             var sources = new[]
             {
                 new SimulatedQuoteSource("A", 100.0, 0.0, 0.0),
@@ -192,7 +180,7 @@ public class QuoteSubscriberTests
             };
             var basket = new BasketAggregate(sources);
 
-            subscriber.Subscribe(basket);
+            coloredSubscriber.Subscribe(basket);
             await basket.RunOnceAsync();
 
             Assert.Contains("Subscribed to B A,B", output.ToString());
@@ -201,30 +189,6 @@ public class QuoteSubscriberTests
         {
             Console.SetOut(originalOut);
             Console.ForegroundColor = originalColor;
-        }
-    }
-
-    [Fact]
-    public async Task QuoteSubscriberDoesNotWriteWhenQuietModeIsEnabled()
-    {
-        var output = new StringWriter();
-        var originalOut = Console.Out;
-
-        try
-        {
-            Console.SetOut(output);
-            var subscriber = new QuoteSubscriber(quiet: true);
-            var source = new SimulatedQuoteSource("XYZ", 100.0, 0.0, 0.0);
-
-            subscriber.Subscribe(source);
-            source.Tick += (_, _) => { };
-            await source.Start(1);
-
-            Assert.Empty(output.ToString());
-        }
-        finally
-        {
-            Console.SetOut(originalOut);
         }
     }
 }
