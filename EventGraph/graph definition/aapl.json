@@ -1,0 +1,7 @@
+{
+  "type": "SimulatedQuoteSource",
+  "name": "AAPL",
+  "spot": 225.0,
+  "volatility": 0.28,
+  "meanTickTimeSeconds": 4.5
+}

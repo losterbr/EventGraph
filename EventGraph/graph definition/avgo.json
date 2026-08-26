@@ -1,0 +1,7 @@
+{
+  "type": "SimulatedQuoteSource",
+  "name": "AVGO",
+  "spot": 300.0,
+  "volatility": 0.4,
+  "meanTickTimeSeconds": 5.5
+}
