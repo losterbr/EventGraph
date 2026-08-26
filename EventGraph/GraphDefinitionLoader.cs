@@ -46,15 +46,9 @@ namespace EventGraph
                 definitionsByName[name] = definition;
             }
 
-            var supportedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "SimulatedQuoteSource",
-                "BasketAggregate"
-            };
-
             var unsupportedType = definitions
                 .Select(GetType)
-                .FirstOrDefault(type => !supportedTypes.Contains(type));
+                .FirstOrDefault(type => !NodeRegistry.IsSupportedType(type));
             if (unsupportedType != null)
             {
                 throw new InvalidDataException($"Unsupported graph node type: '{unsupportedType}'.");
@@ -80,7 +74,7 @@ namespace EventGraph
 
                 foreach (var definition in ready)
                 {
-                    var node = CreateNode(definition, nodesByName);
+                    var node = NodeRegistry.CreateNode(definition, nodesByName);
                     nodesByName[node.Name] = node;
                     resolvedOrder.Add(node);
                     remainingDefinitions.Remove(GetName(definition));
@@ -110,19 +104,6 @@ namespace EventGraph
             }
 
             return true;
-        }
-
-        private static IQuoteNode CreateNode(
-            IReadOnlyDictionary<string, JsonElement> definition,
-            IReadOnlyDictionary<string, IQuoteNode> nodesByName)
-        {
-            var type = GetType(definition);
-            return type switch
-            {
-                "SimulatedQuoteSource" => new SimulatedQuoteSource(definition),
-                "BasketAggregate" => new BasketAggregate(definition, nodesByName),
-                _ => throw new InvalidDataException($"Unsupported graph node type: '{type}'.")
-            };
         }
 
         private static string GetType(IReadOnlyDictionary<string, JsonElement> definition)
