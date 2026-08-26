@@ -40,5 +40,20 @@ namespace EventGraph.Tests
 
             _ = Assert.Throws<KeyNotFoundException>(() => graph.GetIndex("Missing"));
         }
+
+        [Fact]
+        public void QuoteGraphExposesDependentIndices()
+        {
+            var sourceA = new SimulatedQuoteSource("A", 100.0, 0.0, 0.0);
+            var sourceB = new SimulatedQuoteSource("B", 200.0, 0.0, 0.0);
+            var parent = new BasketAggregate("PARENT", [sourceA, sourceB]);
+            var child = new BasketAggregate("CHILD", [parent]);
+            var graph = new QuoteGraph([sourceA, sourceB, parent, child]);
+
+            Assert.Equal([graph.GetIndex("PARENT")], graph.DependentsByNode[graph.GetIndex("A")]);
+            Assert.Equal([graph.GetIndex("PARENT")], graph.DependentsByNode[graph.GetIndex("B")]);
+            Assert.Equal([graph.GetIndex("CHILD")], graph.DependentsByNode[graph.GetIndex("PARENT")]);
+            Assert.Empty(graph.DependentsByNode[graph.GetIndex("CHILD")]);
+        }
     }
 }

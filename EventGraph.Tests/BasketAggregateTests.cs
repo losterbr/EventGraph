@@ -110,6 +110,34 @@ namespace EventGraph.Tests
         }
 
         [Fact]
+        public async Task BasketAggregateDoesNotSubscribeUntilConnected()
+        {
+            var source = new SimulatedQuoteSource("A", 100.0, 0.0, 0.0);
+            var basket = new BasketAggregate([source]);
+            var updates = new List<QuoteTick>();
+            basket.Tick += (_, message) => updates.Add(message);
+
+            await source.Start(1);
+
+            Assert.Empty(updates);
+        }
+
+        [Fact]
+        public async Task BasketAggregatePublishesSourceTicksAfterConnect()
+        {
+            var source = new SimulatedQuoteSource("A", 100.0, 0.0, 0.0);
+            var basket = new BasketAggregate([source]);
+            var updates = new List<QuoteTick>();
+            basket.Tick += (_, message) => updates.Add(message);
+
+            basket.Connect();
+            await source.Start(1);
+
+            var update = Assert.Single(updates);
+            Assert.Equal(100.0, update.Value, 10);
+        }
+
+        [Fact]
         public async Task BasketAggregateIgnoresZeroWeightBasketConstituentsAfterConnect()
         {
             var zeroWeightSource = new SimulatedQuoteSource("ZERO", 100.0, 0.0, 0.0);
@@ -233,6 +261,7 @@ namespace EventGraph.Tests
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
 
+            basket.Connect();
             await Task.WhenAll(quotes[0].Start(1), quotes[1].Start(1));
 
             _ = Assert.Single(updates);

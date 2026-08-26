@@ -28,6 +28,18 @@ namespace EventGraph
 
             nodeIndexByName = indices;
             DependenciesByNode = [.. Nodes.Select(node => (IReadOnlyList<int>)[.. node.Dependencies.Select(dependency => GetIndex(dependency.Name))])];
+            var dependentsByNode = Enumerable.Range(0, Nodes.Count)
+                .Select(_ => new List<int>())
+                .ToArray();
+            for (int nodeIndex = 0; nodeIndex < DependenciesByNode.Count; nodeIndex++)
+            {
+                foreach (var dependencyIndex in DependenciesByNode[nodeIndex])
+                {
+                    dependentsByNode[dependencyIndex].Add(nodeIndex);
+                }
+            }
+
+            DependentsByNode = [.. dependentsByNode.Select(dependents => (IReadOnlyList<int>)[.. dependents])];
         }
 
         public IReadOnlyList<IQuoteNode> Nodes { get; }
@@ -35,6 +47,8 @@ namespace EventGraph
         public IReadOnlyDictionary<string, int> NodeIndexByName => nodeIndexByName;
 
         public IReadOnlyList<IReadOnlyList<int>> DependenciesByNode { get; }
+
+        public IReadOnlyList<IReadOnlyList<int>> DependentsByNode { get; }
 
         public int GetIndex(string name)
         {

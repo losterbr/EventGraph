@@ -97,10 +97,6 @@ namespace EventGraph
             }
 
             requiredConstituentCount = constituentIndicesByNode.Values.Sum(indexes => indexes.Length);
-            foreach (var constituent in constituentIndicesByNode.Keys)
-            {
-                constituent.Tick += SpotTicked;
-            }
         }
 
         public string Name { get; }

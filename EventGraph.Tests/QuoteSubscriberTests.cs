@@ -131,6 +131,7 @@ namespace EventGraph.Tests
                 subscriber.Subscribe(sources[1]);
                 var basket = new BasketAggregate(sources);
                 subscriber.Subscribe(basket);
+                basket.Connect();
 
                 await sources[0].Start(1);
                 await sources[1].Start(1);
