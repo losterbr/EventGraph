@@ -30,7 +30,7 @@ namespace EventGraph
 
         private readonly bool quiet = quiet;
         private readonly ConsoleColor? basketColorOverride = basketColor;
-        private readonly Dictionary<IQuoteNode, ConsoleColor> nodeColors = new(ReferenceEqualityComparer.Instance);
+        private readonly Dictionary<IGraphNode, ConsoleColor> nodeColors = new(ReferenceEqualityComparer.Instance);
         private int nextSourceColor;
         private int nextBasketColor;
 
@@ -73,7 +73,7 @@ namespace EventGraph
                 lock (ConsoleLock)
                 {
                     WriteTimestamp();
-                    var node = (IQuoteNode)sender;
+                    var node = (IGraphNode)sender;
                     Console.ForegroundColor = nodeColors[node];
                     Console.WriteLine($" {FormatNodeIdentifier($"{node.Type}::{node.Name}")} updated to {e.Value:0.##}");
                     Console.ResetColor();

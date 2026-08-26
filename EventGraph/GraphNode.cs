@@ -4,9 +4,9 @@ using System.Collections.Generic;
 namespace EventGraph
 {
     /// <summary>
-    /// Represents a quote-producing node and the nodes it depends on.
+    /// Represents a graph node that can publish quote ticks and depend on other graph nodes.
     /// </summary>
-    public interface IQuoteNode
+    public interface IGraphNode
     {
         event EventHandler<QuoteTick> Tick;
 
@@ -16,6 +16,6 @@ namespace EventGraph
 
         double CurrentValue { get; }
 
-        IReadOnlyList<IQuoteNode> Dependencies { get; }
+        IReadOnlyList<IGraphNode> Dependencies { get; }
     }
 }

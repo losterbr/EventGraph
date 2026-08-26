@@ -10,12 +10,12 @@ namespace EventGraph
     /// <summary>
     /// Aggregates multiple simulated quotes into a weighted basket value.
     /// </summary>
-    public class BasketAggregate : IQuoteNode
+    public class BasketAggregate : IGraphNode
     {
         public event EventHandler<QuoteTick> Tick;
 
         private const double Epsilon = 1e-9;
-        private readonly Dictionary<IQuoteNode, int[]> constituentIndicesByNode;
+        private readonly Dictionary<IGraphNode, int[]> constituentIndicesByNode;
         private readonly bool[] hasLatestValue;
         private readonly double[] latestValues;
         private readonly object stateLock = new();
@@ -25,7 +25,7 @@ namespace EventGraph
 
         public BasketAggregate(
             IReadOnlyDictionary<string, JsonElement> definition,
-            IReadOnlyDictionary<string, IQuoteNode> nodesByName)
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
             : this(
                 GetString(definition, "name"),
                 GetConstituents(definition, nodesByName),
@@ -33,12 +33,12 @@ namespace EventGraph
         {
         }
 
-        public BasketAggregate(IReadOnlyList<IQuoteNode> constituents, IReadOnlyList<double> weights = null)
+        public BasketAggregate(IReadOnlyList<IGraphNode> constituents, IReadOnlyList<double> weights = null)
             : this(constituents == null ? null : $"B {string.Join(",", constituents.Select(x => x.Name))}", constituents, weights)
         {
         }
 
-        public BasketAggregate(string name, IReadOnlyList<IQuoteNode> constituents, IReadOnlyList<double> weights = null)
+        public BasketAggregate(string name, IReadOnlyList<IGraphNode> constituents, IReadOnlyList<double> weights = null)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -55,7 +55,7 @@ namespace EventGraph
             hasLatestValue = new bool[Dependencies.Count];
             latestValues = new double[Dependencies.Count];
             this.weights = new double[Dependencies.Count];
-            var activeIndicesByNode = new Dictionary<IQuoteNode, List<int>>(ReferenceEqualityComparer.Instance);
+            var activeIndicesByNode = new Dictionary<IGraphNode, List<int>>(ReferenceEqualityComparer.Instance);
 
             if (weights != null)
             {
@@ -90,7 +90,7 @@ namespace EventGraph
                 }
             }
 
-            constituentIndicesByNode = new Dictionary<IQuoteNode, int[]>(ReferenceEqualityComparer.Instance);
+            constituentIndicesByNode = new Dictionary<IGraphNode, int[]>(ReferenceEqualityComparer.Instance);
             foreach (var pair in activeIndicesByNode)
             {
                 constituentIndicesByNode[pair.Key] = [.. pair.Value];
@@ -105,7 +105,7 @@ namespace EventGraph
 
         public double CurrentValue { get; private set; }
 
-        public IReadOnlyList<IQuoteNode> Dependencies { get; }
+        public IReadOnlyList<IGraphNode> Dependencies { get; }
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
@@ -114,16 +114,16 @@ namespace EventGraph
                 : property.GetString();
         }
 
-        private static List<IQuoteNode> GetConstituents(
+        private static List<IGraphNode> GetConstituents(
             IReadOnlyDictionary<string, JsonElement> definition,
-            IReadOnlyDictionary<string, IQuoteNode> nodesByName)
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
         {
             if (definition == null || !definition.TryGetValue("names", out var names) || names.ValueKind != JsonValueKind.Array)
             {
                 throw new InvalidDataException("BasketAggregate requires a names array.");
             }
 
-            var constituents = new List<IQuoteNode>();
+            var constituents = new List<IGraphNode>();
             foreach (var name in names.EnumerateArray())
             {
                 if (name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString()) || !nodesByName.TryGetValue(name.GetString(), out var constituent))
@@ -176,8 +176,8 @@ namespace EventGraph
         }
 
         private static void AddActiveIndex(
-            Dictionary<IQuoteNode, List<int>> activeIndicesByNode,
-            IQuoteNode constituent,
+            Dictionary<IGraphNode, List<int>> activeIndicesByNode,
+            IGraphNode constituent,
             int index)
         {
             if (!activeIndicesByNode.TryGetValue(constituent, out var indices))
@@ -202,7 +202,7 @@ namespace EventGraph
 
         private void SpotTicked(object sender, QuoteTick e)
         {
-            if (sender is not IQuoteNode node || !constituentIndicesByNode.TryGetValue(node, out var indices))
+            if (sender is not IGraphNode node || !constituentIndicesByNode.TryGetValue(node, out var indices))
             {
                 return;
             }

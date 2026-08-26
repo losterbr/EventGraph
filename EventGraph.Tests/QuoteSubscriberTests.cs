@@ -2,6 +2,7 @@ using System.Reflection;
 
 namespace EventGraph.Tests
 {
+    [Collection(ConsoleTestGroup.Name)]
     public class QuoteSubscriberTests
     {
         private static string[] GetOutputLines(StringWriter output)
@@ -188,7 +189,7 @@ namespace EventGraph.Tests
             }
 
             var colorsField = typeof(QuoteSubscriber).GetField("nodeColors", BindingFlags.Instance | BindingFlags.NonPublic);
-            var nodeColors = (IDictionary<IQuoteNode, ConsoleColor>)colorsField!.GetValue(subscriber)!;
+            var nodeColors = (IDictionary<IGraphNode, ConsoleColor>)colorsField!.GetValue(subscriber)!;
 
             Assert.Equal(expectedPalette, sources.Take(expectedPalette.Length).Select(source => nodeColors[source]));
             Assert.Equal(ConsoleColor.Blue, nodeColors[sources[6]]);
@@ -354,7 +355,7 @@ namespace EventGraph.Tests
                 var root = new BasketAggregate("ROOT", [child, sourceD]);
                 var subscriber = new QuoteSubscriber();
 
-                foreach (var source in new IQuoteNode[] { sourceA, sourceB, sourceC, sourceD, parent, child, root })
+                foreach (var source in new IGraphNode[] { sourceA, sourceB, sourceC, sourceD, parent, child, root })
                 {
                     if (source is BasketAggregate basket)
                     {

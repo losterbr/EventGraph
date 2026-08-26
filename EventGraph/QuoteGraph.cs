@@ -5,13 +5,13 @@ using System.Linq;
 namespace EventGraph
 {
     /// <summary>
-    /// Stores quote nodes in a stable indexed order with dependencies represented as node indices.
+    /// Stores graph nodes in a stable indexed order with dependencies represented as node indices.
     /// </summary>
     public sealed class QuoteGraph
     {
         private readonly Dictionary<string, int> nodeIndexByName;
 
-        public QuoteGraph(IReadOnlyList<IQuoteNode> nodes)
+        public QuoteGraph(IReadOnlyList<IGraphNode> nodes)
         {
             ArgumentNullException.ThrowIfNull(nodes);
 
@@ -22,7 +22,7 @@ namespace EventGraph
                 var node = Nodes[i] ?? throw new ArgumentException("Quote graph nodes cannot be null.", nameof(nodes));
                 if (!indices.TryAdd(node.Name, i))
                 {
-                    throw new ArgumentException($"Duplicate quote node name '{node.Name}' detected.", nameof(nodes));
+                    throw new ArgumentException($"Duplicate graph node name '{node.Name}' detected.", nameof(nodes));
                 }
             }
 
@@ -42,7 +42,7 @@ namespace EventGraph
             DependentsByNode = [.. dependentsByNode.Select(dependents => (IReadOnlyList<int>)[.. dependents])];
         }
 
-        public IReadOnlyList<IQuoteNode> Nodes { get; }
+        public IReadOnlyList<IGraphNode> Nodes { get; }
 
         public IReadOnlyDictionary<string, int> NodeIndexByName => nodeIndexByName;
 
@@ -54,7 +54,7 @@ namespace EventGraph
         {
             return nodeIndexByName.GetValueOrDefault(name, -1) is var index && index >= 0
                 ? index
-                : throw new KeyNotFoundException($"Quote node '{name}' was not found in the graph.");
+                : throw new KeyNotFoundException($"Graph node '{name}' was not found in the graph.");
         }
     }
 }

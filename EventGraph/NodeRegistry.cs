@@ -6,13 +6,13 @@ using System.Text.Json;
 namespace EventGraph
 {
     /// <summary>
-    /// Central registry of supported quote-node implementations.
+    /// Central registry of supported graph-node implementations.
     /// New node types should be added here, not in NodeGraphLoader.
     /// </summary>
     public static class NodeRegistry
     {
-        private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IQuoteNode>, IQuoteNode>> Factories =
-            new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IQuoteNode>, IQuoteNode>>(StringComparer.OrdinalIgnoreCase)
+        private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>> Factories =
+            new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>>(StringComparer.OrdinalIgnoreCase)
             {
                 [nameof(SimulatedQuoteSource)] = (definition, _) => new SimulatedQuoteSource(definition),
                 [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName)
@@ -25,9 +25,9 @@ namespace EventGraph
             return !string.IsNullOrWhiteSpace(type) && Factories.ContainsKey(type);
         }
 
-        public static IQuoteNode CreateNode(
+        public static IGraphNode CreateNode(
             IReadOnlyDictionary<string, JsonElement> definition,
-            IReadOnlyDictionary<string, IQuoteNode> nodesByName)
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
         {
             ArgumentNullException.ThrowIfNull(definition);
 

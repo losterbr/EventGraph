@@ -45,7 +45,7 @@ namespace EventGraph.Tests
             _ = Assert.Throws<ArgumentException>(() => GraphValidator.EnsureAcyclic([null]));
         }
 
-        private sealed class TestNode(string name, params IQuoteNode[] dependencies) : IQuoteNode
+        private sealed class TestNode(string name, params IGraphNode[] dependencies) : IGraphNode
         {
             public event EventHandler<QuoteTick> Tick
             {
@@ -59,9 +59,9 @@ namespace EventGraph.Tests
 
             public double CurrentValue => 0.0;
 
-            public IReadOnlyList<IQuoteNode> Dependencies { get; private set; } = dependencies;
+            public IReadOnlyList<IGraphNode> Dependencies { get; private set; } = dependencies;
 
-            public void SetDependencies(params IQuoteNode[] dependencies)
+            public void SetDependencies(params IGraphNode[] dependencies)
             {
                 Dependencies = dependencies;
             }

@@ -7,7 +7,7 @@ EventGraph is a small .NET sample that demonstrates an event-driven market quote
 - Simulates stock-like quotes with `SimulatedQuoteSource`.
 - Subscribes the same `QuoteSubscriber` to both individual quotes and an aggregated basket.
 - Emits basket updates only after all constituent values are available for the current cycle.
-- Validates the quote-node dependency graph at startup and rejects cycles before processing begins.
+- Validates the graph-node dependency graph at startup and rejects cycles before processing begins.
 - Keeps the sample self-contained, deterministic enough for tests, and suitable for public release as a demo project.
 
 ### Graph definitions

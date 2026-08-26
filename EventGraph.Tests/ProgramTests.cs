@@ -2,6 +2,7 @@ using System.Reflection;
 
 namespace EventGraph.Tests
 {
+    [Collection(ConsoleTestGroup.Name)]
     public class ProgramTests
     {
         [Fact]

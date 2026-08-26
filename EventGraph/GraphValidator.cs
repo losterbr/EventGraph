@@ -8,12 +8,12 @@ namespace EventGraph
     /// </summary>
     public static class GraphValidator
     {
-        public static void EnsureAcyclic(IEnumerable<IQuoteNode> roots)
+        public static void EnsureAcyclic(IEnumerable<IGraphNode> roots)
         {
             ArgumentNullException.ThrowIfNull(roots);
 
-            var visiting = new HashSet<IQuoteNode>(ReferenceEqualityComparer.Instance);
-            var visited = new HashSet<IQuoteNode>(ReferenceEqualityComparer.Instance);
+            var visiting = new HashSet<IGraphNode>(ReferenceEqualityComparer.Instance);
+            var visited = new HashSet<IGraphNode>(ReferenceEqualityComparer.Instance);
 
             foreach (var root in roots)
             {
@@ -22,9 +22,9 @@ namespace EventGraph
         }
 
         private static void Visit(
-            IQuoteNode node,
-            HashSet<IQuoteNode> visiting,
-            HashSet<IQuoteNode> visited)
+            IGraphNode node,
+            HashSet<IGraphNode> visiting,
+            HashSet<IGraphNode> visited)
         {
             if (node == null)
             {
@@ -33,7 +33,7 @@ namespace EventGraph
 
             if (visiting.Contains(node))
             {
-                throw new InvalidOperationException($"Cycle detected at quote node '{node.Name}'.");
+                throw new InvalidOperationException($"Cycle detected at graph node '{node.Name}'.");
             }
 
             if (!visited.Add(node))

@@ -10,7 +10,7 @@ namespace EventGraph
     /// <summary>
     /// Simulates a market quote and raises tick events over time.
     /// </summary>
-    public class SimulatedQuoteSource : IQuoteNode
+    public class SimulatedQuoteSource : IGraphNode
     {
         public event EventHandler<QuoteTick> Tick;
 
@@ -61,7 +61,7 @@ namespace EventGraph
 
         public double CurrentValue { get; private set; }
 
-        public IReadOnlyList<IQuoteNode> Dependencies => [];
+        public IReadOnlyList<IGraphNode> Dependencies => [];
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
