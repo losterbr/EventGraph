@@ -28,6 +28,8 @@ The `type` field selects the node implementation. Each node constructor owns the
 
 Graph loading uses Kahn's algorithm to resolve dependencies. The loader builds an in-degree count for each node, processes dependency-free nodes first, and then releases dependent nodes as their prerequisites are created. This keeps startup ordering deterministic while avoiding repeated full scans of unresolved definitions.
 
+The loaded graph also exposes stable node indices through `QuoteGraph`, which gives future runtime optimizations a dense representation without replacing the current node model. More specialized graph layouts such as compressed sparse row storage or parallel execution should be considered only after profiling shows that traversal or update propagation is a bottleneck.
+
 ## How it works
 
 ### Quote simulation
@@ -87,7 +89,7 @@ Quality gate:
 ./scripts/quality.sh
 ```
 
-The repo enforces at least 95% line coverage for the production code path.
+The repo enforces at least 97% line coverage for the production code path.
 
 ## Public-repo readiness checklist
 

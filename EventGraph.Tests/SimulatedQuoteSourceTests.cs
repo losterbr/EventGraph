@@ -21,10 +21,12 @@ namespace EventGraph.Tests
         {
             var updates = new List<QuoteTick>();
             var source = new SimulatedQuoteSource("CONT", 50.0, 0.1, 0.0);
-            source.Tick += (_, message) => updates.Add(message);
-
             using var cts = new CancellationTokenSource();
-            cts.CancelAfter(10);
+            source.Tick += (_, message) =>
+            {
+                updates.Add(message);
+                cts.Cancel();
+            };
 
             await source.Start(0, cts.Token);
 
