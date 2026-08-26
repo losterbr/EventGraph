@@ -11,11 +11,12 @@ namespace EventGraph
     /// </summary>
     public static class NodeRegistry
     {
-        private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, ISpotQuoteNode>, ISpotQuoteNode>> Factories =
-            new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, ISpotQuoteNode>, ISpotQuoteNode>>(StringComparer.OrdinalIgnoreCase)
+        private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>> Factories =
+            new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>>(StringComparer.OrdinalIgnoreCase)
             {
                 ["SimulatedAssetSource"] = (definition, _) => new SimulatedAssetSource(definition),
-                [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName)
+                [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName),
+                [nameof(RateCurveSource)] = (definition, _) => new RateCurveSource(definition)
             };
 
         public static IReadOnlyCollection<string> SupportedTypes => [.. Factories.Keys];
@@ -25,9 +26,9 @@ namespace EventGraph
             return !string.IsNullOrWhiteSpace(type) && Factories.ContainsKey(type);
         }
 
-        public static ISpotQuoteNode CreateNode(
+        public static IGraphNode CreateNode(
             IReadOnlyDictionary<string, JsonElement> definition,
-            IReadOnlyDictionary<string, ISpotQuoteNode> nodesByName)
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
         {
             ArgumentNullException.ThrowIfNull(definition);
 
@@ -35,6 +36,22 @@ namespace EventGraph
             return !Factories.TryGetValue(type, out var factory)
                 ? throw new InvalidDataException($"Unsupported graph node type: '{type}'.")
                 : factory(definition, nodesByName);
+        }
+
+        public static IGraphNode CreateNode(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, ISpotQuoteNode> nodesByName)
+        {
+            var graphNodesByName = new Dictionary<string, IGraphNode>(StringComparer.OrdinalIgnoreCase);
+            if (nodesByName != null)
+            {
+                foreach (var pair in nodesByName)
+                {
+                    graphNodesByName[pair.Key] = pair.Value;
+                }
+            }
+
+            return CreateNode(definition, graphNodesByName);
         }
 
         private static string GetType(IReadOnlyDictionary<string, JsonElement> definition)

@@ -34,4 +34,12 @@ namespace EventGraph
 
         double Volatility { get; }
     }
+
+    /// <summary>
+    /// Represents a graph node that provides a date-based rate curve.
+    /// </summary>
+    public interface IRateCurveNode : IGraphNode
+    {
+        Func<DateTime, double> RateCurve { get; }
+    }
 }

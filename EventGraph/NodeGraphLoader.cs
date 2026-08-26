@@ -77,8 +77,8 @@ namespace EventGraph
                 }
             }
 
-            var nodesByName = new Dictionary<string, ISpotQuoteNode>(StringComparer.OrdinalIgnoreCase);
-            var resolvedOrder = new List<ISpotQuoteNode>();
+            var nodesByName = new Dictionary<string, IGraphNode>(StringComparer.OrdinalIgnoreCase);
+            var resolvedOrder = new List<IGraphNode>();
             var readyNames = new SortedSet<string>(
                 inDegreeByName.Where(pair => pair.Value == 0).Select(pair => pair.Key),
                 StringComparer.OrdinalIgnoreCase);

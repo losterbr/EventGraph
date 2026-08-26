@@ -26,11 +26,20 @@ namespace EventGraph
 
         public BasketAggregate(
             IReadOnlyDictionary<string, JsonElement> definition,
-            IReadOnlyDictionary<string, ISpotQuoteNode> nodesByName)
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
             : this(
                 GetString(definition, "name"),
                 GetConstituents(definition, nodesByName),
                 GetWeights(definition))
+        {
+        }
+
+        public BasketAggregate(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, ISpotQuoteNode> nodesByName)
+            : this(
+                definition,
+                nodesByName?.ToDictionary(pair => pair.Key, pair => (IGraphNode)pair.Value, StringComparer.OrdinalIgnoreCase))
         {
         }
 
@@ -117,7 +126,7 @@ namespace EventGraph
 
         private static List<ISpotQuoteNode> GetConstituents(
             IReadOnlyDictionary<string, JsonElement> definition,
-            IReadOnlyDictionary<string, ISpotQuoteNode> nodesByName)
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
         {
             if (definition == null || !definition.TryGetValue("names", out var names) || names.ValueKind != JsonValueKind.Array)
             {
@@ -127,7 +136,7 @@ namespace EventGraph
             var constituents = new List<ISpotQuoteNode>();
             foreach (var name in names.EnumerateArray())
             {
-                if (name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString()) || !nodesByName.TryGetValue(name.GetString(), out var constituent))
+                if (name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString()) || !nodesByName.TryGetValue(name.GetString(), out var node) || node is not ISpotQuoteNode constituent)
                 {
                     throw new InvalidDataException($"BasketAggregate references an unknown source '{name}'.");
                 }

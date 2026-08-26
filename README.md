@@ -26,6 +26,8 @@ Each JSON file in `EventGraph/graph-definition` defines one `SimulatedAssetSourc
 
 The `type` field selects the node implementation. Each node constructor owns the interpretation and validation of its complete JSON property dictionary, so adding or removing a property only requires changing that node's code. A `BasketAggregate` definition uses `name`, `names`, and `weights` to reference source nodes and assign their weights. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
 
+A `RateCurveSource` definition uses `name` and `interestRate` (for example, `0.02` for 2%). Its `RateCurve` property is a `date -> double` function implemented as `exp(interestRate * (date - today) / 365)`.
+
 Graph loading uses Kahn's algorithm to resolve dependencies. The loader builds an in-degree count for each node, processes dependency-free nodes first, and then releases dependent nodes as their prerequisites are created. This keeps startup ordering deterministic while avoiding repeated full scans of unresolved definitions.
 
 The loaded graph also exposes stable node indices through `QuoteGraph`, which gives future runtime optimizations a dense representation without replacing the current node model. More specialized graph layouts such as compressed sparse row storage or parallel execution should be considered only after profiling shows that traversal or update propagation is a bottleneck.

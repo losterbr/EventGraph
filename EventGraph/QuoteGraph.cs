@@ -11,12 +11,12 @@ namespace EventGraph
     {
         private readonly Dictionary<string, int> nodeIndexByName;
 
-        public QuoteGraph(IReadOnlyList<ISpotQuoteNode> nodes)
+        public QuoteGraph(IReadOnlyList<IGraphNode> nodes)
         {
             ArgumentNullException.ThrowIfNull(nodes);
 
-            QuoteNodes = [.. nodes];
-            Nodes = QuoteNodes;
+            Nodes = [.. nodes];
+            QuoteNodes = [.. Nodes.OfType<ISpotQuoteNode>()];
             var indices = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < Nodes.Count; i++)
             {
