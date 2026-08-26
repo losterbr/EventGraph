@@ -54,56 +54,58 @@ namespace EventGraph
                 throw new InvalidDataException($"Unsupported graph node type: '{unsupportedType}'.");
             }
 
-            var nodesByName = new Dictionary<string, IQuoteNode>(StringComparer.OrdinalIgnoreCase);
-            var remainingDefinitions = new Dictionary<string, IReadOnlyDictionary<string, JsonElement>>(definitionsByName, StringComparer.OrdinalIgnoreCase);
-            var resolvedOrder = new List<IQuoteNode>();
-
-            while (remainingDefinitions.Count > 0)
+            // Kahn's algorithm: track unresolved dependency counts and walk ready nodes in stable name order.
+            var inDegreeByName = definitionsByName.Keys.ToDictionary(name => name, _ => 0, StringComparer.OrdinalIgnoreCase);
+            var dependentsByName = definitionsByName.Keys.ToDictionary(name => name, _ => new List<string>(), StringComparer.OrdinalIgnoreCase);
+            foreach (var definition in definitionsByName.Values)
             {
-                var ready = remainingDefinitions
-                    .Where(pair => DependenciesAreSatisfied(pair.Value, nodesByName, definitionsByName))
-                    .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
-                    .Select(pair => pair.Value)
-                    .ToList();
-
-                if (ready.Count == 0)
+                var name = GetName(definition);
+                foreach (var dependencyName in GetDependencies(definition))
                 {
-                    var unresolvedNames = string.Join(", ", remainingDefinitions.Keys);
-                    throw new InvalidOperationException($"Unable to satisfy node dependencies for: {unresolvedNames}. Check for missing or cyclic references.");
-                }
+                    if (!definitionsByName.ContainsKey(dependencyName))
+                    {
+                        throw new InvalidDataException($"Node '{name}' references an unknown dependency '{dependencyName}'.");
+                    }
 
-                foreach (var definition in ready)
-                {
-                    var node = NodeRegistry.CreateNode(definition, nodesByName);
-                    nodesByName[node.Name] = node;
-                    resolvedOrder.Add(node);
-                    remainingDefinitions.Remove(GetName(definition));
+                    inDegreeByName[name]++;
+                    dependentsByName[dependencyName].Add(name);
                 }
+            }
+
+            var nodesByName = new Dictionary<string, IQuoteNode>(StringComparer.OrdinalIgnoreCase);
+            var resolvedOrder = new List<IQuoteNode>();
+            var readyNames = new SortedSet<string>(
+                inDegreeByName.Where(pair => pair.Value == 0).Select(pair => pair.Key),
+                StringComparer.OrdinalIgnoreCase);
+
+            while (readyNames.Count > 0)
+            {
+                var name = readyNames.Min;
+                readyNames.Remove(name);
+
+                var definition = definitionsByName[name];
+                var node = NodeRegistry.CreateNode(definition, nodesByName);
+                nodesByName[node.Name] = node;
+                resolvedOrder.Add(node);
+
+                foreach (var dependentName in dependentsByName[name])
+                {
+                    inDegreeByName[dependentName]--;
+                    if (inDegreeByName[dependentName] == 0)
+                    {
+                        readyNames.Add(dependentName);
+                    }
+
+                }
+            }
+
+            if (resolvedOrder.Count != definitionsByName.Count)
+            {
+                var unresolvedNames = string.Join(", ", definitionsByName.Keys.Where(name => !nodesByName.ContainsKey(name)));
+                throw new InvalidOperationException($"Unable to satisfy node dependencies for: {unresolvedNames}. Check for missing or cyclic references.");
             }
 
             return resolvedOrder;
-        }
-
-        private static bool DependenciesAreSatisfied(
-            IReadOnlyDictionary<string, JsonElement> definition,
-            Dictionary<string, IQuoteNode> nodesByName,
-            IReadOnlyDictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByName)
-        {
-            var dependencies = GetDependencies(definition);
-            foreach (var dependencyName in dependencies)
-            {
-                if (!definitionsByName.ContainsKey(dependencyName))
-                {
-                    throw new InvalidDataException($"Node '{GetName(definition)}' references an unknown dependency '{dependencyName}'.");
-                }
-
-                if (!nodesByName.ContainsKey(dependencyName))
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         private static string GetType(IReadOnlyDictionary<string, JsonElement> definition)
