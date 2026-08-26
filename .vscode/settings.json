@@ -3,6 +3,8 @@
         "dotnet test": true,
         "dotnet run": true,
         "git add": true,
-        "git commit": true
+        "git commit": true,
+        "./scripts/quality.sh": true,
+        "dotnet build": true
     }
 }
