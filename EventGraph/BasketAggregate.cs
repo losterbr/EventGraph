@@ -15,8 +15,13 @@ namespace EventGraph
         public event EventHandler<QuoteTick> Tick;
 
         private const double Epsilon = 1e-9;
-        private readonly Dictionary<string, double> spots = [];
-        private readonly Dictionary<string, double> weights = [];
+        private readonly Dictionary<IQuoteNode, int[]> constituentIndicesByNode;
+        private readonly bool[] hasLatestValue;
+        private readonly double[] latestValues;
+        private readonly object stateLock = new();
+        private readonly double[] weights;
+        private readonly int requiredConstituentCount;
+        private int availableConstituentCount;
 
         public BasketAggregate(
             IReadOnlyDictionary<string, JsonElement> definition,
@@ -45,8 +50,12 @@ namespace EventGraph
                 throw new ArgumentException("Basket must have at least one constituent.", nameof(constituents));
             }
 
-            Dependencies = constituents;
+            Dependencies = [.. constituents];
             Name = name;
+            hasLatestValue = new bool[Dependencies.Count];
+            latestValues = new double[Dependencies.Count];
+            this.weights = new double[Dependencies.Count];
+            var activeIndicesByNode = new Dictionary<IQuoteNode, List<int>>(ReferenceEqualityComparer.Instance);
 
             if (weights != null)
             {
@@ -63,36 +72,34 @@ namespace EventGraph
 
                 for (int i = 0; i < constituents.Count; i++)
                 {
-                    if (Math.Abs(weights[i]) <= Epsilon)
+                    this.weights[i] = weights[i];
+                    if (Math.Abs(this.weights[i]) <= Epsilon)
                     {
                         continue;
                     }
 
-                    this.weights[constituents[i].Name] = weights[i];
-                    if (constituents[i] is BasketAggregate basket)
-                    {
-                        basket.Tick += SpotTicked;
-                    }
-                    else
-                    {
-                        constituents[i].Tick += SpotTicked;
-                    }
+                    AddActiveIndex(activeIndicesByNode, Dependencies[i], i);
                 }
             }
             else
             {
-                foreach (var constituent in constituents)
+                for (int i = 0; i < Dependencies.Count; i++)
                 {
-                    this.weights[constituent.Name] = 1.0 / constituents.Count;
-                    if (constituent is BasketAggregate basket)
-                    {
-                        basket.Tick += SpotTicked;
-                    }
-                    else
-                    {
-                        constituent.Tick += SpotTicked;
-                    }
+                    this.weights[i] = 1.0 / Dependencies.Count;
+                    AddActiveIndex(activeIndicesByNode, Dependencies[i], i);
                 }
+            }
+
+            constituentIndicesByNode = new Dictionary<IQuoteNode, int[]>(ReferenceEqualityComparer.Instance);
+            foreach (var pair in activeIndicesByNode)
+            {
+                constituentIndicesByNode[pair.Key] = [.. pair.Value];
+            }
+
+            requiredConstituentCount = constituentIndicesByNode.Values.Sum(indexes => indexes.Length);
+            foreach (var constituent in constituentIndicesByNode.Keys)
+            {
+                constituent.Tick += SpotTicked;
             }
         }
 
@@ -157,51 +164,66 @@ namespace EventGraph
 
         public void Connect()
         {
-            foreach (var constituent in Dependencies)
+            foreach (var constituent in constituentIndicesByNode.Keys)
             {
-                if (constituent is BasketAggregate basket)
-                {
-                    basket.Tick -= SpotTicked;
-                    basket.Tick += SpotTicked;
-                }
-                else
-                {
-                    constituent.Tick -= SpotTicked;
-                    if (weights.ContainsKey(constituent.Name))
-                    {
-                        constituent.Tick += SpotTicked;
-                    }
-                }
+                constituent.Tick -= SpotTicked;
+                constituent.Tick += SpotTicked;
             }
         }
 
         public string GetWeights()
         {
-            return string.Join(", ", weights.OrderBy(x => x.Key).Select(x => $"{x.Key}={x.Value:0.###}"));
+            return string.Join(", ", Enumerable.Range(0, weights.Length)
+                .Where(index => Math.Abs(weights[index]) > Epsilon)
+                .OrderBy(index => Dependencies[index].Name, StringComparer.OrdinalIgnoreCase)
+                .Select(index => $"{Dependencies[index].Name}={weights[index]:0.###}"));
         }
 
-        private bool AllSpotsAvailable()
+        private static void AddActiveIndex(
+            Dictionary<IQuoteNode, List<int>> activeIndicesByNode,
+            IQuoteNode constituent,
+            int index)
         {
-            lock (spots)
+            if (!activeIndicesByNode.TryGetValue(constituent, out var indices))
             {
-                return spots.Count == weights.Count;
+                indices = [];
+                activeIndicesByNode[constituent] = indices;
             }
+
+            indices.Add(index);
         }
 
         private double Spot()
         {
-            lock (spots)
+            var spot = 0.0;
+            for (int i = 0; i < weights.Length; i++)
             {
-                return spots.Sum(x => weights[x.Key] * x.Value);
+                spot += weights[i] * latestValues[i];
             }
+
+            return spot;
         }
 
         private void SpotTicked(object sender, QuoteTick e)
         {
-            lock (spots)
+            if (sender is not IQuoteNode node || !constituentIndicesByNode.TryGetValue(node, out var indices))
             {
-                spots[e.Name] = e.Value;
-                if (AllSpotsAvailable())
+                return;
+            }
+
+            lock (stateLock)
+            {
+                foreach (var index in indices)
+                {
+                    latestValues[index] = e.Value;
+                    if (!hasLatestValue[index])
+                    {
+                        hasLatestValue[index] = true;
+                        availableConstituentCount++;
+                    }
+                }
+
+                if (availableConstituentCount == requiredConstituentCount)
                 {
                     var spot = Spot();
                     CurrentValue = spot;
@@ -215,17 +237,22 @@ namespace EventGraph
         {
             return Task.Run(() =>
             {
-                lock (spots)
+                lock (stateLock)
                 {
-                    foreach (var constituent in Dependencies)
+                    foreach (var indexes in constituentIndicesByNode.Values)
                     {
-                        if (weights.ContainsKey(constituent.Name))
+                        foreach (var index in indexes)
                         {
-                            spots[constituent.Name] = constituent.CurrentValue;
+                            latestValues[index] = Dependencies[index].CurrentValue;
+                            if (!hasLatestValue[index])
+                            {
+                                hasLatestValue[index] = true;
+                                availableConstituentCount++;
+                            }
                         }
                     }
 
-                    if (AllSpotsAvailable())
+                    if (availableConstituentCount == requiredConstituentCount)
                     {
                         var spot = Spot();
                         CurrentValue = spot;

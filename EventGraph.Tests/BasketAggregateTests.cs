@@ -110,6 +110,22 @@ namespace EventGraph.Tests
         }
 
         [Fact]
+        public async Task BasketAggregateIgnoresZeroWeightBasketConstituentsAfterConnect()
+        {
+            var zeroWeightSource = new SimulatedQuoteSource("ZERO", 100.0, 0.0, 0.0);
+            var activeSource = new SimulatedQuoteSource("ACTIVE", 200.0, 0.0, 0.0);
+            var zeroWeightBasket = new BasketAggregate("ZERO_BASKET", [zeroWeightSource]);
+            var basket = new BasketAggregate("BASKET", [zeroWeightBasket, activeSource], [0.0, 1.0]);
+            var updates = new List<QuoteTick>();
+            basket.Tick += (_, message) => updates.Add(message);
+
+            basket.Connect();
+            await zeroWeightBasket.RunOnceAsync();
+
+            Assert.Empty(updates);
+        }
+
+        [Fact]
         public void BasketAggregateThrowsWhenWeightsDoNotSumToOne()
         {
             var quotes = new[]
