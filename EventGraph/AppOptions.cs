@@ -7,7 +7,7 @@ namespace EventGraph
     /// </summary>
     public sealed class AppOptions
     {
-        public int TickCount { get; set; } = 0;
+        public int TickCount { get; set; }
         public bool Quiet { get; set; }
         public bool ShowHelp { get; set; }
         public bool BasketColorSpecified { get; set; }

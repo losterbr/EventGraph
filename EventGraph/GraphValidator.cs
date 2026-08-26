@@ -41,13 +41,13 @@ namespace EventGraph
                 return;
             }
 
-            visiting.Add(node);
+            _ = visiting.Add(node);
             foreach (var dependency in node.Dependencies)
             {
                 Visit(dependency, visiting, visited);
             }
 
-            visiting.Remove(node);
+            _ = visiting.Remove(node);
         }
     }
 }

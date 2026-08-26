@@ -7,7 +7,6 @@ namespace EventGraph
     /// </summary>
     public class QuoteTick : EventArgs
     {
-        private readonly string name;
         private double value;
 
         public QuoteTick(string name, double value)
@@ -17,11 +16,11 @@ namespace EventGraph
                 throw new ArgumentException("Have to provide name for QuoteTick.", nameof(name));
             }
 
-            this.name = name;
+            Name = name;
             this.value = value;
         }
 
-        public string Name => name;
+        public string Name { get; }
 
         public double Value
         {

@@ -15,11 +15,8 @@ namespace EventGraph
         public event EventHandler<QuoteTick> Tick;
 
         private const double Epsilon = 1e-9;
-
-        private readonly IReadOnlyList<IQuoteNode> constituents;
-        private readonly Dictionary<string, double> spots = new();
-        private readonly Dictionary<string, double> weights = new();
-        private readonly string name;
+        private readonly Dictionary<string, double> spots = [];
+        private readonly Dictionary<string, double> weights = [];
 
         public BasketAggregate(
             IReadOnlyDictionary<string, JsonElement> definition,
@@ -48,8 +45,8 @@ namespace EventGraph
                 throw new ArgumentException("Basket must have at least one constituent.", nameof(constituents));
             }
 
-            this.constituents = constituents;
-            this.name = name;
+            Dependencies = constituents;
+            Name = name;
 
             if (weights != null)
             {
@@ -99,25 +96,22 @@ namespace EventGraph
             }
         }
 
-        public string Name => name;
+        public string Name { get; }
 
         public string Type => "CalculatedBasket";
 
         public double CurrentValue { get; private set; }
 
-        public IReadOnlyList<IQuoteNode> Dependencies => constituents;
+        public IReadOnlyList<IQuoteNode> Dependencies { get; }
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
-            if (definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString()))
-            {
-                throw new InvalidDataException($"BasketAggregate requires a non-empty '{propertyName}' property.");
-            }
-
-            return property.GetString();
+            return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString())
+                ? throw new InvalidDataException($"BasketAggregate requires a non-empty '{propertyName}' property.")
+                : property.GetString();
         }
 
-        private static IReadOnlyList<IQuoteNode> GetConstituents(
+        private static List<IQuoteNode> GetConstituents(
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IQuoteNode> nodesByName)
         {
@@ -140,7 +134,7 @@ namespace EventGraph
             return constituents;
         }
 
-        private static IReadOnlyList<double> GetWeights(IReadOnlyDictionary<string, JsonElement> definition)
+        private static List<double> GetWeights(IReadOnlyDictionary<string, JsonElement> definition)
         {
             if (definition == null || !definition.TryGetValue("weights", out var weights) || weights.ValueKind != JsonValueKind.Array)
             {
@@ -163,7 +157,7 @@ namespace EventGraph
 
         public void Connect()
         {
-            foreach (var constituent in constituents)
+            foreach (var constituent in Dependencies)
             {
                 if (constituent is BasketAggregate basket)
                 {
@@ -211,7 +205,7 @@ namespace EventGraph
                 {
                     var spot = Spot();
                     CurrentValue = spot;
-                    var quoteTick = new QuoteTick(name, spot);
+                    var quoteTick = new QuoteTick(Name, spot);
                     Tick?.Invoke(this, quoteTick);
                 }
             }
@@ -223,7 +217,7 @@ namespace EventGraph
             {
                 lock (spots)
                 {
-                    foreach (var constituent in constituents)
+                    foreach (var constituent in Dependencies)
                     {
                         if (weights.ContainsKey(constituent.Name))
                         {
@@ -235,7 +229,7 @@ namespace EventGraph
                     {
                         var spot = Spot();
                         CurrentValue = spot;
-                        var quoteTick = new QuoteTick(name, spot);
+                        var quoteTick = new QuoteTick(Name, spot);
                         Tick?.Invoke(this, quoteTick);
                     }
                 }

@@ -6,12 +6,12 @@ namespace EventGraph
     /// <summary>
     /// Subscribes to quote updates and prints them to the console.
     /// </summary>
-    public class QuoteSubscriber
+    public class QuoteSubscriber(bool quiet = false, ConsoleColor? basketColor = null)
     {
         private const int NodeIdentifierWidth = 40;
         private static readonly object ConsoleLock = new();
         private static readonly ConsoleColor[] SourceColors =
-        {
+        [
             ConsoleColor.DarkBlue,
             ConsoleColor.DarkGreen,
             ConsoleColor.DarkCyan,
@@ -26,19 +26,13 @@ namespace EventGraph
             ConsoleColor.Yellow,
             ConsoleColor.Gray,
             ConsoleColor.DarkGray
-        };
+        ];
 
-        private readonly bool quiet;
-        private readonly ConsoleColor? basketColorOverride;
+        private readonly bool quiet = quiet;
+        private readonly ConsoleColor? basketColorOverride = basketColor;
         private readonly Dictionary<IQuoteNode, ConsoleColor> nodeColors = new(ReferenceEqualityComparer.Instance);
         private int nextSourceColor;
         private int nextBasketColor;
-
-        public QuoteSubscriber(bool quiet = false, ConsoleColor? basketColor = null)
-        {
-            this.quiet = quiet;
-            this.basketColorOverride = basketColor;
-        }
 
         public void Subscribe(SimulatedQuoteSource quote)
         {
@@ -89,12 +83,9 @@ namespace EventGraph
 
         private static string FormatNodeIdentifier(string identifier)
         {
-            if (identifier.Length > NodeIdentifierWidth)
-            {
-                return identifier[..(NodeIdentifierWidth - 3)] + "...";
-            }
-
-            return identifier.PadRight(NodeIdentifierWidth);
+            return identifier.Length > NodeIdentifierWidth
+                ? identifier[..(NodeIdentifierWidth - 3)] + "..."
+                : identifier.PadRight(NodeIdentifierWidth);
         }
 
         private static void WriteTimestamp()

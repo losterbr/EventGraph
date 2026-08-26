@@ -15,11 +15,8 @@ namespace EventGraph
         public event EventHandler<QuoteTick> Tick;
 
         private const double MilliSecondsPerYear = 365.25 * 24.0 * 60.0 * 60.0 * 1000.0;
-
-        private readonly string name;
         private readonly double vol;
         private readonly double meanTickTimeSeconds;
-        private double currentValue;
 
         public SimulatedQuoteSource(IReadOnlyDictionary<string, JsonElement> definition)
             : this(
@@ -52,38 +49,32 @@ namespace EventGraph
                 throw new ArgumentOutOfRangeException(nameof(meanTickTimeSeconds), "Mean tick time must be a non-negative finite number.");
             }
 
-            this.name = name;
-            this.currentValue = spot;
+            Name = name;
+            CurrentValue = spot;
             this.vol = vol;
             this.meanTickTimeSeconds = meanTickTimeSeconds;
         }
 
-        public string Name => name;
+        public string Name { get; }
 
         public string Type => "SimulatedSpot";
 
-        public double CurrentValue => currentValue;
+        public double CurrentValue { get; private set; }
 
-        public IReadOnlyList<IQuoteNode> Dependencies => Array.Empty<IQuoteNode>();
+        public IReadOnlyList<IQuoteNode> Dependencies => [];
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
-            if (definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString()))
-            {
-                throw new InvalidDataException($"SimulatedQuoteSource requires a non-empty '{propertyName}' property.");
-            }
-
-            return property.GetString();
+            return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString())
+                ? throw new InvalidDataException($"SimulatedQuoteSource requires a non-empty '{propertyName}' property.")
+                : property.GetString();
         }
 
         private static double GetDouble(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
-            if (definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.Number || !property.TryGetDouble(out var value))
-            {
-                throw new InvalidDataException($"SimulatedQuoteSource requires a numeric '{propertyName}' property.");
-            }
-
-            return value;
+            return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.Number || !property.TryGetDouble(out var value)
+                ? throw new InvalidDataException($"SimulatedQuoteSource requires a numeric '{propertyName}' property.")
+                : value;
         }
 
         private double IncrStdDev(double tMilliSeconds)
@@ -103,7 +94,7 @@ namespace EventGraph
                 ? null
                 : new MathNet.Numerics.Distributions.Poisson(poissonLambda);
             var normalDist = new MathNet.Numerics.Distributions.Normal(0.0, 1.0);
-            var quoteTick = new QuoteTick(name, currentValue);
+            var quoteTick = new QuoteTick(Name, CurrentValue);
 
             await Task.Run(() =>
             {
@@ -119,8 +110,8 @@ namespace EventGraph
                     // This is the standard lognormal/Itô adjustment for a GBM-style spot process.
                     // A separate convexity adjustment would be applied at the payoff/forward level,
                     // not as an extra term in the underlying spot simulation itself.
-                    quoteTick.Value *= Math.Exp(stdDev * normalDist.Sample() + logDriftAdjustment);
-                    currentValue = quoteTick.Value;
+                    quoteTick.Value *= Math.Exp((stdDev * normalDist.Sample()) + logDriftAdjustment);
+                    CurrentValue = quoteTick.Value;
                     Sleep(timeStepMilliSeconds);
                     Tick?.Invoke(this, quoteTick);
                     emittedTicks++;

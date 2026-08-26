@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 
 namespace EventGraph
@@ -19,7 +18,7 @@ namespace EventGraph
                 [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName)
             };
 
-        public static IReadOnlyCollection<string> SupportedTypes => Factories.Keys.ToArray();
+        public static IReadOnlyCollection<string> SupportedTypes => [.. Factories.Keys];
 
         public static bool IsSupportedType(string type)
         {
@@ -33,22 +32,16 @@ namespace EventGraph
             ArgumentNullException.ThrowIfNull(definition);
 
             var type = GetType(definition);
-            if (!Factories.TryGetValue(type, out var factory))
-            {
-                throw new InvalidDataException($"Unsupported graph node type: '{type}'.");
-            }
-
-            return factory(definition, nodesByName);
+            return !Factories.TryGetValue(type, out var factory)
+                ? throw new InvalidDataException($"Unsupported graph node type: '{type}'.")
+                : factory(definition, nodesByName);
         }
 
         private static string GetType(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            if (!definition.TryGetValue("type", out var type) || type.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(type.GetString()))
-            {
-                throw new InvalidDataException("Every graph definition must provide a non-empty string type.");
-            }
-
-            return type.GetString();
+            return !definition.TryGetValue("type", out var type) || type.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(type.GetString())
+                ? throw new InvalidDataException("Every graph definition must provide a non-empty string type.")
+                : type.GetString();
         }
     }
 }
