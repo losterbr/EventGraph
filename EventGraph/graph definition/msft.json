@@ -1,7 +1,0 @@
-{
-  "type": "SimulatedQuoteSource",
-  "name": "MSFT",
-  "spot": 505.0,
-  "volatility": 0.25,
-  "meanTickTimeSeconds": 4.0
-}

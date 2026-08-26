@@ -1,7 +1,0 @@
-{
-  "type": "SimulatedQuoteSource",
-  "name": "COST",
-  "spot": 980.0,
-  "volatility": 0.2,
-  "meanTickTimeSeconds": 6.0
-}
