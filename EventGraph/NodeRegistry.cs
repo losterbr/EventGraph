@@ -30,10 +30,7 @@ namespace EventGraph
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IQuoteNode> nodesByName)
         {
-            if (definition == null)
-            {
-                throw new ArgumentNullException(nameof(definition));
-            }
+            ArgumentNullException.ThrowIfNull(definition);
 
             var type = GetType(definition);
             if (!Factories.TryGetValue(type, out var factory))

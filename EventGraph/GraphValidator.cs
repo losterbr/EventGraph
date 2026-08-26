@@ -10,10 +10,7 @@ namespace EventGraph
     {
         public static void EnsureAcyclic(IEnumerable<IQuoteNode> roots)
         {
-            if (roots == null)
-            {
-                throw new ArgumentNullException(nameof(roots));
-            }
+            ArgumentNullException.ThrowIfNull(roots);
 
             var visiting = new HashSet<IQuoteNode>(ReferenceEqualityComparer.Instance);
             var visited = new HashSet<IQuoteNode>(ReferenceEqualityComparer.Instance);
