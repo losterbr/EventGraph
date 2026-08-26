@@ -14,7 +14,7 @@ namespace EventGraph
         private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, ISpotQuoteNode>, ISpotQuoteNode>> Factories =
             new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, ISpotQuoteNode>, ISpotQuoteNode>>(StringComparer.OrdinalIgnoreCase)
             {
-                [nameof(SimulatedQuoteSource)] = (definition, _) => new SimulatedQuoteSource(definition),
+                ["SimulatedAssetSource"] = (definition, _) => new SimulatedAssetSource(definition),
                 [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName)
             };
 

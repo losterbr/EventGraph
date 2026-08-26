@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedQuoteSource",
+  "type": "SimulatedAssetSource",
   "name": "COST",
   "spot": 980.0,
   "volatility": 0.2,

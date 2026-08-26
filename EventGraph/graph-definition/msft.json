@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedQuoteSource",
+  "type": "SimulatedAssetSource",
   "name": "MSFT",
   "spot": 505.0,
   "volatility": 0.25,

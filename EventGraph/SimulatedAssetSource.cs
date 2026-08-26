@@ -8,9 +8,9 @@ using System.Text.Json;
 namespace EventGraph
 {
     /// <summary>
-    /// Simulates a market quote and raises tick events over time.
+    /// Simulates a market spot and volatility quote and raises tick events over time.
     /// </summary>
-    public class SimulatedQuoteSource : ISpotQuoteNode, IVolQuoteNode
+    public class SimulatedAssetSource : ISpotQuoteNode, IVolQuoteNode
     {
         public event EventHandler<QuoteTick> SpotTick;
 
@@ -23,7 +23,7 @@ namespace EventGraph
         private const double MilliSecondsPerYear = 365.25 * 24.0 * 60.0 * 60.0 * 1000.0;
         private readonly double meanTickTimeSeconds;
 
-        public SimulatedQuoteSource(IReadOnlyDictionary<string, JsonElement> definition)
+        public SimulatedAssetSource(IReadOnlyDictionary<string, JsonElement> definition)
             : this(
                 GetString(definition, "name"),
                 GetDouble(definition, "spot"),
@@ -32,7 +32,7 @@ namespace EventGraph
         {
         }
 
-        public SimulatedQuoteSource(string name, double spot, double vol, double meanTickTimeSeconds = 1.0)
+        public SimulatedAssetSource(string name, double spot, double vol, double meanTickTimeSeconds = 1.0)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -73,14 +73,14 @@ namespace EventGraph
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
             return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString())
-                ? throw new InvalidDataException($"SimulatedQuoteSource requires a non-empty '{propertyName}' property.")
+                ? throw new InvalidDataException($"SimulatedAssetSource requires a non-empty '{propertyName}' property.")
                 : property.GetString();
         }
 
         private static double GetDouble(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
             return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.Number || !property.TryGetDouble(out var value)
-                ? throw new InvalidDataException($"SimulatedQuoteSource requires a numeric '{propertyName}' property.")
+                ? throw new InvalidDataException($"SimulatedAssetSource requires a numeric '{propertyName}' property.")
                 : value;
         }
 

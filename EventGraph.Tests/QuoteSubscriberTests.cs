@@ -33,7 +33,7 @@ namespace EventGraph.Tests
             {
                 Console.SetOut(output);
                 var subscriber = new QuoteSubscriber();
-                var source = new SimulatedQuoteSource("XYZ", 100.0, 0.0, 0.0);
+                var source = new SimulatedAssetSource("XYZ", 100.0, 0.0, 0.0);
 
                 subscriber.Subscribe(source);
                 await source.Start(1);
@@ -51,10 +51,10 @@ namespace EventGraph.Tests
 
                 var sources = new[]
                 {
-                    new SimulatedQuoteSource("TSLA", 100.0, 0.0, 0.0),
-                    new SimulatedQuoteSource("GOOG", 200.0, 0.0, 0.0),
-                    new SimulatedQuoteSource("AMZN", 300.0, 0.0, 0.0),
-                    new SimulatedQuoteSource("MSFT", 400.0, 0.0, 0.0)
+                    new SimulatedAssetSource("TSLA", 100.0, 0.0, 0.0),
+                    new SimulatedAssetSource("GOOG", 200.0, 0.0, 0.0),
+                    new SimulatedAssetSource("AMZN", 300.0, 0.0, 0.0),
+                    new SimulatedAssetSource("MSFT", 400.0, 0.0, 0.0)
                 };
 
                 var basket = new BasketAggregate(sources);
@@ -86,9 +86,9 @@ namespace EventGraph.Tests
                 var subscriber = new QuoteSubscriber();
                 var sources = new[]
                 {
-                    new SimulatedQuoteSource("A", 100.0, 0.0, 0.0),
-                    new SimulatedQuoteSource("B", 200.0, 0.0, 0.0),
-                    new SimulatedQuoteSource("C", 300.0, 0.0, 0.0)
+                    new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
+                    new SimulatedAssetSource("B", 200.0, 0.0, 0.0),
+                    new SimulatedAssetSource("C", 300.0, 0.0, 0.0)
                 };
 
                 foreach (var source in sources)
@@ -124,8 +124,8 @@ namespace EventGraph.Tests
                 var subscriber = new QuoteSubscriber();
                 var sources = new[]
                 {
-                    new SimulatedQuoteSource("A", 100.0, 0.0, 0.0),
-                    new SimulatedQuoteSource("B", 200.0, 0.0, 0.0)
+                    new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
+                    new SimulatedAssetSource("B", 200.0, 0.0, 0.0)
                 };
 
                 subscriber.Subscribe(sources[0]);
@@ -172,7 +172,7 @@ namespace EventGraph.Tests
                 ConsoleColor.DarkGray
             };
             var sources = Enumerable.Range(0, expectedPalette.Length + 1)
-                .Select(index => new SimulatedQuoteSource($"SOURCE_{index}", 100.0, 0.0, 0.0))
+                .Select(index => new SimulatedAssetSource($"SOURCE_{index}", 100.0, 0.0, 0.0))
                 .ToArray();
             var baskets = sources
                 .Select((source, index) => new BasketAggregate($"BASKET_{index}", [source]))
@@ -209,7 +209,7 @@ namespace EventGraph.Tests
             {
                 Console.SetOut(output);
                 var quietSubscriber = new QuoteSubscriber(quiet: true);
-                var source = new SimulatedQuoteSource("XYZ", 100.0, 0.0, 0.0);
+                var source = new SimulatedAssetSource("XYZ", 100.0, 0.0, 0.0);
 
                 quietSubscriber.Subscribe(source);
                 await source.Start(1);
@@ -220,8 +220,8 @@ namespace EventGraph.Tests
                 var coloredSubscriber = new QuoteSubscriber(quiet: false, basketColor: ConsoleColor.Red);
                 var sources = new[]
                 {
-                    new SimulatedQuoteSource("A", 100.0, 0.0, 0.0),
-                    new SimulatedQuoteSource("B", 200.0, 0.0, 0.0)
+                    new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
+                    new SimulatedAssetSource("B", 200.0, 0.0, 0.0)
                 };
                 var basket = new BasketAggregate(sources);
 
@@ -245,7 +245,7 @@ namespace EventGraph.Tests
 
             try
             {
-                File.WriteAllText(Path.Combine(directory, "a.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedQuoteSource\",\"name\":\"A\",\"spot\":10,\"volatility\":0,\"meanTickTimeSeconds\":1}");
+                File.WriteAllText(Path.Combine(directory, "a.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedAssetSource\",\"name\":\"A\",\"spot\":10,\"volatility\":0,\"meanTickTimeSeconds\":1}");
                 File.WriteAllText(Path.Combine(directory, "b.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"names\":[\"A\"],\"weights\":[1.0]}");
                 File.WriteAllText(Path.Combine(directory, "c.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"C\",\"names\":[\"B\"],\"weights\":[1.0]}");
 
@@ -276,8 +276,8 @@ namespace EventGraph.Tests
 
             try
             {
-                File.WriteAllText(Path.Combine(directory, "alpha.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedQuoteSource\",\"name\":\"ALPHA\",\"spot\":10,\"volatility\":0,\"meanTickTimeSeconds\":1}");
-                File.WriteAllText(Path.Combine(directory, "beta.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedQuoteSource\",\"name\":\"BETA\",\"spot\":20,\"volatility\":0,\"meanTickTimeSeconds\":1}");
+                File.WriteAllText(Path.Combine(directory, "alpha.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedAssetSource\",\"name\":\"ALPHA\",\"spot\":10,\"volatility\":0,\"meanTickTimeSeconds\":1}");
+                File.WriteAllText(Path.Combine(directory, "beta.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedAssetSource\",\"name\":\"BETA\",\"spot\":20,\"volatility\":0,\"meanTickTimeSeconds\":1}");
                 File.WriteAllText(Path.Combine(directory, "mix.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"MIX\",\"names\":[\"ALPHA\",\"BETA\"],\"weights\":[0.5,0.5]}");
                 File.WriteAllText(Path.Combine(directory, "combo.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"COMBO\",\"names\":[\"MIX\"],\"weights\":[1.0]}");
 
@@ -304,8 +304,8 @@ namespace EventGraph.Tests
             {
                 Console.SetOut(output);
 
-                var baseSource = new SimulatedQuoteSource("BASE", 100.0, 0.0, 0.0);
-                var childSource = new SimulatedQuoteSource("CHILD", 200.0, 0.0, 0.0);
+                var baseSource = new SimulatedAssetSource("BASE", 100.0, 0.0, 0.0);
+                var childSource = new SimulatedAssetSource("CHILD", 200.0, 0.0, 0.0);
                 var parent = new BasketAggregate("PARENT", [baseSource]);
                 var child = new BasketAggregate("CHILD_BASKET", [parent, childSource]);
                 var subscriber = new QuoteSubscriber();
@@ -345,10 +345,10 @@ namespace EventGraph.Tests
             {
                 Console.SetOut(output);
 
-                var sourceA = new SimulatedQuoteSource("A", 100.0, 0.0, 0.0);
-                var sourceB = new SimulatedQuoteSource("B", 200.0, 0.0, 0.0);
-                var sourceC = new SimulatedQuoteSource("C", 300.0, 0.0, 0.0);
-                var sourceD = new SimulatedQuoteSource("D", 400.0, 0.0, 0.0);
+                var sourceA = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
+                var sourceB = new SimulatedAssetSource("B", 200.0, 0.0, 0.0);
+                var sourceC = new SimulatedAssetSource("C", 300.0, 0.0, 0.0);
+                var sourceD = new SimulatedAssetSource("D", 400.0, 0.0, 0.0);
 
                 var parent = new BasketAggregate("PARENT", [sourceA, sourceB]);
                 var child = new BasketAggregate("CHILD", [parent, sourceC]);
@@ -363,7 +363,7 @@ namespace EventGraph.Tests
                     }
                     else
                     {
-                        subscriber.Subscribe((SimulatedQuoteSource)source);
+                        subscriber.Subscribe((SimulatedAssetSource)source);
                     }
                 }
 
@@ -405,10 +405,10 @@ namespace EventGraph.Tests
             {
                 Console.SetOut(output);
 
-                var sourceA = new SimulatedQuoteSource("A", 100.0, 0.0, 0.0);
-                var sourceB = new SimulatedQuoteSource("B", 200.0, 0.0, 0.0);
-                var sourceC = new SimulatedQuoteSource("C", 300.0, 0.0, 0.0);
-                var sourceD = new SimulatedQuoteSource("D", 400.0, 0.0, 0.0);
+                var sourceA = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
+                var sourceB = new SimulatedAssetSource("B", 200.0, 0.0, 0.0);
+                var sourceC = new SimulatedAssetSource("C", 300.0, 0.0, 0.0);
+                var sourceD = new SimulatedAssetSource("D", 400.0, 0.0, 0.0);
 
                 var leftParent = new BasketAggregate("LEFT_PARENT", [sourceA, sourceB]);
                 var rightParent = new BasketAggregate("RIGHT_PARENT", [sourceC, sourceD]);

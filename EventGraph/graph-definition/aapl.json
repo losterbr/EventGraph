@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedQuoteSource",
+  "type": "SimulatedAssetSource",
   "name": "AAPL",
   "spot": 225.0,
   "volatility": 0.28,

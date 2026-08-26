@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedQuoteSource",
+  "type": "SimulatedAssetSource",
   "name": "NVDA",
   "spot": 180.0,
   "volatility": 0.45,

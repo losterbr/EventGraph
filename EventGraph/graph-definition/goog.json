@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedQuoteSource",
+  "type": "SimulatedAssetSource",
   "name": "GOOG",
   "spot": 190.0,
   "volatility": 0.3,

@@ -7,7 +7,7 @@ namespace EventGraph.Tests
         [Fact]
         public void SupportedTypesIncludeRegisteredNodeTypes()
         {
-            Assert.Contains(nameof(SimulatedQuoteSource), NodeRegistry.SupportedTypes);
+            Assert.Contains("SimulatedAssetSource", NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(BasketAggregate), NodeRegistry.SupportedTypes);
         }
 
@@ -15,15 +15,15 @@ namespace EventGraph.Tests
         public void IsSupportedTypeRejectsBlankNamesAndMatchesCaseInsensitively()
         {
             Assert.False(NodeRegistry.IsSupportedType(" "));
-            Assert.True(NodeRegistry.IsSupportedType("simulatedquotesource"));
+            Assert.True(NodeRegistry.IsSupportedType("simulatedassetsource"));
         }
 
         [Fact]
-        public void CreateNodeCreatesSimulatedQuoteSource()
+        public void CreateNodeCreatesSimulatedAssetSource()
         {
             using var definition = JsonDocument.Parse("""
         {
-          "type": "SimulatedQuoteSource",
+          "type": "SimulatedAssetSource",
           "name": "A",
           "spot": 100,
           "volatility": 0.2,
@@ -33,14 +33,14 @@ namespace EventGraph.Tests
 
             var node = NodeRegistry.CreateNode(ToDictionary(definition), new Dictionary<string, ISpotQuoteNode>());
 
-            var source = Assert.IsType<SimulatedQuoteSource>(node);
+            var source = Assert.IsType<SimulatedAssetSource>(node);
             Assert.Equal("A", source.Name);
         }
 
         [Fact]
         public void CreateNodeCreatesBasketAggregate()
         {
-            var source = new SimulatedQuoteSource("A", 100.0, 0.0, 0.0);
+            var source = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
             using var definition = JsonDocument.Parse("""
         {
           "type": "BasketAggregate",

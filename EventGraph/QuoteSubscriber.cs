@@ -34,7 +34,7 @@ namespace EventGraph
         private int nextSourceColor;
         private int nextBasketColor;
 
-        public void Subscribe(SimulatedQuoteSource quote)
+        public void Subscribe(SimulatedAssetSource quote)
         {
             quote.SpotTick += SpotTicked;
             nodeColors[quote] = SourceColors[nextSourceColor++ % SourceColors.Length];

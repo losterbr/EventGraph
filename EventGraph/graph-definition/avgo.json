@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedQuoteSource",
+  "type": "SimulatedAssetSource",
   "name": "AVGO",
   "spot": 300.0,
   "volatility": 0.4,

@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedQuoteSource",
+  "type": "SimulatedAssetSource",
   "name": "TSLA",
   "spot": 350.0,
   "volatility": 0.55,

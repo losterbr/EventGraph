@@ -2,13 +2,13 @@ using System.Text.Json;
 
 namespace EventGraph.Tests
 {
-    public class SimulatedQuoteSourceTests
+    public class SimulatedAssetSourceTests
     {
         [Fact]
-        public async Task SimulatedQuoteSourceCanRunMultipleTicks()
+        public async Task SimulatedAssetSourceCanRunMultipleTicks()
         {
             var updates = new List<QuoteTick>();
-            var source = new SimulatedQuoteSource("XYZ", 100.0, 0.2, 0.0);
+            var source = new SimulatedAssetSource("XYZ", 100.0, 0.2, 0.0);
             source.SpotTick += (_, message) => updates.Add(message);
 
             await source.Start(2);
@@ -17,10 +17,10 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public async Task SimulatedQuoteSourceCanRunInContinuousModeUntilCancelled()
+        public async Task SimulatedAssetSourceCanRunInContinuousModeUntilCancelled()
         {
             var updates = new List<QuoteTick>();
-            var source = new SimulatedQuoteSource("CONT", 50.0, 0.1, 0.0);
+            var source = new SimulatedAssetSource("CONT", 50.0, 0.1, 0.0);
             using var cts = new CancellationTokenSource();
             source.SpotTick += (_, message) =>
             {
@@ -34,13 +34,13 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void SimulatedQuoteSourceRejectsInvalidName()
+        public void SimulatedAssetSourceRejectsInvalidName()
         {
-            _ = Assert.Throws<ArgumentException>(() => new SimulatedQuoteSource(" ", 100.0, 0.1));
+            _ = Assert.Throws<ArgumentException>(() => new SimulatedAssetSource(" ", 100.0, 0.1));
         }
 
         [Fact]
-        public void SimulatedQuoteSourceRejectsDefinitionsWithoutNames()
+        public void SimulatedAssetSourceRejectsDefinitionsWithoutNames()
         {
             using var definition = JsonDocument.Parse("""
         {
@@ -51,23 +51,23 @@ namespace EventGraph.Tests
         """);
 
             var exception = Assert.Throws<InvalidDataException>(() =>
-                new SimulatedQuoteSource(ToDictionary(definition)));
+                new SimulatedAssetSource(ToDictionary(definition)));
 
             Assert.Contains("name", exception.Message);
         }
 
         [Fact]
-        public void SimulatedQuoteSourceHasTheExpectedType()
+        public void SimulatedAssetSourceHasTheExpectedType()
         {
-            var source = new SimulatedQuoteSource("TYPE", 100.0, 0.1);
+            var source = new SimulatedAssetSource("TYPE", 100.0, 0.1);
 
             Assert.Equal("SimulatedSpot", source.Type);
         }
 
         [Fact]
-        public void SimulatedQuoteSourceExposesVolatilityQuote()
+        public void SimulatedAssetSourceExposesVolatilityQuote()
         {
-            var source = new SimulatedQuoteSource("VOL", 100.0, 0.25);
+            var source = new SimulatedAssetSource("VOL", 100.0, 0.25);
 
             var volNode = Assert.IsAssignableFrom<IVolQuoteNode>(source);
             var spotNode = Assert.IsAssignableFrom<ISpotQuoteNode>(source);
@@ -76,27 +76,27 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void SimulatedQuoteSourceRejectsInvalidStartingSpot()
+        public void SimulatedAssetSourceRejectsInvalidStartingSpot()
         {
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedQuoteSource("A", double.NaN, 0.1));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", double.NaN, 0.1));
         }
 
         [Fact]
-        public void SimulatedQuoteSourceRejectsNegativeVolatility()
+        public void SimulatedAssetSourceRejectsNegativeVolatility()
         {
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedQuoteSource("A", 100.0, -0.1));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", 100.0, -0.1));
         }
 
         [Fact]
-        public void SimulatedQuoteSourceRejectsNegativeMeanTickTime()
+        public void SimulatedAssetSourceRejectsNegativeMeanTickTime()
         {
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedQuoteSource("A", 100.0, 0.1, -1.0));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", 100.0, 0.1, -1.0));
         }
 
         [Fact]
-        public async Task SimulatedQuoteSourceEmitsInitialValueBeforeMovement()
+        public async Task SimulatedAssetSourceEmitsInitialValueBeforeMovement()
         {
-            var source = new SimulatedQuoteSource("INIT", 100.0, 0.0, 0.0);
+            var source = new SimulatedAssetSource("INIT", 100.0, 0.0, 0.0);
             QuoteTick? message = null;
             source.SpotTick += (_, update) => message = update;
 

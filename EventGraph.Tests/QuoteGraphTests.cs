@@ -17,8 +17,8 @@ namespace EventGraph.Tests
         [Fact]
         public void QuoteGraphRejectsDuplicateNamesCaseInsensitively()
         {
-            var first = new SimulatedQuoteSource("A", 100.0, 0.0, 0.0);
-            var second = new SimulatedQuoteSource("a", 200.0, 0.0, 0.0);
+            var first = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
+            var second = new SimulatedAssetSource("a", 200.0, 0.0, 0.0);
 
             _ = Assert.Throws<ArgumentException>(() => new QuoteGraph([first, second]));
         }
@@ -26,7 +26,7 @@ namespace EventGraph.Tests
         [Fact]
         public void QuoteGraphRejectsDependenciesOutsideTheGraph()
         {
-            var source = new SimulatedQuoteSource("A", 100.0, 0.0, 0.0);
+            var source = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
             var basket = new BasketAggregate("BASKET", [source]);
 
             _ = Assert.Throws<KeyNotFoundException>(() => new QuoteGraph([basket]));
@@ -35,7 +35,7 @@ namespace EventGraph.Tests
         [Fact]
         public void GetIndexRejectsUnknownNodeNames()
         {
-            var source = new SimulatedQuoteSource("A", 100.0, 0.0, 0.0);
+            var source = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
             var graph = new QuoteGraph([source]);
 
             _ = Assert.Throws<KeyNotFoundException>(() => graph.GetIndex("Missing"));
@@ -44,8 +44,8 @@ namespace EventGraph.Tests
         [Fact]
         public void QuoteGraphExposesDependentIndices()
         {
-            var sourceA = new SimulatedQuoteSource("A", 100.0, 0.0, 0.0);
-            var sourceB = new SimulatedQuoteSource("B", 200.0, 0.0, 0.0);
+            var sourceA = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
+            var sourceB = new SimulatedAssetSource("B", 200.0, 0.0, 0.0);
             var parent = new BasketAggregate("PARENT", [sourceA, sourceB]);
             var child = new BasketAggregate("CHILD", [parent]);
             var graph = new QuoteGraph([sourceA, sourceB, parent, child]);

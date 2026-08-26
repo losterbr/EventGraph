@@ -10,7 +10,7 @@ namespace EventGraph.Tests
             {
                 File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ """
             {
-                            "type": "SimulatedQuoteSource",
+                            "type": "SimulatedAssetSource",
               "name": "JSON",
               "spot": 123.0,
               "volatility": 0.15,
@@ -155,7 +155,7 @@ namespace EventGraph.Tests
             var directory = CreateDirectory();
             try
             {
-                File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedQuoteSource\",\"name\":\"A\",\"spot\":100}");
+                File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedAssetSource\",\"name\":\"A\",\"spot\":100}");
 
                 var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
 
@@ -331,7 +331,7 @@ namespace EventGraph.Tests
 
         private static void WriteDefinition(string directory, string fileName, string name)
         {
-            File.WriteAllText(Path.Combine(directory, fileName), $"{{\"type\":\"SimulatedQuoteSource\",\"name\":\"{name}\",\"spot\":100,\"volatility\":0.2,\"meanTickTimeSeconds\":1}}");
+            File.WriteAllText(Path.Combine(directory, fileName), $"{{\"type\":\"SimulatedAssetSource\",\"name\":\"{name}\",\"spot\":100,\"volatility\":0.2,\"meanTickTimeSeconds\":1}}");
         }
     }
 }

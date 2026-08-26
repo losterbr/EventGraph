@@ -4,7 +4,7 @@ EventGraph is a small .NET sample that demonstrates an event-driven market quote
 
 ## Overview
 
-- Simulates stock-like quotes with `SimulatedQuoteSource`.
+- Simulates stock-like assets with `SimulatedAssetSource`.
 - Subscribes the same `QuoteSubscriber` to both individual quotes and an aggregated basket.
 - Emits basket updates only after all constituent values are available for the current cycle.
 - Validates the graph-node dependency graph at startup and rejects cycles before processing begins.
@@ -12,11 +12,11 @@ EventGraph is a small .NET sample that demonstrates an event-driven market quote
 
 ### Graph definitions
 
-Each JSON file in `EventGraph/graph-definition` defines one `SimulatedQuoteSource`. The required fields are:
+Each JSON file in `EventGraph/graph-definition` defines one `SimulatedAssetSource`. The required fields are:
 
 ```json
 {
-	"type": "SimulatedQuoteSource",
+	"type": "SimulatedAssetSource",
 	"name": "TSLA",
 	"spot": 800.0,
 	"volatility": 0.2,
@@ -94,7 +94,7 @@ The repo enforces at least 97% line coverage for the production code path.
 ## Public-repo readiness checklist
 
 - Source is organized around a single library and a focused test project.
-- Test naming follows production types (`AppOptions`, `BasketAggregate`, `QuoteSubscriber`, `SimulatedQuoteSource`, `QuoteTick`).
+- Test naming follows production types (`AppOptions`, `BasketAggregate`, `QuoteSubscriber`, `SimulatedAssetSource`, `QuoteTick`).
 - Coverage, quality checks, and clean test execution are included in the repo workflow.
 - The project includes a permissive open-source license in the root of the repository.
 - No secrets, credentials, or local-only environment artifacts are required to build or run the sample.

@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedQuoteSource",
+  "type": "SimulatedAssetSource",
   "name": "NFLX",
   "spot": 1200.0,
   "volatility": 0.35,
