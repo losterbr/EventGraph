@@ -159,18 +159,29 @@ public class QuoteSubscriberTests
     public void QuoteSubscriberCyclesDefaultColorsAcrossSourcesAndBaskets()
     {
         var subscriber = new QuoteSubscriber();
-        var sources = new[]
+        var expectedPalette = new[]
         {
-            new SimulatedQuoteSource("A", 100.0, 0.0, 0.0),
-            new SimulatedQuoteSource("B", 200.0, 0.0, 0.0),
-            new SimulatedQuoteSource("C", 300.0, 0.0, 0.0)
+            ConsoleColor.DarkBlue,
+            ConsoleColor.DarkGreen,
+            ConsoleColor.DarkCyan,
+            ConsoleColor.DarkRed,
+            ConsoleColor.DarkMagenta,
+            ConsoleColor.DarkYellow,
+            ConsoleColor.Blue,
+            ConsoleColor.Green,
+            ConsoleColor.Cyan,
+            ConsoleColor.Red,
+            ConsoleColor.Magenta,
+            ConsoleColor.Yellow,
+            ConsoleColor.Gray,
+            ConsoleColor.DarkGray
         };
-        var baskets = new[]
-        {
-            new BasketAggregate("PARENT_A", new IQuoteNode[] { sources[0] }),
-            new BasketAggregate("PARENT_B", new IQuoteNode[] { sources[1] }),
-            new BasketAggregate("PARENT_C", new IQuoteNode[] { sources[2] })
-        };
+        var sources = Enumerable.Range(0, expectedPalette.Length + 1)
+            .Select(index => new SimulatedQuoteSource($"SOURCE_{index}", 100.0, 0.0, 0.0))
+            .ToArray();
+        var baskets = sources
+            .Select((source, index) => new BasketAggregate($"BASKET_{index}", new IQuoteNode[] { source }))
+            .ToArray();
 
         foreach (var source in sources)
         {
@@ -185,8 +196,11 @@ public class QuoteSubscriberTests
         var colorsField = typeof(QuoteSubscriber).GetField("nodeColors", BindingFlags.Instance | BindingFlags.NonPublic);
         var nodeColors = (IDictionary<IQuoteNode, ConsoleColor>)colorsField!.GetValue(subscriber)!;
 
-        Assert.Equal(3, nodeColors.Where(pair => sources.Contains(pair.Key)).Select(pair => pair.Value).Distinct().Count());
-        Assert.Equal(3, nodeColors.Where(pair => baskets.Contains(pair.Key)).Select(pair => pair.Value).Distinct().Count());
+        Assert.Equal(expectedPalette, sources.Take(expectedPalette.Length).Select(source => nodeColors[source]));
+        Assert.Equal(ConsoleColor.Blue, nodeColors[sources[6]]);
+        Assert.Equal(expectedPalette[0], nodeColors[sources.Last()]);
+        Assert.Equal(expectedPalette, baskets.Take(expectedPalette.Length).Select(basket => nodeColors[basket]));
+        Assert.Equal(expectedPalette[0], nodeColors[baskets.Last()]);
     }
 
     [Fact]

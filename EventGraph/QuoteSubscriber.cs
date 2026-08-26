@@ -12,11 +12,20 @@ namespace EventGraph
         private static readonly object ConsoleLock = new();
         private static readonly ConsoleColor[] SourceColors =
         {
-            ConsoleColor.Green,
-            ConsoleColor.Yellow,
+            ConsoleColor.DarkBlue,
+            ConsoleColor.DarkGreen,
+            ConsoleColor.DarkCyan,
+            ConsoleColor.DarkRed,
+            ConsoleColor.DarkMagenta,
+            ConsoleColor.DarkYellow,
             ConsoleColor.Blue,
+            ConsoleColor.Green,
+            ConsoleColor.Cyan,
+            ConsoleColor.Red,
             ConsoleColor.Magenta,
-            ConsoleColor.Cyan
+            ConsoleColor.Yellow,
+            ConsoleColor.Gray,
+            ConsoleColor.DarkGray
         };
 
         private readonly bool quiet;
