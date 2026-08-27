@@ -1,6 +1,7 @@
 {
   "type": "SimulatedAssetSource",
   "name": "AMZN",
+  "currency": "USD",
   "spot": 225.0,
   "volatility": 0.35,
   "meanTickTimeSeconds": 5.0

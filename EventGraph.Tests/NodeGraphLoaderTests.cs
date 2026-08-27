@@ -12,6 +12,7 @@ namespace EventGraph.Tests
             {
                             "type": "SimulatedAssetSource",
               "name": "JSON",
+              "currency": "USD",
               "spot": 123.0,
               "volatility": 0.15,
               "meanTickTimeSeconds": 2.0,
@@ -23,6 +24,7 @@ namespace EventGraph.Tests
 
                 var source = Assert.Single(sources);
                 Assert.Equal("JSON", source.Name);
+                Assert.Equal("USD", source.Currency);
                 Assert.Equal("SimulatedSpot", source.Type);
                 Assert.Equal(123.0, source.Spot);
             }

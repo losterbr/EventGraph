@@ -73,6 +73,7 @@ namespace EventGraph.Tests
             var spotNode = Assert.IsAssignableFrom<ISpotQuoteNode>(source);
             Assert.Equal(0.25, volNode.Volatility, 10);
             Assert.Equal(100.0, spotNode.Spot, 10);
+            Assert.Equal("USD", spotNode.Currency);
         }
 
         [Fact]

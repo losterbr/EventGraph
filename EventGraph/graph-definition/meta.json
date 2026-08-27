@@ -1,6 +1,7 @@
 {
   "type": "SimulatedAssetSource",
   "name": "META",
+  "currency": "USD",
   "spot": 750.0,
   "volatility": 0.36,
   "meanTickTimeSeconds": 5.0

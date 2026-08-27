@@ -23,6 +23,8 @@ namespace EventGraph
         event EventHandler<QuoteTick> SpotTick;
 
         double Spot { get; }
+
+        string Currency { get; }
     }
 
     /// <summary>

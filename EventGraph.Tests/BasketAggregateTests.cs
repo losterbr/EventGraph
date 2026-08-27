@@ -178,6 +178,20 @@ namespace EventGraph.Tests
         }
 
         [Fact]
+        public void BasketAggregateRejectsMixedCurrencies()
+        {
+            var quotes = new[]
+            {
+                new SimulatedAssetSource("USD_ASSET", 100.0, 0.0, 0.0, "USD"),
+                new SimulatedAssetSource("EUR_ASSET", 200.0, 0.0, 0.0, "EUR")
+            };
+
+            var exception = Assert.Throws<ArgumentException>(() => new BasketAggregate(quotes));
+
+            Assert.Contains("same currency", exception.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
         public void BasketAggregateThrowsWhenConstituentsAreNull()
         {
             _ = Assert.Throws<ArgumentException>(() => new BasketAggregate(null));

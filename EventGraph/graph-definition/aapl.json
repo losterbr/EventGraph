@@ -1,6 +1,7 @@
 {
   "type": "SimulatedAssetSource",
   "name": "AAPL",
+  "currency": "USD",
   "spot": 225.0,
   "volatility": 0.28,
   "meanTickTimeSeconds": 4.5

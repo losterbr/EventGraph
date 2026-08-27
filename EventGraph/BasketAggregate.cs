@@ -62,6 +62,12 @@ namespace EventGraph
 
             this.constituents = [.. constituents];
             Name = name;
+            Currency = this.constituents[0].Currency;
+            if (this.constituents.Any(constituent => !string.Equals(constituent.Currency, Currency, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new ArgumentException("Basket constituents must use the same currency.", nameof(constituents));
+            }
+
             hasLatestValue = new bool[this.constituents.Count];
             latestValues = new double[this.constituents.Count];
             this.weights = new double[this.constituents.Count];
@@ -114,6 +120,8 @@ namespace EventGraph
         public string Type => "CalculatedBasket";
 
         public double Spot { get; private set; }
+
+        public string Currency { get; }
 
         public IReadOnlyList<IGraphNode> Dependencies => constituents;
 

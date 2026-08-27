@@ -18,13 +18,14 @@ Each JSON file in `EventGraph/graph-definition` defines one `SimulatedAssetSourc
 {
 	"type": "SimulatedAssetSource",
 	"name": "TSLA",
+	"currency": "USD",
 	"spot": 800.0,
 	"volatility": 0.2,
 	"meanTickTimeSeconds": 3.0
 }
 ```
 
-The `type` field selects the node implementation. Each node constructor owns the interpretation and validation of its complete JSON property dictionary, so adding or removing a property only requires changing that node's code. A `BasketAggregate` definition uses `name`, `names`, and `weights` to reference source nodes and assign their weights. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
+The `type` field selects the node implementation. Each `SimulatedAssetSource` includes static `currency` metadata, currently set to `USD` for all assets. Each node constructor owns the interpretation and validation of its complete JSON property dictionary, so adding or removing a property only requires changing that node's code. A `BasketAggregate` definition uses `name`, `names`, and `weights` to reference source nodes and assign their weights. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
 
 A `RateCurveSource` definition uses `name` and `interestRate` (for example, `0.02` for 2%). Its `RateCurve` property is a `date -> double` function implemented as `exp(interestRate * (date - today) / 365)`.
 

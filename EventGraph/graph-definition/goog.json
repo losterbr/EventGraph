@@ -1,6 +1,7 @@
 {
   "type": "SimulatedAssetSource",
   "name": "GOOG",
+  "currency": "USD",
   "spot": 190.0,
   "volatility": 0.3,
   "meanTickTimeSeconds": 4.0

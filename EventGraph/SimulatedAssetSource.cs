@@ -22,11 +22,17 @@ namespace EventGraph
                 GetString(definition, "name"),
                 GetDouble(definition, "spot"),
                 GetDouble(definition, "volatility"),
-                GetDouble(definition, "meanTickTimeSeconds"))
+                GetDouble(definition, "meanTickTimeSeconds"),
+                GetStringOrDefault(definition, "currency", "USD"))
         {
         }
 
-        public SimulatedAssetSource(string name, double spot, double vol, double meanTickTimeSeconds = 1.0)
+        public SimulatedAssetSource(
+            string name,
+            double spot,
+            double vol,
+            double meanTickTimeSeconds = 1.0,
+            string currency = "USD")
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -48,9 +54,15 @@ namespace EventGraph
                 throw new ArgumentOutOfRangeException(nameof(meanTickTimeSeconds), "Mean tick time must be a non-negative finite number.");
             }
 
+            if (string.IsNullOrWhiteSpace(currency))
+            {
+                throw new ArgumentException("Currency cannot be empty.", nameof(currency));
+            }
+
             Name = name;
             Spot = spot;
             Volatility = vol;
+            Currency = currency;
             this.meanTickTimeSeconds = meanTickTimeSeconds;
         }
 
@@ -59,6 +71,8 @@ namespace EventGraph
         public string Type => "SimulatedSpot";
 
         public double Spot { get; private set; }
+
+        public string Currency { get; }
 
         public double Volatility { get; }
 
@@ -76,6 +90,16 @@ namespace EventGraph
             return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.Number || !property.TryGetDouble(out var value)
                 ? throw new InvalidDataException($"SimulatedAssetSource requires a numeric '{propertyName}' property.")
                 : value;
+        }
+
+        private static string GetStringOrDefault(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            string propertyName,
+            string defaultValue)
+        {
+            return definition == null || !definition.ContainsKey(propertyName)
+                ? defaultValue
+                : GetString(definition, propertyName);
         }
 
         private double IncrStdDev(double tMilliSeconds)

@@ -1,6 +1,7 @@
 {
   "type": "SimulatedAssetSource",
   "name": "MSFT",
+  "currency": "USD",
   "spot": 505.0,
   "volatility": 0.25,
   "meanTickTimeSeconds": 4.0
