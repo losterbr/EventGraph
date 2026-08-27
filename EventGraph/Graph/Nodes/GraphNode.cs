@@ -52,6 +52,16 @@ namespace EventGraph
     }
 
     /// <summary>
+    /// Represents a graph node that provides a forward curve derived from a spot and a discount factor curve.
+    /// </summary>
+    public interface IForwardCurveNode : ITickingNode
+    {
+        Func<DateTime, double> Forward { get; }
+
+        string Currency { get; }
+    }
+
+    /// <summary>
     /// Represents an equity option price derived from an equity, its volatility, and a discount factor curve.
     /// </summary>
     public interface IEquityOptionNode : ITickingNode

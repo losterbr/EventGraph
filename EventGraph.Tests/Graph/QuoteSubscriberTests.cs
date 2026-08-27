@@ -50,7 +50,9 @@ namespace EventGraph.Tests
                 Assert.StartsWith("SimulatedAssetSource::XYZ", sourceIdentifier);
 
                 var discountFactor = new RateCurveSource("USD", 0.05);
-                var option = new EquityOption("XYZ_CALL", source, discountFactor, DateTime.Today.AddYears(1), 100.0);
+                var forward = new ForwardCurve("XYZ_FWD", source, discountFactor);
+                var volatility = new VolatilitySource("XYZ_VOL", source);
+                var option = new EquityOption("XYZ_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0);
                 subscriber.Subscribe(option);
                 await source.Start(1);
 

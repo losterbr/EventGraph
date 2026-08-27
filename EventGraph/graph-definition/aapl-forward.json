@@ -1,0 +1,6 @@
+{
+  "type": "ForwardCurve",
+  "name": "AAPL_FWD",
+  "constituent": "AAPL",
+  "currency": "USD"
+}

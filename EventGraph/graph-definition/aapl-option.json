@@ -1,7 +1,8 @@
 {
   "type": "EquityOption",
   "name": "AAPL_1Y_CALL",
-  "constituent": "AAPL",
+  "constituent": "AAPL_FWD",
+  "volatility": "AAPL_VOL",
   "currency": "USD",
   "maturity": "1Y",
   "strike": 225.0,

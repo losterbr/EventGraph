@@ -9,6 +9,8 @@ namespace EventGraph.Tests
         {
             Assert.Contains("SimulatedAssetSource", NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(BasketAggregate), NodeRegistry.SupportedTypes);
+            Assert.Contains(nameof(ForwardCurve), NodeRegistry.SupportedTypes);
+            Assert.Contains(nameof(VolatilitySource), NodeRegistry.SupportedTypes);
         }
 
         [Fact]

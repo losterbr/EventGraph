@@ -15,6 +15,8 @@ namespace EventGraph
             new(StringComparer.OrdinalIgnoreCase)
             {
                 [nameof(BasketAggregate)] = BasketAggregate.GetDependencyNames,
+                [nameof(ForwardCurve)] = ForwardCurve.GetDependencyNames,
+                [nameof(VolatilitySource)] = VolatilitySource.GetDependencyNames,
                 [nameof(EquityOption)] = EquityOption.GetDependencyNames
             };
 
@@ -24,6 +26,8 @@ namespace EventGraph
                 [nameof(SimulatedAssetSource)] = (definition, _) => new SimulatedAssetSource(definition),
                 [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName),
                 [nameof(RateCurveSource)] = (definition, _) => new RateCurveSource(definition),
+                [nameof(ForwardCurve)] = (definition, nodesByName) => new ForwardCurve(definition, nodesByName),
+                [nameof(VolatilitySource)] = (definition, nodesByName) => new VolatilitySource(definition, nodesByName),
                 [nameof(EquityOption)] = (definition, nodesByName) => new EquityOption(definition, nodesByName)
             };
 

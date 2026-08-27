@@ -11,7 +11,7 @@ namespace EventGraph
     /// </summary>
     public sealed class EquityOption : IEquityOptionNode
     {
-        private readonly ISpotQuoteNode equity;
+        private readonly IForwardCurveNode forwardNode;
         private readonly IVolQuoteNode volatilitySource;
         private readonly IDiscountFactorNode discountFactorNode;
 
@@ -20,7 +20,8 @@ namespace EventGraph
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
             : this(
                 GetString(definition, "name"),
-                GetNode<ISpotQuoteNode>(definition, "constituent", nodesByName),
+                GetNode<IForwardCurveNode>(definition, "constituent", nodesByName),
+                GetNode<IVolQuoteNode>(definition, "volatility", nodesByName),
                 GetNode<IDiscountFactorNode>(definition, "currency", nodesByName),
                 GetMaturity(definition),
                 GetDouble(definition, "strike"),
@@ -30,7 +31,8 @@ namespace EventGraph
 
         public EquityOption(
             string name,
-            ISpotQuoteNode equity,
+            IForwardCurveNode forwardNode,
+            IVolQuoteNode volatilitySource,
             IDiscountFactorNode discountFactorNode,
             DateTime maturity,
             double strike,
@@ -41,15 +43,14 @@ namespace EventGraph
                 throw new ArgumentException("Option name cannot be empty.", nameof(name));
             }
 
-            ArgumentNullException.ThrowIfNull(equity);
+            ArgumentNullException.ThrowIfNull(forwardNode);
+            ArgumentNullException.ThrowIfNull(volatilitySource);
             ArgumentNullException.ThrowIfNull(discountFactorNode);
-            if (!string.Equals(equity.Currency, discountFactorNode.Currency, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(forwardNode.Currency, discountFactorNode.Currency, StringComparison.OrdinalIgnoreCase))
             {
                 throw new ArgumentException("Option and underlying currencies must match.", nameof(discountFactorNode));
             }
 
-            volatilitySource = equity as IVolQuoteNode
-                ?? throw new ArgumentException("The equity dependency must provide volatility.", nameof(equity));
             if (maturity.Date <= DateTime.Today)
             {
                 throw new ArgumentOutOfRangeException(nameof(maturity), "Option maturity must be after today.");
@@ -66,13 +67,14 @@ namespace EventGraph
             }
 
             Name = name;
-            this.equity = equity;
+            this.forwardNode = forwardNode;
+            this.volatilitySource = volatilitySource;
             this.discountFactorNode = discountFactorNode;
             Maturity = maturity.Date;
             Strike = strike;
             OptionType = optionType;
             Price = CalculatePrice();
-            this.equity.Tick += EquityTicked;
+            this.forwardNode.Tick += ForwardTicked;
         }
 
         public event EventHandler<QuoteTick> Tick;
@@ -81,11 +83,11 @@ namespace EventGraph
 
         public string Type => nameof(EquityOption);
 
-        public IReadOnlyList<IGraphNode> Dependencies => [equity, discountFactorNode];
+        public IReadOnlyList<IGraphNode> Dependencies => [forwardNode, volatilitySource, discountFactorNode];
 
         internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            return [GetString(definition, "constituent"), GetString(definition, "currency")];
+            return [GetString(definition, "constituent"), GetString(definition, "currency"), GetString(definition, "volatility")];
         }
 
         public DateTime Maturity { get; }
@@ -98,7 +100,7 @@ namespace EventGraph
 
         public string Currency => discountFactorNode.Currency;
 
-        private void EquityTicked(object sender, QuoteTick e)
+        private void ForwardTicked(object sender, QuoteTick e)
         {
             Price = CalculatePrice();
             Tick?.Invoke(this, new QuoteTick(Name, Price));
@@ -108,20 +110,20 @@ namespace EventGraph
         {
             var timeToMaturity = (Maturity - DateTime.Today).TotalDays / 365.0;
             var volatility = volatilitySource.Volatility;
-            var spot = equity.Spot;
+            var forward = forwardNode.Forward(Maturity);
             var discountFactor = discountFactorNode.DiscountFactor(Maturity);
             var standardDeviation = volatility * Math.Sqrt(timeToMaturity);
             if (standardDeviation <= 0.0)
             {
-                return discountFactor * Math.Max(spot - Strike, 0.0);
+                return discountFactor * Math.Max(forward - Strike, 0.0);
             }
 
-            var d1 = (Math.Log(spot / Strike) + (0.5 * volatility * volatility * timeToMaturity)) / standardDeviation;
+            var d1 = (Math.Log(forward / Strike) + (0.5 * volatility * volatility * timeToMaturity)) / standardDeviation;
             var d2 = d1 - standardDeviation;
             var normal = new MathNet.Numerics.Distributions.Normal(0.0, 1.0);
             return OptionType == EquityOptionType.Call
-                ? discountFactor * ((spot * normal.CumulativeDistribution(d1)) - (Strike * normal.CumulativeDistribution(d2)))
-                : discountFactor * ((Strike * normal.CumulativeDistribution(-d2)) - (spot * normal.CumulativeDistribution(-d1)));
+                ? discountFactor * ((forward * normal.CumulativeDistribution(d1)) - (Strike * normal.CumulativeDistribution(d2)))
+                : discountFactor * ((Strike * normal.CumulativeDistribution(-d2)) - (forward * normal.CumulativeDistribution(-d1)));
         }
 
         private static DateTime GetMaturity(IReadOnlyDictionary<string, JsonElement> definition)
