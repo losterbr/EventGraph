@@ -23,6 +23,9 @@ namespace EventGraph
             var quotes = nodes.OfType<SimulatedAssetSource>()
                 .OrderBy(quote => quote.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
+            var optionNodes = nodes.OfType<IEquityOptionNode>()
+                .OrderBy(option => option.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
             var baskets = nodes.OfType<BasketAggregate>()
                 .OrderBy(basket => basket.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -33,6 +36,11 @@ namespace EventGraph
             foreach (var quote in quotes)
             {
                 listener.Subscribe(quote);
+            }
+
+            foreach (var option in optionNodes)
+            {
+                listener.Subscribe(option);
             }
 
             GraphValidator.EnsureAcyclic(nodes);

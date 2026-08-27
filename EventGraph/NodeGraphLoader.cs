@@ -129,21 +129,33 @@ namespace EventGraph
 
         private static List<string> GetDependencies(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            if (!definition.TryGetValue("constituents", out var constituents) || constituents.ValueKind != JsonValueKind.Array)
-            {
-                return [];
-            }
-
             var dependencies = new List<string>();
-            foreach (var name in constituents.EnumerateArray())
+            if (definition.TryGetValue("constituents", out var constituents) && constituents.ValueKind == JsonValueKind.Array)
             {
-                if (name.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(name.GetString()))
+                foreach (var name in constituents.EnumerateArray())
                 {
-                    dependencies.Add(name.GetString());
+                    if (name.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(name.GetString()))
+                    {
+                        dependencies.Add(name.GetString());
+                    }
                 }
             }
 
+            AddDependency(definition, dependencies, "constituent");
+            AddDependency(definition, dependencies, "rateCurve");
+
             return dependencies;
+        }
+
+        private static void AddDependency(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            List<string> dependencies,
+            string propertyName)
+        {
+            if (definition.TryGetValue(propertyName, out var dependency) && dependency.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(dependency.GetString()))
+            {
+                dependencies.Add(dependency.GetString());
+            }
         }
 
         private static IReadOnlyDictionary<string, JsonElement> LoadDefinition(string path)

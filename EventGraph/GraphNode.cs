@@ -44,4 +44,14 @@ namespace EventGraph
 
         string Currency { get; }
     }
+
+    /// <summary>
+    /// Represents an equity option price derived from an equity and a rate curve.
+    /// </summary>
+    public interface IEquityOptionNode : IGraphNode
+    {
+        event EventHandler<QuoteTick> PriceTick;
+
+        double Price { get; }
+    }
 }

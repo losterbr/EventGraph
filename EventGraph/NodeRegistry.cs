@@ -16,7 +16,8 @@ namespace EventGraph
             {
                 ["SimulatedAssetSource"] = (definition, _) => new SimulatedAssetSource(definition),
                 [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName),
-                [nameof(RateCurveSource)] = (definition, _) => new RateCurveSource(definition)
+                [nameof(RateCurveSource)] = (definition, _) => new RateCurveSource(definition),
+                ["EquityOption"] = (definition, nodesByName) => new EquityOption(definition, nodesByName)
             };
 
         public static IReadOnlyCollection<string> SupportedTypes => [.. Factories.Keys];

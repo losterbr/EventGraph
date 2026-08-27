@@ -29,6 +29,8 @@ The `type` field selects the node implementation. Each `SimulatedAssetSource` in
 
 A `RateCurveSource` definition uses `name` and `interestRate` (for example, `0.02` for 2%). Its `RateCurve` property is a `date -> double` function implemented as `exp(interestRate * (date - today) / 365)`.
 
+An `EquityOption` definition uses `constituent`, `rateCurve`, `maturity`, and `strike`. The current example uses `maturity: "1Y"`, meaning today plus one year, and sets the strike to the equity's current spot. The initial approximation sets the forward equal to spot and uses the forward Black-Scholes form: `discountFactor * (forward * N(d1) - strike * N(d2))`, with the inverse rate-curve value at maturity as the discount factor.
+
 Graph loading uses Kahn's algorithm to resolve dependencies. The loader builds an in-degree count for each node, processes dependency-free nodes first, and then releases dependent nodes as their prerequisites are created. This keeps startup ordering deterministic while avoiding repeated full scans of unresolved definitions.
 
 The loaded graph also exposes stable node indices through `QuoteGraph`, which gives future runtime optimizations a dense representation without replacing the current node model. More specialized graph layouts such as compressed sparse row storage or parallel execution should be considered only after profiling shows that traversal or update propagation is a bottleneck.

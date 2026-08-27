@@ -1,0 +1,137 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Text.Json;
+
+namespace EventGraph
+{
+    /// <summary>
+    /// Prices a one-constituent equity call with the Black-Scholes formula.
+    /// </summary>
+    public sealed class EquityOption : IEquityOptionNode
+    {
+        private readonly ISpotQuoteNode equity;
+        private readonly IVolQuoteNode volatilitySource;
+        private readonly IRateCurveNode rateCurve;
+
+        public EquityOption(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
+            : this(
+                GetString(definition, "name"),
+                GetNode<ISpotQuoteNode>(definition, "constituent", nodesByName),
+                GetNode<IRateCurveNode>(definition, "rateCurve", nodesByName),
+                GetMaturity(definition),
+                GetDouble(definition, "strike"))
+        {
+        }
+
+        public EquityOption(
+            string name,
+            ISpotQuoteNode equity,
+            IRateCurveNode rateCurve,
+            DateTime maturity,
+            double strike)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException("Option name cannot be empty.", nameof(name));
+            }
+
+            ArgumentNullException.ThrowIfNull(equity);
+            ArgumentNullException.ThrowIfNull(rateCurve);
+            volatilitySource = equity as IVolQuoteNode
+                ?? throw new ArgumentException("The equity dependency must provide volatility.", nameof(equity));
+            if (maturity.Date <= DateTime.Today)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maturity), "Option maturity must be after today.");
+            }
+
+            if (strike <= 0.0 || double.IsNaN(strike) || double.IsInfinity(strike))
+            {
+                throw new ArgumentOutOfRangeException(nameof(strike), "Option strike must be a positive finite number.");
+            }
+
+            Name = name;
+            this.equity = equity;
+            this.rateCurve = rateCurve;
+            Maturity = maturity.Date;
+            Strike = strike;
+            Price = CalculatePrice();
+            this.equity.SpotTick += EquitySpotTicked;
+        }
+
+        public event EventHandler<QuoteTick> PriceTick;
+
+        public string Name { get; }
+
+        public string Type => nameof(EquityOption);
+
+        public IReadOnlyList<IGraphNode> Dependencies => [equity, rateCurve];
+
+        public DateTime Maturity { get; }
+
+        public double Strike { get; }
+
+        public double Price { get; private set; }
+
+        private void EquitySpotTicked(object sender, QuoteTick e)
+        {
+            Price = CalculatePrice();
+            PriceTick?.Invoke(this, new QuoteTick(Name, Price));
+        }
+
+        private double CalculatePrice()
+        {
+            var timeToMaturity = (Maturity - DateTime.Today).TotalDays / 365.0;
+            var volatility = volatilitySource.Volatility;
+            var spot = equity.Spot;
+            var discountFactor = 1.0 / rateCurve.RateCurve(Maturity);
+            var standardDeviation = volatility * Math.Sqrt(timeToMaturity);
+            if (standardDeviation <= 0.0)
+            {
+                return discountFactor * Math.Max(spot - Strike, 0.0);
+            }
+
+            var d1 = (Math.Log(spot / Strike) + (0.5 * volatility * volatility * timeToMaturity)) / standardDeviation;
+            var d2 = d1 - standardDeviation;
+            var normal = new MathNet.Numerics.Distributions.Normal(0.0, 1.0);
+            return discountFactor * ((spot * normal.CumulativeDistribution(d1)) - (Strike * normal.CumulativeDistribution(d2)));
+        }
+
+        private static DateTime GetMaturity(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            var maturity = GetString(definition, "maturity");
+            return string.Equals(maturity, "1Y", StringComparison.OrdinalIgnoreCase)
+                ? DateTime.Today.AddYears(1)
+                : DateTime.Parse(maturity, CultureInfo.InvariantCulture);
+        }
+
+        private static TNode GetNode<TNode>(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            string propertyName,
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
+            where TNode : class, IGraphNode
+        {
+            var nodeName = GetString(definition, propertyName);
+            return nodesByName != null && nodesByName.TryGetValue(nodeName, out var node) && node is TNode typedNode
+                ? typedNode
+                : throw new InvalidDataException($"EquityOption references an invalid {propertyName} '{nodeName}'.");
+        }
+
+        private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
+        {
+            return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString())
+                ? throw new InvalidDataException($"EquityOption requires a non-empty '{propertyName}' property.")
+                : property.GetString();
+        }
+
+        private static double GetDouble(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
+        {
+            return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.Number || !property.TryGetDouble(out var value)
+                ? throw new InvalidDataException($"EquityOption requires a numeric '{propertyName}' property.")
+                : value;
+        }
+    }
+}

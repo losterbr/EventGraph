@@ -49,6 +49,16 @@ namespace EventGraph.Tests
                 Assert.Equal(40, sourceIdentifier.Length);
                 Assert.StartsWith("SimulatedSpot::XYZ", sourceIdentifier);
 
+                var rateCurve = new RateCurveSource("USD", 0.05);
+                var option = new EquityOption("XYZ_CALL", source, rateCurve, DateTime.Today.AddYears(1), 100.0);
+                subscriber.Subscribe(option);
+                await source.Start(1);
+
+                Assert.Contains("Subscribed to XYZ_CALL", output.ToString());
+                var optionLine = GetOutputLines(output)
+                    .Single(line => line.Contains("EquityOption::XYZ_CALL") && line.Contains("updated to"));
+                Assert.Equal(40, GetIdentifier(optionLine).Length);
+
                 var sources = new[]
                 {
                     new SimulatedAssetSource("TSLA", 100.0, 0.0, 0.0),

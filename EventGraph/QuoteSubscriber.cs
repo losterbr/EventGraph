@@ -66,7 +66,38 @@ namespace EventGraph
             }
         }
 
+        public void Subscribe(IEquityOptionNode option)
+        {
+            option.PriceTick += PriceTicked;
+            nodeColors[option] = SourceColors[nextSourceColor++ % SourceColors.Length];
+            if (!quiet)
+            {
+                lock (ConsoleLock)
+                {
+                    WriteTimestamp();
+                    Console.ForegroundColor = nodeColors[option];
+                    Console.WriteLine($" Subscribed to {option.Name}");
+                    Console.ResetColor();
+                }
+            }
+        }
+
         private void SpotTicked(object sender, QuoteTick e)
+        {
+            if (!quiet)
+            {
+                lock (ConsoleLock)
+                {
+                    WriteTimestamp();
+                    var node = (IGraphNode)sender;
+                    Console.ForegroundColor = nodeColors[node];
+                    Console.WriteLine($" {FormatNodeIdentifier($"{node.Type}::{node.Name}")} updated to {e.Value:0.##}");
+                    Console.ResetColor();
+                }
+            }
+        }
+
+        private void PriceTicked(object sender, QuoteTick e)
         {
             if (!quiet)
             {
