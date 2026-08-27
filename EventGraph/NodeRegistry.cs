@@ -11,6 +11,13 @@ namespace EventGraph
     /// </summary>
     public static class NodeRegistry
     {
+        private static readonly Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyList<string>>> DependencyResolvers =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                [nameof(BasketAggregate)] = BasketAggregate.GetDependencyNames,
+                [nameof(EquityOption)] = EquityOption.GetDependencyNames
+            };
+
         private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>> Factories =
             new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>>(StringComparer.OrdinalIgnoreCase)
             {
@@ -25,6 +32,16 @@ namespace EventGraph
         public static bool IsSupportedType(string type)
         {
             return !string.IsNullOrWhiteSpace(type) && Factories.ContainsKey(type);
+        }
+
+        public static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            ArgumentNullException.ThrowIfNull(definition);
+
+            var type = GetType(definition);
+            return DependencyResolvers.TryGetValue(type, out var resolver)
+                ? resolver(definition)
+                : [];
         }
 
         public static IGraphNode CreateNode(

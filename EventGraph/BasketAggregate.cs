@@ -125,6 +125,15 @@ namespace EventGraph
 
         public IReadOnlyList<IGraphNode> Dependencies => constituents;
 
+        internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return !definition.TryGetValue("constituents", out var constituents) || constituents.ValueKind != JsonValueKind.Array
+                ? []
+                : [.. constituents.EnumerateArray()
+                .Where(name => name.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(name.GetString()))
+                .Select(name => name.GetString())];
+        }
+
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
             return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString())
