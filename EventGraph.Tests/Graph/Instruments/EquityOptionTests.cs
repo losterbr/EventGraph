@@ -151,7 +151,7 @@ namespace EventGraph.Tests
             var discountFactor = new RateCurveSource(rateNode);
             var forward = new ForwardCurve(spotNode, discountFactor);
             var volatility = new VolatilitySource(equity);
-            using var document = JsonDocument.Parse("{\"name\":\"AAPL_CALL\",\"underlyer\":\"AAPL\",\"currency\":\"USD\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Put\"}");
+            using var document = JsonDocument.Parse("{\"name\":\"AAPL_CALL\",\"forward\":\"ForwardCurve::AAPL\",\"volatility\":\"VolatilitySource::AAPL\",\"discountCurve\":\"RateCurveSource::USD\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Put\"}");
             var definition = document.RootElement
                 .EnumerateObject()
                 .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
@@ -166,19 +166,6 @@ namespace EventGraph.Tests
             Assert.Equal(DateTime.Today.AddYears(1), option.Maturity);
             Assert.Equal(100.0, option.Strike);
             Assert.Equal(EquityOptionType.Put, option.OptionType);
-        }
-
-        [Fact]
-        public void EquityOptionDerivesDependencyKeysFromUnderlyerAndCurrency()
-        {
-            using var document = JsonDocument.Parse("{\"name\":\"AAPL_CALL\",\"underlyer\":\"AAPL\",\"currency\":\"USD\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Call\"}");
-            var definition = document.RootElement
-                .EnumerateObject()
-                .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
-
-            var keys = EquityOption.GetDerivedDependencyKeys(definition);
-
-            Assert.Equal(["ForwardCurve::AAPL", "VolatilitySource::AAPL", "RateCurveSource::USD"], keys);
         }
     }
 }

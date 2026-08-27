@@ -30,7 +30,6 @@ namespace EventGraph.Tests
                   "type": "EquityOption",
                   "name": "AAPL_1Y_CALL",
                   "underlyer": "AAPL",
-                  "currency": "USD",
                   "maturity": "1Y",
                   "strike": 225.0,
                   "optionType": "Call"

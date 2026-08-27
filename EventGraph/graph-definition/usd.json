@@ -1,5 +1,6 @@
 {
   "type": "CurrencyRateSource",
-  "name": "USD",
+  "name": "USD_3M_Libor",
+  "currency": "USD",
   "interestRate": 0.02
 }

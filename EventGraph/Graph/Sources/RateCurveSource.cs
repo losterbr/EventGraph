@@ -8,7 +8,7 @@ namespace EventGraph
     /// <summary>
     /// Internal node that converts a flat interest rate into a continuously compounded discount factor curve.
     /// </summary>
-    public sealed class RateCurveSource : IDiscountFactorNode, IDiscountCurveNode
+    public sealed class RateCurveSource : IDiscountCurveNode
     {
         private readonly RateNode rateNode;
 
@@ -32,7 +32,7 @@ namespace EventGraph
 
         public double InterestRate => rateNode.InterestRate;
 
-        public string Currency => rateNode.Name;
+        public string Currency => rateNode.Currency;
 
         public Func<DateTime, double> DiscountFactor { get; }
 

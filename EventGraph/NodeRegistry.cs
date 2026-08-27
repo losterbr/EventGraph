@@ -11,7 +11,7 @@ namespace EventGraph
     /// </summary>
     public static class NodeRegistry
     {
-            private static readonly Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyList<string>>> DependencyResolvers =
+        private static readonly Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyList<string>>> DependencyResolvers =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 [nameof(BasketAggregate)] = BasketAggregate.GetDependencyNames,
@@ -20,7 +20,7 @@ namespace EventGraph
                 [nameof(RateNode)] = definition => [GraphKey.Of(nameof(CurrencyRateSource), GetNodeName(definition))],
                 [nameof(ForwardCurve)] = ForwardCurve.GetDependencyNames,
                 [nameof(RateCurveSource)] = RateCurveSource.GetDependencyNames,
-                [nameof(EquityOption)] = EquityOption.GetDerivedDependencyKeys
+                [nameof(EquityOption)] = EquityOption.GetDependencyNames
             };
 
         private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>> Factories =

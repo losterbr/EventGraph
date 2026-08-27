@@ -21,6 +21,8 @@ namespace EventGraph
 
         public double InterestRate => source.InterestRate;
 
+        public string Currency => source.Currency;
+
         public IReadOnlyList<IGraphNode> Dependencies => [source];
     }
 }

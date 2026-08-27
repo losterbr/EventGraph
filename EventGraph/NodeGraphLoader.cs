@@ -71,7 +71,8 @@ namespace EventGraph
                 }
                 else if (type == nameof(EquityOption))
                 {
-                    AddForwardChainIfMissing(toAdd, definitionsByKey, definition);
+                    var optionKey = GetNodeKey(definition);
+                    definitionsByKey[optionKey] = EnrichEquityOptionDefinition(toAdd, definitionsByKey, definition);
                 }
                 else if (type == nameof(CurrencyRateSource))
                 {
@@ -288,13 +289,14 @@ namespace EventGraph
             toAdd.Add(synthetic);
         }
 
-        private static void AddForwardChainIfMissing(
+        private static Dictionary<string, JsonElement> EnrichEquityOptionDefinition(
             List<IReadOnlyDictionary<string, JsonElement>> toAdd,
             Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
             IReadOnlyDictionary<string, JsonElement> definition)
         {
             var underlyer = GetStringProperty(definition, "underlyer");
-            var currency = GetStringProperty(definition, "currency");
+            var currency = GetUnderlyerCurrency(definitionsByKey, underlyer);
+            var rateSourceName = GetRateSourceName(definitionsByKey, currency);
 
             AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(SpotNode), underlyer, new Dictionary<string, JsonElement>
             {
@@ -304,15 +306,64 @@ namespace EventGraph
             {
                 ["name"] = JsonSerializer.SerializeToElement(underlyer)
             });
-            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(RateCurveSource), currency, new Dictionary<string, JsonElement>
+            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(RateCurveSource), rateSourceName, new Dictionary<string, JsonElement>
             {
-                ["rate"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateNode), currency))
+                ["name"] = JsonSerializer.SerializeToElement(rateSourceName),
+                ["rate"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateNode), rateSourceName))
             });
             AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(ForwardCurve), underlyer, new Dictionary<string, JsonElement>
             {
                 ["spot"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(SpotNode), underlyer)),
-                ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveSource), currency))
+                ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveSource), rateSourceName))
             });
+
+            return new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase)
+            {
+                ["forward"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(ForwardCurve), underlyer)),
+                ["volatility"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(VolatilitySource), underlyer)),
+                ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveSource), rateSourceName))
+            };
+        }
+
+        private static string GetUnderlyerCurrency(
+            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
+            string underlyer)
+        {
+            var sourceKey = GraphKey.Of(nameof(EquitySource), underlyer);
+            if (!definitionsByKey.TryGetValue(sourceKey, out var sourceDefinition))
+            {
+                var simulatedKey = GraphKey.Of(nameof(SimulatedAssetSource), underlyer);
+                if (!definitionsByKey.TryGetValue(simulatedKey, out sourceDefinition))
+                {
+                    throw new InvalidDataException($"EquityOption references an unknown underlyer '{underlyer}'.");
+                }
+            }
+
+            return GetOptionalString(sourceDefinition, "currency") ?? "USD";
+        }
+
+        private static string GetRateSourceName(
+            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
+            string currency)
+        {
+            var matches = definitionsByKey.Values
+                .Where(definition => GetType(definition) == nameof(CurrencyRateSource))
+                .Where(definition => string.Equals(GetOptionalString(definition, "currency") ?? GetNodeName(definition), currency, StringComparison.OrdinalIgnoreCase))
+                .Select(GetNodeName)
+                .ToList();
+            return matches.Count switch
+            {
+                1 => matches[0],
+                0 => throw new InvalidDataException($"No CurrencyRateSource found for currency '{currency}'."),
+                _ => throw new InvalidDataException($"Multiple CurrencyRateSource definitions found for currency '{currency}'.")
+            };
+        }
+
+        private static string GetOptionalString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
+        {
+            return definition.TryGetValue(propertyName, out var property) && property.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(property.GetString())
+                ? property.GetString()
+                : null;
         }
 
         private static void AddSyntheticIfMissing(

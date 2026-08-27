@@ -42,16 +42,6 @@ namespace EventGraph
     }
 
     /// <summary>
-    /// Represents a graph node that provides a discount factor curve.
-    /// </summary>
-    public interface IDiscountFactorNode : IGraphNode
-    {
-        Func<DateTime, double> DiscountFactor { get; }
-
-        string Currency { get; }
-    }
-
-    /// <summary>
     /// Represents a graph node that provides a forward curve derived from a spot and a discount factor curve.
     /// </summary>
     public interface IForwardCurveNode : ITickingNode
