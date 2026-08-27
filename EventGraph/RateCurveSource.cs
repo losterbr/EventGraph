@@ -13,11 +13,12 @@ namespace EventGraph
         public RateCurveSource(IReadOnlyDictionary<string, JsonElement> definition)
             : this(
                 GetString(definition, "name"),
-                GetDouble(definition, "interestRate"))
+                GetDouble(definition, "interestRate"),
+                GetStringOrDefault(definition, "currency", "USD"))
         {
         }
 
-        public RateCurveSource(string name, double interestRate)
+        public RateCurveSource(string name, double interestRate, string currency = "USD")
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -29,8 +30,14 @@ namespace EventGraph
                 throw new ArgumentOutOfRangeException(nameof(interestRate), "Interest rate must be a finite number.");
             }
 
+            if (string.IsNullOrWhiteSpace(currency))
+            {
+                throw new ArgumentException("Currency cannot be empty.", nameof(currency));
+            }
+
             Name = name;
             InterestRate = interestRate;
+            Currency = currency;
             RateCurve = date => Math.Exp(InterestRate * (date - DateTime.Today).TotalDays / 365.0);
         }
 
@@ -39,6 +46,8 @@ namespace EventGraph
         public string Type => nameof(RateCurveSource);
 
         public double InterestRate { get; }
+
+        public string Currency { get; }
 
         public Func<DateTime, double> RateCurve { get; }
 
@@ -56,6 +65,16 @@ namespace EventGraph
             return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.Number || !property.TryGetDouble(out var value)
                 ? throw new InvalidDataException($"RateCurveSource requires a numeric '{propertyName}' property.")
                 : value;
+        }
+
+        private static string GetStringOrDefault(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            string propertyName,
+            string defaultValue)
+        {
+            return definition == null || !definition.ContainsKey(propertyName)
+                ? defaultValue
+                : GetString(definition, propertyName);
         }
     }
 }

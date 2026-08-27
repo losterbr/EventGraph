@@ -41,5 +41,7 @@ namespace EventGraph
     public interface IRateCurveNode : IGraphNode
     {
         Func<DateTime, double> RateCurve { get; }
+
+        string Currency { get; }
     }
 }

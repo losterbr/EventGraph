@@ -16,7 +16,7 @@ namespace EventGraph.Tests
         [Fact]
         public void RateCurveSourceLoadsInterestRateFromJson()
         {
-            using var document = JsonDocument.Parse("{\"name\":\"USD\",\"interestRate\":0.02}");
+            using var document = JsonDocument.Parse("{\"name\":\"USD\",\"currency\":\"USD\",\"interestRate\":0.02}");
             var definition = document.RootElement
                 .EnumerateObject()
                 .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
@@ -24,6 +24,7 @@ namespace EventGraph.Tests
             var source = new RateCurveSource(definition);
 
             Assert.Equal("USD", source.Name);
+            Assert.Equal("USD", source.Currency);
             Assert.Equal(0.02, source.InterestRate);
             Assert.Equal(nameof(RateCurveSource), source.Type);
         }
