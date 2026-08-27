@@ -45,7 +45,7 @@ namespace EventGraph.Tests
         {
           "type": "BasketAggregate",
           "name": "BASKET",
-          "names": ["A"],
+          "constituents": ["A"],
           "weights": [1]
         }
         """);

@@ -70,7 +70,7 @@ namespace EventGraph.Tests
             using var definition = JsonDocument.Parse("""
         {
           "name": "PAIR_TRADE",
-          "names": ["A", "B"],
+          "constituents": ["A", "B"],
           "weights": [2, -1]
         }
         """);
@@ -205,8 +205,8 @@ namespace EventGraph.Tests
 
         [Theory]
         [InlineData("{}", "name")]
-        [InlineData(/*lang=json,strict*/ "{\"name\":\"BASKET\"}", "names")]
-        [InlineData(/*lang=json,strict*/ "{\"name\":\"BASKET\",\"names\":[\"Missing\"],\"weights\":[1]}", "unknown source")]
+        [InlineData(/*lang=json,strict*/ "{\"name\":\"BASKET\"}", "constituents")]
+        [InlineData(/*lang=json,strict*/ "{\"name\":\"BASKET\",\"constituents\":[\"Missing\"],\"weights\":[1]}", "unknown source")]
         public void BasketAggregateRejectsInvalidDefinitions(string json, string expectedMessage)
         {
             using var definition = JsonDocument.Parse(json);
@@ -222,7 +222,7 @@ namespace EventGraph.Tests
         public void BasketAggregateRejectsNonNumericWeights()
         {
             var source = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
-            using var definition = JsonDocument.Parse("{\"name\":\"BASKET\",\"names\":[\"A\"],\"weights\":[\"bad\"]}");
+            using var definition = JsonDocument.Parse("{\"name\":\"BASKET\",\"constituents\":[\"A\"],\"weights\":[\"bad\"]}");
 
             var exception = Assert.Throws<InvalidDataException>(() => new BasketAggregate(
                 ToDictionary(definition),

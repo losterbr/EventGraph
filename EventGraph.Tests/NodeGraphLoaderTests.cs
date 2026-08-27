@@ -87,7 +87,7 @@ namespace EventGraph.Tests
             {
               "type": "BasketAggregate",
               "name": "EquityBasket",
-              "names": ["A", "B"],
+              "constituents": ["A", "B"],
               "weights": [0.25, 0.75]
             }
             """);
@@ -116,7 +116,7 @@ namespace EventGraph.Tests
             {
               "type": "BasketAggregate",
               "name": "EquityBasket",
-              "names": ["A", "B"],
+              "constituents": ["A", "B"],
               "weights": [0.25, 0.75]
             }
             """);
@@ -141,7 +141,7 @@ namespace EventGraph.Tests
             var directory = CreateDirectory();
             try
             {
-                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"names\":[\"Missing\"],\"weights\":[1]}");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"constituents\":[\"Missing\"],\"weights\":[1]}");
 
                 _ = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
             }
@@ -176,7 +176,7 @@ namespace EventGraph.Tests
             try
             {
                 WriteDefinition(directory, "source.json", "A");
-                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"Basket\",\"names\":[\"A\"]}");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"Basket\",\"constituents\":[\"A\"]}");
 
                 var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
 
@@ -244,8 +244,8 @@ namespace EventGraph.Tests
             var directory = CreateDirectory();
             try
             {
-                File.WriteAllText(Path.Combine(directory, "a.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"A\",\"names\":[\"B\"],\"weights\":[1]}");
-                File.WriteAllText(Path.Combine(directory, "b.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"names\":[\"A\"],\"weights\":[1]}");
+                File.WriteAllText(Path.Combine(directory, "a.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"A\",\"constituents\":[\"B\"],\"weights\":[1]}");
+                File.WriteAllText(Path.Combine(directory, "b.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"constituents\":[\"A\"],\"weights\":[1]}");
 
                 var exception = Assert.Throws<InvalidOperationException>(() => NodeGraphLoader.LoadNodes(directory));
 

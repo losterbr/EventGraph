@@ -129,13 +129,13 @@ namespace EventGraph
 
         private static List<string> GetDependencies(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            if (!definition.TryGetValue("names", out var names) || names.ValueKind != JsonValueKind.Array)
+            if (!definition.TryGetValue("constituents", out var constituents) || constituents.ValueKind != JsonValueKind.Array)
             {
                 return [];
             }
 
             var dependencies = new List<string>();
-            foreach (var name in names.EnumerateArray())
+            foreach (var name in constituents.EnumerateArray())
             {
                 if (name.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(name.GetString()))
                 {

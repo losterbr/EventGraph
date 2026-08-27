@@ -136,13 +136,13 @@ namespace EventGraph
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
         {
-            if (definition == null || !definition.TryGetValue("names", out var names) || names.ValueKind != JsonValueKind.Array)
+            if (definition == null || !definition.TryGetValue("constituents", out var constituentsDefinition) || constituentsDefinition.ValueKind != JsonValueKind.Array)
             {
-                throw new InvalidDataException("BasketAggregate requires a names array.");
+                throw new InvalidDataException("BasketAggregate requires a constituents array.");
             }
 
             var constituents = new List<ISpotQuoteNode>();
-            foreach (var name in names.EnumerateArray())
+            foreach (var name in constituentsDefinition.EnumerateArray())
             {
                 if (name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString()) || !nodesByName.TryGetValue(name.GetString(), out var node) || node is not ISpotQuoteNode constituent)
                 {
