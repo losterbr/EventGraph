@@ -8,7 +8,7 @@ namespace EventGraph
     /// <summary>
     /// Provides a continuously compounded flat interest-rate curve.
     /// </summary>
-    public sealed class RateCurveSource : IRateCurveNode
+    public sealed class RateCurveSource : IDiscountFactorNode
     {
         public RateCurveSource(IReadOnlyDictionary<string, JsonElement> definition)
             : this(
@@ -38,7 +38,7 @@ namespace EventGraph
             Name = name;
             InterestRate = interestRate;
             Currency = currency;
-            RateCurve = date => Math.Exp(InterestRate * (date - DateTime.Today).TotalDays / 365.0);
+            DiscountFactor = date => Math.Exp(-InterestRate * (date - DateTime.Today).TotalDays / 365.0);
         }
 
         public string Name { get; }
@@ -49,7 +49,7 @@ namespace EventGraph
 
         public string Currency { get; }
 
-        public Func<DateTime, double> RateCurve { get; }
+        public Func<DateTime, double> DiscountFactor { get; }
 
         public IReadOnlyList<IGraphNode> Dependencies => [];
 

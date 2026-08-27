@@ -142,7 +142,7 @@ namespace EventGraph
             }
 
             AddDependency(definition, dependencies, "constituent");
-            AddDependency(definition, dependencies, "rateCurve");
+            AddDependency(definition, dependencies, "discountFactor");
 
             return dependencies;
         }

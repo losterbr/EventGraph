@@ -49,8 +49,8 @@ namespace EventGraph.Tests
                 Assert.Equal(40, sourceIdentifier.Length);
                 Assert.StartsWith("SimulatedSpot::XYZ", sourceIdentifier);
 
-                var rateCurve = new RateCurveSource("USD", 0.05);
-                var option = new EquityOption("XYZ_CALL", source, rateCurve, DateTime.Today.AddYears(1), 100.0);
+                var discountFactor = new RateCurveSource("USD", 0.05);
+                var option = new EquityOption("XYZ_CALL", source, discountFactor, DateTime.Today.AddYears(1), 100.0);
                 subscriber.Subscribe(option);
                 await source.Start(1);
 

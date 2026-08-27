@@ -38,9 +38,9 @@ namespace EventGraph
     /// <summary>
     /// Represents a graph node that provides a date-based rate curve.
     /// </summary>
-    public interface IRateCurveNode : IGraphNode
+    public interface IDiscountFactorNode : IGraphNode
     {
-        Func<DateTime, double> RateCurve { get; }
+        Func<DateTime, double> DiscountFactor { get; }
 
         string Currency { get; }
     }

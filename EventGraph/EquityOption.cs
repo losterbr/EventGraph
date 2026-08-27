@@ -13,7 +13,7 @@ namespace EventGraph
     {
         private readonly ISpotQuoteNode equity;
         private readonly IVolQuoteNode volatilitySource;
-        private readonly IRateCurveNode rateCurve;
+        private readonly IDiscountFactorNode discountFactorNode;
 
         public EquityOption(
             IReadOnlyDictionary<string, JsonElement> definition,
@@ -21,7 +21,7 @@ namespace EventGraph
             : this(
                 GetString(definition, "name"),
                 GetNode<ISpotQuoteNode>(definition, "constituent", nodesByName),
-                GetNode<IRateCurveNode>(definition, "rateCurve", nodesByName),
+                GetNode<IDiscountFactorNode>(definition, "discountFactor", nodesByName),
                 GetMaturity(definition),
                 GetDouble(definition, "strike"))
         {
@@ -30,7 +30,7 @@ namespace EventGraph
         public EquityOption(
             string name,
             ISpotQuoteNode equity,
-            IRateCurveNode rateCurve,
+            IDiscountFactorNode discountFactorNode,
             DateTime maturity,
             double strike)
         {
@@ -40,7 +40,7 @@ namespace EventGraph
             }
 
             ArgumentNullException.ThrowIfNull(equity);
-            ArgumentNullException.ThrowIfNull(rateCurve);
+            ArgumentNullException.ThrowIfNull(discountFactorNode);
             volatilitySource = equity as IVolQuoteNode
                 ?? throw new ArgumentException("The equity dependency must provide volatility.", nameof(equity));
             if (maturity.Date <= DateTime.Today)
@@ -55,7 +55,7 @@ namespace EventGraph
 
             Name = name;
             this.equity = equity;
-            this.rateCurve = rateCurve;
+            this.discountFactorNode = discountFactorNode;
             Maturity = maturity.Date;
             Strike = strike;
             Price = CalculatePrice();
@@ -68,7 +68,7 @@ namespace EventGraph
 
         public string Type => nameof(EquityOption);
 
-        public IReadOnlyList<IGraphNode> Dependencies => [equity, rateCurve];
+        public IReadOnlyList<IGraphNode> Dependencies => [equity, discountFactorNode];
 
         public DateTime Maturity { get; }
 
@@ -87,7 +87,7 @@ namespace EventGraph
             var timeToMaturity = (Maturity - DateTime.Today).TotalDays / 365.0;
             var volatility = volatilitySource.Volatility;
             var spot = equity.Spot;
-            var discountFactor = 1.0 / rateCurve.RateCurve(Maturity);
+            var discountFactor = discountFactorNode.DiscountFactor(Maturity);
             var standardDeviation = volatility * Math.Sqrt(timeToMaturity);
             if (standardDeviation <= 0.0)
             {
