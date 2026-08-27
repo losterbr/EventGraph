@@ -77,7 +77,7 @@ namespace EventGraph.Tests
 
             var basket = new BasketAggregate(
                 ToDictionary(definition),
-                new Dictionary<string, ISpotQuoteNode>
+                new Dictionary<string, IGraphNode>
                 {
                     [sourceA.Name] = sourceA,
                     [sourceB.Name] = sourceB
@@ -213,7 +213,7 @@ namespace EventGraph.Tests
 
             var exception = Assert.ThrowsAny<Exception>(() => new BasketAggregate(
                 ToDictionary(definition),
-                new Dictionary<string, ISpotQuoteNode>()));
+                new Dictionary<string, IGraphNode>()));
 
             Assert.Contains(expectedMessage, exception.Message, StringComparison.OrdinalIgnoreCase);
         }
@@ -226,7 +226,7 @@ namespace EventGraph.Tests
 
             var exception = Assert.Throws<InvalidDataException>(() => new BasketAggregate(
                 ToDictionary(definition),
-                new Dictionary<string, ISpotQuoteNode> { [source.Name] = source }));
+                new Dictionary<string, IGraphNode> { [source.Name] = source }));
 
             Assert.Contains("weights", exception.Message);
         }
@@ -241,7 +241,7 @@ namespace EventGraph.Tests
 
             var basket = new BasketAggregate(quotes);
 
-            Assert.Equal("CalculatedBasket", basket.Type);
+            Assert.Equal(nameof(BasketAggregate), basket.Type);
         }
 
         [Fact]

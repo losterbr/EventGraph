@@ -40,14 +40,14 @@ namespace EventGraph.Tests
 
                 var rendered = output.ToString();
                 Assert.Contains("Subscribed to XYZ", rendered);
-                Assert.Contains("SimulatedSpot::XYZ", rendered);
+                Assert.Contains("SimulatedAssetSource::XYZ", rendered);
 
                 var sourceLine = GetOutputLines(output)
-                    .Single(line => line.Contains("SimulatedSpot::XYZ") && line.Contains("updated to"));
+                    .Single(line => line.Contains("SimulatedAssetSource::XYZ") && line.Contains("updated to"));
                 var sourceIdentifier = GetIdentifier(sourceLine);
 
                 Assert.Equal(40, sourceIdentifier.Length);
-                Assert.StartsWith("SimulatedSpot::XYZ", sourceIdentifier);
+                Assert.StartsWith("SimulatedAssetSource::XYZ", sourceIdentifier);
 
                 var discountFactor = new RateCurveSource("USD", 0.05);
                 var option = new EquityOption("XYZ_CALL", source, discountFactor, DateTime.Today.AddYears(1), 100.0);
@@ -72,11 +72,11 @@ namespace EventGraph.Tests
                 await basket.RunOnceAsync();
 
                 var basketLine = GetOutputLines(output)
-                    .Single(line => line.Contains("CalculatedBasket::B TSLA,GOOG,AMZN,MSFT") && line.Contains("updated to"));
+                    .Single(line => line.Contains("BasketAggregate::B TSLA,GOOG,AMZN,MSFT") && line.Contains("updated to"));
                 var basketIdentifier = GetIdentifier(basketLine);
 
                 Assert.Equal(40, basketIdentifier.Length);
-                Assert.StartsWith("CalculatedBasket::B TSLA,GOOG,AMZN,MSFT", basketIdentifier);
+                Assert.StartsWith("BasketAggregate::B TSLA,GOOG,AMZN,MSFT", basketIdentifier);
             }
             finally
             {
@@ -109,7 +109,7 @@ namespace EventGraph.Tests
                 await Task.WhenAll(sources.Select(source => source.Start(1)));
 
                 var updateLines = GetOutputLines(output)
-                    .Where(line => line.Contains("SimulatedSpot::A") || line.Contains("SimulatedSpot::B") || line.Contains("SimulatedSpot::C"))
+                    .Where(line => line.Contains("SimulatedAssetSource::A") || line.Contains("SimulatedAssetSource::B") || line.Contains("SimulatedAssetSource::C"))
                     .ToArray();
 
                 Assert.Equal(3, updateLines.Length);
@@ -148,8 +148,8 @@ namespace EventGraph.Tests
                 await sources[1].Start(1);
 
                 var lines = GetOutputLines(output);
-                var sourceIndex = Array.FindIndex(lines, line => line.Contains("SimulatedSpot::B") && line.Contains("updated to"));
-                var basketIndex = Array.FindIndex(lines, line => line.Contains("CalculatedBasket::B A,B") && line.Contains("updated to"));
+                var sourceIndex = Array.FindIndex(lines, line => line.Contains("SimulatedAssetSource::B") && line.Contains("updated to"));
+                var basketIndex = Array.FindIndex(lines, line => line.Contains("BasketAggregate::B A,B") && line.Contains("updated to"));
 
                 Assert.True(sourceIndex >= 0);
                 Assert.True(basketIndex > sourceIndex);
@@ -328,13 +328,13 @@ namespace EventGraph.Tests
                 await Task.WhenAll(baseSource.Start(1), childSource.Start(1));
 
                 var lines = GetOutputLines(output)
-                    .Where(line => line.Contains("CalculatedBasket::PARENT") || line.Contains("CalculatedBasket::CHILD_BASKET"))
+                    .Where(line => line.Contains("BasketAggregate::PARENT") || line.Contains("BasketAggregate::CHILD_BASKET"))
                     .ToArray();
 
                 Assert.NotEmpty(lines);
 
-                var parentIndex = Array.FindIndex(lines, line => line.Contains("CalculatedBasket::PARENT"));
-                var childIndex = Array.FindIndex(lines, line => line.Contains("CalculatedBasket::CHILD_BASKET"));
+                var parentIndex = Array.FindIndex(lines, line => line.Contains("BasketAggregate::PARENT"));
+                var childIndex = Array.FindIndex(lines, line => line.Contains("BasketAggregate::CHILD_BASKET"));
 
                 Assert.True(parentIndex >= 0, "The upstream basket should emit before the dependent basket.");
                 Assert.True(childIndex > parentIndex, "A dependent basket must not log before its parent basket has updated.");
@@ -388,12 +388,12 @@ namespace EventGraph.Tests
                     sourceD.Start(1));
 
                 var lines = GetOutputLines(output)
-                    .Where(line => line.Contains("CalculatedBasket::PARENT") || line.Contains("CalculatedBasket::CHILD") || line.Contains("CalculatedBasket::ROOT"))
+                    .Where(line => line.Contains("BasketAggregate::PARENT") || line.Contains("BasketAggregate::CHILD") || line.Contains("BasketAggregate::ROOT"))
                     .ToArray();
 
-                var parentIndex = Array.FindIndex(lines, line => line.Contains("CalculatedBasket::PARENT"));
-                var childIndex = Array.FindIndex(lines, line => line.Contains("CalculatedBasket::CHILD"));
-                var rootIndex = Array.FindIndex(lines, line => line.Contains("CalculatedBasket::ROOT"));
+                var parentIndex = Array.FindIndex(lines, line => line.Contains("BasketAggregate::PARENT"));
+                var childIndex = Array.FindIndex(lines, line => line.Contains("BasketAggregate::CHILD"));
+                var rootIndex = Array.FindIndex(lines, line => line.Contains("BasketAggregate::ROOT"));
 
                 Assert.True(parentIndex >= 0, "The root basket should emit when its dependencies are available.");
                 Assert.True(childIndex > parentIndex, "A basket depending on a parent basket must wait for that parent update.");
@@ -440,12 +440,12 @@ namespace EventGraph.Tests
                     sourceD.Start(1));
 
                 var lines = GetOutputLines(output)
-                    .Where(line => line.Contains("CalculatedBasket::LEFT_PARENT") || line.Contains("CalculatedBasket::RIGHT_PARENT") || line.Contains("CalculatedBasket::CHILD"))
+                    .Where(line => line.Contains("BasketAggregate::LEFT_PARENT") || line.Contains("BasketAggregate::RIGHT_PARENT") || line.Contains("BasketAggregate::CHILD"))
                     .ToArray();
 
-                var leftIndex = Array.FindIndex(lines, line => line.Contains("CalculatedBasket::LEFT_PARENT"));
-                var rightIndex = Array.FindIndex(lines, line => line.Contains("CalculatedBasket::RIGHT_PARENT"));
-                var childIndex = Array.FindIndex(lines, line => line.Contains("CalculatedBasket::CHILD"));
+                var leftIndex = Array.FindIndex(lines, line => line.Contains("BasketAggregate::LEFT_PARENT"));
+                var rightIndex = Array.FindIndex(lines, line => line.Contains("BasketAggregate::RIGHT_PARENT"));
+                var childIndex = Array.FindIndex(lines, line => line.Contains("BasketAggregate::CHILD"));
 
                 Assert.True(leftIndex >= 0, "The first parent basket should update.");
                 Assert.True(rightIndex >= 0, "The second parent basket should update.");

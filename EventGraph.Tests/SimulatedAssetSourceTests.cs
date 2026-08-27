@@ -61,7 +61,7 @@ namespace EventGraph.Tests
         {
             var source = new SimulatedAssetSource("TYPE", 100.0, 0.1);
 
-            Assert.Equal("SimulatedSpot", source.Type);
+            Assert.Equal(nameof(SimulatedAssetSource), source.Type);
         }
 
         [Fact]

@@ -56,22 +56,6 @@ namespace EventGraph
                 : factory(definition, nodesByName);
         }
 
-        public static IGraphNode CreateNode(
-            IReadOnlyDictionary<string, JsonElement> definition,
-            IReadOnlyDictionary<string, ISpotQuoteNode> nodesByName)
-        {
-            var graphNodesByName = new Dictionary<string, IGraphNode>(StringComparer.OrdinalIgnoreCase);
-            if (nodesByName != null)
-            {
-                foreach (var pair in nodesByName)
-                {
-                    graphNodesByName[pair.Key] = pair.Value;
-                }
-            }
-
-            return CreateNode(definition, graphNodesByName);
-        }
-
         private static string GetType(IReadOnlyDictionary<string, JsonElement> definition)
         {
             return !definition.TryGetValue("type", out var type) || type.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(type.GetString())

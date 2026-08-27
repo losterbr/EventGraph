@@ -144,16 +144,12 @@ namespace EventGraph
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
-            return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString())
-                ? throw new InvalidDataException($"EquityOption requires a non-empty '{propertyName}' property.")
-                : property.GetString();
+            return JsonDefinitionReader.GetString(definition, propertyName, nameof(EquityOption));
         }
 
         private static double GetDouble(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
-            return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.Number || !property.TryGetDouble(out var value)
-                ? throw new InvalidDataException($"EquityOption requires a numeric '{propertyName}' property.")
-                : value;
+            return JsonDefinitionReader.GetDouble(definition, propertyName, nameof(EquityOption));
         }
 
         private static EquityOptionType GetOptionType(IReadOnlyDictionary<string, JsonElement> definition)

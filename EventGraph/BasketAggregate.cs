@@ -34,15 +34,6 @@ namespace EventGraph
         {
         }
 
-        public BasketAggregate(
-            IReadOnlyDictionary<string, JsonElement> definition,
-            IReadOnlyDictionary<string, ISpotQuoteNode> nodesByName)
-            : this(
-                definition,
-                nodesByName?.ToDictionary(pair => pair.Key, pair => (IGraphNode)pair.Value, StringComparer.OrdinalIgnoreCase))
-        {
-        }
-
         public BasketAggregate(IReadOnlyList<ISpotQuoteNode> constituents, IReadOnlyList<double> weights = null)
             : this(constituents == null ? null : $"B {string.Join(",", constituents.Select(x => x.Name))}", constituents, weights)
         {
@@ -117,7 +108,7 @@ namespace EventGraph
 
         public string Name { get; }
 
-        public string Type => "CalculatedBasket";
+        public string Type => nameof(BasketAggregate);
 
         public double Spot { get; private set; }
 
@@ -136,9 +127,7 @@ namespace EventGraph
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
-            return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString())
-                ? throw new InvalidDataException($"BasketAggregate requires a non-empty '{propertyName}' property.")
-                : property.GetString();
+            return JsonDefinitionReader.GetString(definition, propertyName, nameof(BasketAggregate));
         }
 
         private static List<ISpotQuoteNode> GetConstituents(

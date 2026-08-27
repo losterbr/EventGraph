@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.Json;
 
 namespace EventGraph
@@ -55,16 +54,12 @@ namespace EventGraph
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
-            return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString())
-                ? throw new InvalidDataException($"RateCurveSource requires a non-empty '{propertyName}' property.")
-                : property.GetString();
+            return JsonDefinitionReader.GetString(definition, propertyName, nameof(RateCurveSource));
         }
 
         private static double GetDouble(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
-            return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.Number || !property.TryGetDouble(out var value)
-                ? throw new InvalidDataException($"RateCurveSource requires a numeric '{propertyName}' property.")
-                : value;
+            return JsonDefinitionReader.GetDouble(definition, propertyName, nameof(RateCurveSource));
         }
 
         private static string GetStringOrDefault(
@@ -72,9 +67,7 @@ namespace EventGraph
             string propertyName,
             string defaultValue)
         {
-            return definition == null || !definition.ContainsKey(propertyName)
-                ? defaultValue
-                : GetString(definition, propertyName);
+            return JsonDefinitionReader.GetStringOrDefault(definition, propertyName, defaultValue, nameof(RateCurveSource));
         }
     }
 }

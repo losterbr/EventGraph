@@ -36,7 +36,7 @@ namespace EventGraph
     }
 
     /// <summary>
-    /// Represents a graph node that provides a date-based rate curve.
+    /// Represents a graph node that provides a discount factor curve.
     /// </summary>
     public interface IDiscountFactorNode : IGraphNode
     {
@@ -46,7 +46,7 @@ namespace EventGraph
     }
 
     /// <summary>
-    /// Represents an equity option price derived from an equity and a rate curve.
+    /// Represents an equity option price derived from an equity, its volatility, and a discount factor curve.
     /// </summary>
     public interface IEquityOptionNode : IGraphNode
     {
