@@ -14,10 +14,10 @@ namespace EventGraph
         private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>> Factories =
             new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>>(StringComparer.OrdinalIgnoreCase)
             {
-                ["SimulatedAssetSource"] = (definition, _) => new SimulatedAssetSource(definition),
+                [nameof(SimulatedAssetSource)] = (definition, _) => new SimulatedAssetSource(definition),
                 [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName),
                 [nameof(RateCurveSource)] = (definition, _) => new RateCurveSource(definition),
-                ["EquityOption"] = (definition, nodesByName) => new EquityOption(definition, nodesByName)
+                [nameof(EquityOption)] = (definition, nodesByName) => new EquityOption(definition, nodesByName)
             };
 
         public static IReadOnlyCollection<string> SupportedTypes => [.. Factories.Keys];
