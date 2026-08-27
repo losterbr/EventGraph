@@ -15,7 +15,7 @@ namespace EventGraph.Tests
 
             var basket = new BasketAggregate(quotes);
             var updates = new List<QuoteTick>();
-            basket.SpotTick += (_, message) => updates.Add(message);
+            basket.Tick += (_, message) => updates.Add(message);
 
             await basket.RunOnceAsync();
 
@@ -34,7 +34,7 @@ namespace EventGraph.Tests
 
             var basket = new BasketAggregate(quotes, [0.25, 0.75]);
             var updates = new List<QuoteTick>();
-            basket.SpotTick += (_, message) => updates.Add(message);
+            basket.Tick += (_, message) => updates.Add(message);
 
             await basket.RunOnceAsync();
 
@@ -53,7 +53,7 @@ namespace EventGraph.Tests
 
             var basket = new BasketAggregate(quotes, [2.0, -1.0]);
             var updates = new List<QuoteTick>();
-            basket.SpotTick += (_, message) => updates.Add(message);
+            basket.Tick += (_, message) => updates.Add(message);
 
             await basket.RunOnceAsync();
 
@@ -83,7 +83,7 @@ namespace EventGraph.Tests
                     [sourceB.Name] = sourceB
                 });
             var updates = new List<QuoteTick>();
-            basket.SpotTick += (_, message) => updates.Add(message);
+            basket.Tick += (_, message) => updates.Add(message);
 
             await basket.RunOnceAsync();
 
@@ -102,7 +102,7 @@ namespace EventGraph.Tests
 
             var basket = new BasketAggregate(quotes, [0.0, 1.0]);
             var updates = new List<QuoteTick>();
-            basket.SpotTick += (_, message) => updates.Add(message);
+            basket.Tick += (_, message) => updates.Add(message);
 
             await quotes[0].Start(1);
 
@@ -115,7 +115,7 @@ namespace EventGraph.Tests
             var source = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
             var basket = new BasketAggregate([source]);
             var updates = new List<QuoteTick>();
-            basket.SpotTick += (_, message) => updates.Add(message);
+            basket.Tick += (_, message) => updates.Add(message);
 
             await source.Start(1);
 
@@ -128,7 +128,7 @@ namespace EventGraph.Tests
             var source = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
             var basket = new BasketAggregate([source]);
             var updates = new List<QuoteTick>();
-            basket.SpotTick += (_, message) => updates.Add(message);
+            basket.Tick += (_, message) => updates.Add(message);
 
             basket.Connect();
             await source.Start(1);
@@ -145,7 +145,7 @@ namespace EventGraph.Tests
             var zeroWeightBasket = new BasketAggregate("ZERO_BASKET", [zeroWeightSource]);
             var basket = new BasketAggregate("BASKET", [zeroWeightBasket, activeSource], [0.0, 1.0]);
             var updates = new List<QuoteTick>();
-            basket.SpotTick += (_, message) => updates.Add(message);
+            basket.Tick += (_, message) => updates.Add(message);
 
             basket.Connect();
             await zeroWeightBasket.RunOnceAsync();
@@ -255,7 +255,7 @@ namespace EventGraph.Tests
 
             var basket = new BasketAggregate(quotes);
             var updates = new List<QuoteTick>();
-            basket.SpotTick += (_, message) => updates.Add(message);
+            basket.Tick += (_, message) => updates.Add(message);
 
             await quotes[0].Start(1);
 
@@ -273,7 +273,7 @@ namespace EventGraph.Tests
 
             var basket = new BasketAggregate(quotes);
             var updates = new List<QuoteTick>();
-            basket.SpotTick += (_, message) => updates.Add(message);
+            basket.Tick += (_, message) => updates.Add(message);
 
             basket.Connect();
             await Task.WhenAll(quotes[0].Start(1), quotes[1].Start(1));

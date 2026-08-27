@@ -16,6 +16,7 @@ namespace EventGraph.Tests
             Assert.Equal(7.5771, option.Price, precision: 3);
             Assert.Equal(EquityOptionType.Call, option.OptionType);
             Assert.Equal([equity, discountFactor], option.Dependencies);
+            Assert.Equal("USD", option.Currency);
         }
 
         [Fact]
@@ -87,7 +88,7 @@ namespace EventGraph.Tests
             var discountFactor = new RateCurveSource("USD", 0.05);
             var option = new EquityOption("AAPL_CALL", equity, discountFactor, DateTime.Today.AddYears(1), 100.0);
             QuoteTick? update = null;
-            option.PriceTick += (_, message) => update = message;
+            option.Tick += (_, message) => update = message;
 
             await equity.Start(1);
 

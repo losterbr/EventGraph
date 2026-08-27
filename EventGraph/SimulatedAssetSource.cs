@@ -11,7 +11,7 @@ namespace EventGraph
     /// </summary>
     public class SimulatedAssetSource : ISpotQuoteNode, IVolQuoteNode
     {
-        public event EventHandler<QuoteTick> SpotTick;
+        public event EventHandler<QuoteTick> Tick;
 
         private const double MilliSecondsPerYear = 365.25 * 24.0 * 60.0 * 60.0 * 1000.0;
         private readonly double meanTickTimeSeconds;
@@ -116,7 +116,7 @@ namespace EventGraph
 
             await Task.Run(() =>
             {
-                SpotTick?.Invoke(this, quoteTick);
+                Tick?.Invoke(this, quoteTick);
 
                 int emittedTicks = 1;
                 while (!cancellationToken.IsCancellationRequested && (tickCount <= 0 || emittedTicks < tickCount))
@@ -131,7 +131,7 @@ namespace EventGraph
                     quoteTick.Value *= Math.Exp((stdDev * normalDist.Sample()) + logDriftAdjustment);
                     Spot = quoteTick.Value;
                     Sleep(timeStepMilliSeconds);
-                    SpotTick?.Invoke(this, quoteTick);
+                    Tick?.Invoke(this, quoteTick);
                     emittedTicks++;
 
                     if (tickCount == 0)

@@ -12,7 +12,7 @@ namespace EventGraph
     /// </summary>
     public class BasketAggregate : ISpotQuoteNode
     {
-        public event EventHandler<QuoteTick> SpotTick;
+        public event EventHandler<QuoteTick> Tick;
 
         private const double Epsilon = 1e-9;
         private readonly Dictionary<ISpotQuoteNode, int[]> constituentIndicesByNode;
@@ -178,8 +178,8 @@ namespace EventGraph
         {
             foreach (var constituent in constituentIndicesByNode.Keys)
             {
-                constituent.SpotTick -= SpotTicked;
-                constituent.SpotTick += SpotTicked;
+                constituent.Tick -= ConstituentTicked;
+                constituent.Tick += ConstituentTicked;
             }
         }
 
@@ -216,7 +216,7 @@ namespace EventGraph
             return spot;
         }
 
-        private void SpotTicked(object sender, QuoteTick e)
+        private void ConstituentTicked(object sender, QuoteTick e)
         {
             if (sender is not ISpotQuoteNode node || !constituentIndicesByNode.TryGetValue(node, out var indices))
             {
@@ -240,7 +240,7 @@ namespace EventGraph
                     var spot = CalculateSpot();
                     Spot = spot;
                     var quoteTick = new QuoteTick(Name, spot);
-                    SpotTick?.Invoke(this, quoteTick);
+                    Tick?.Invoke(this, quoteTick);
                 }
             }
         }
@@ -269,7 +269,7 @@ namespace EventGraph
                         var spot = CalculateSpot();
                         Spot = spot;
                         var quoteTick = new QuoteTick(Name, spot);
-                        SpotTick?.Invoke(this, quoteTick);
+                        Tick?.Invoke(this, quoteTick);
                     }
                 }
             });

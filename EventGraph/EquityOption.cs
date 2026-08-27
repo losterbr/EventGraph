@@ -72,10 +72,10 @@ namespace EventGraph
             Strike = strike;
             OptionType = optionType;
             Price = CalculatePrice();
-            this.equity.SpotTick += EquitySpotTicked;
+            this.equity.Tick += EquityTicked;
         }
 
-        public event EventHandler<QuoteTick> PriceTick;
+        public event EventHandler<QuoteTick> Tick;
 
         public string Name { get; }
 
@@ -96,10 +96,12 @@ namespace EventGraph
 
         public double Price { get; private set; }
 
-        private void EquitySpotTicked(object sender, QuoteTick e)
+        public string Currency => discountFactorNode.Currency;
+
+        private void EquityTicked(object sender, QuoteTick e)
         {
             Price = CalculatePrice();
-            PriceTick?.Invoke(this, new QuoteTick(Name, Price));
+            Tick?.Invoke(this, new QuoteTick(Name, Price));
         }
 
         private double CalculatePrice()

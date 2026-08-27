@@ -16,12 +16,18 @@ namespace EventGraph
     }
 
     /// <summary>
+    /// Represents a graph node that raises quote-tick events.
+    /// </summary>
+    public interface ITickingNode : IGraphNode
+    {
+        event EventHandler<QuoteTick> Tick;
+    }
+
+    /// <summary>
     /// Represents the spot quote-producing node type.
     /// </summary>
-    public interface ISpotQuoteNode : IGraphNode
+    public interface ISpotQuoteNode : ITickingNode
     {
-        event EventHandler<QuoteTick> SpotTick;
-
         double Spot { get; }
 
         string Currency { get; }
@@ -48,11 +54,11 @@ namespace EventGraph
     /// <summary>
     /// Represents an equity option price derived from an equity, its volatility, and a discount factor curve.
     /// </summary>
-    public interface IEquityOptionNode : IGraphNode
+    public interface IEquityOptionNode : ITickingNode
     {
-        event EventHandler<QuoteTick> PriceTick;
-
         double Price { get; }
+
+        string Currency { get; }
     }
 
 }

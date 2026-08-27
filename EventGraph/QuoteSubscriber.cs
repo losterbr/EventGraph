@@ -34,70 +34,25 @@ namespace EventGraph
         private int nextSourceColor;
         private int nextBasketColor;
 
-        public void Subscribe(SimulatedAssetSource quote)
+        public void Subscribe(ITickingNode node)
         {
-            quote.SpotTick += SpotTicked;
-            nodeColors[quote] = SourceColors[nextSourceColor++ % SourceColors.Length];
+            node.Tick += NodeTicked;
+            nodeColors[node] = node is BasketAggregate
+                ? basketColorOverride ?? SourceColors[nextBasketColor++ % SourceColors.Length]
+                : SourceColors[nextSourceColor++ % SourceColors.Length];
             if (!quiet)
             {
                 lock (ConsoleLock)
                 {
                     WriteTimestamp();
-                    Console.ForegroundColor = nodeColors[quote];
-                    Console.WriteLine($" Subscribed to {quote.Name}");
-                    Console.ResetColor();
-                }
-            }
-        }
-
-        public void Subscribe(BasketAggregate quote)
-        {
-            quote.SpotTick += SpotTicked;
-            nodeColors[quote] = basketColorOverride ?? SourceColors[nextBasketColor++ % SourceColors.Length];
-            if (!quiet)
-            {
-                lock (ConsoleLock)
-                {
-                    WriteTimestamp();
-                    Console.ForegroundColor = nodeColors[quote];
-                    Console.WriteLine($" Subscribed to {quote.Name}");
-                    Console.ResetColor();
-                }
-            }
-        }
-
-        public void Subscribe(IEquityOptionNode option)
-        {
-            option.PriceTick += PriceTicked;
-            nodeColors[option] = SourceColors[nextSourceColor++ % SourceColors.Length];
-            if (!quiet)
-            {
-                lock (ConsoleLock)
-                {
-                    WriteTimestamp();
-                    Console.ForegroundColor = nodeColors[option];
-                    Console.WriteLine($" Subscribed to {option.Name}");
-                    Console.ResetColor();
-                }
-            }
-        }
-
-        private void SpotTicked(object sender, QuoteTick e)
-        {
-            if (!quiet)
-            {
-                lock (ConsoleLock)
-                {
-                    WriteTimestamp();
-                    var node = (IGraphNode)sender;
                     Console.ForegroundColor = nodeColors[node];
-                    Console.WriteLine($" {FormatNodeIdentifier($"{node.Type}::{node.Name}")} updated to {e.Value:0.##}");
+                    Console.WriteLine($" Subscribed to {node.Name}");
                     Console.ResetColor();
                 }
             }
         }
 
-        private void PriceTicked(object sender, QuoteTick e)
+        private void NodeTicked(object sender, QuoteTick e)
         {
             if (!quiet)
             {

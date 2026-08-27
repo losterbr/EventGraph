@@ -9,7 +9,7 @@ namespace EventGraph.Tests
         {
             var updates = new List<QuoteTick>();
             var source = new SimulatedAssetSource("XYZ", 100.0, 0.2, 0.0);
-            source.SpotTick += (_, message) => updates.Add(message);
+            source.Tick += (_, message) => updates.Add(message);
 
             await source.Start(2);
 
@@ -22,7 +22,7 @@ namespace EventGraph.Tests
             var updates = new List<QuoteTick>();
             var source = new SimulatedAssetSource("CONT", 50.0, 0.1, 0.0);
             using var cts = new CancellationTokenSource();
-            source.SpotTick += (_, message) =>
+            source.Tick += (_, message) =>
             {
                 updates.Add(message);
                 cts.Cancel();
@@ -99,7 +99,7 @@ namespace EventGraph.Tests
         {
             var source = new SimulatedAssetSource("INIT", 100.0, 0.0, 0.0);
             QuoteTick? message = null;
-            source.SpotTick += (_, update) => message = update;
+            source.Tick += (_, update) => message = update;
 
             await source.Start(1);
 
