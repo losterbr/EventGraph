@@ -58,6 +58,17 @@ namespace EventGraph.Tests
         }
 
         [Fact]
+        public void EquityOptionRejectsCurrencyMismatch()
+        {
+            var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0, "USD");
+            var discountFactor = new RateCurveSource("EUR", 0.05, "EUR");
+
+            var exception = Assert.Throws<ArgumentException>(() => new EquityOption("AAPL_CALL", equity, discountFactor, DateTime.Today.AddYears(1), 100.0));
+
+            Assert.Contains("currencies must match", exception.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
         public void EquityOptionHandlesSpotMuchGreaterThanStrike()
         {
             var equity = new SimulatedAssetSource("AAPL", 1_000_000_000.0, 0.2, 0.0);

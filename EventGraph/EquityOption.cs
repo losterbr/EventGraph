@@ -43,6 +43,11 @@ namespace EventGraph
 
             ArgumentNullException.ThrowIfNull(equity);
             ArgumentNullException.ThrowIfNull(discountFactorNode);
+            if (!string.Equals(equity.Currency, discountFactorNode.Currency, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("Option and underlying currencies must match.", nameof(discountFactorNode));
+            }
+
             volatilitySource = equity as IVolQuoteNode
                 ?? throw new ArgumentException("The equity dependency must provide volatility.", nameof(equity));
             if (maturity.Date <= DateTime.Today)
