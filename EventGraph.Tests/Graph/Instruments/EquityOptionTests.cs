@@ -151,7 +151,7 @@ namespace EventGraph.Tests
             var discountFactor = new RateCurveSource(rateNode);
             var forward = new ForwardCurve(spotNode, discountFactor);
             var volatility = new VolatilitySource(equity);
-            using var document = JsonDocument.Parse("{\"name\":\"AAPL_CALL\",\"constituent\":\"ForwardCurve::AAPL\",\"volatility\":\"VolatilitySource::AAPL\",\"discountCurve\":\"RateCurveSource::USD\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Put\"}");
+            using var document = JsonDocument.Parse("{\"name\":\"AAPL_CALL\",\"underlyer\":\"ForwardCurve::AAPL\",\"volatility\":\"VolatilitySource::AAPL\",\"discountCurve\":\"RateCurveSource::USD\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Put\"}");
             var definition = document.RootElement
                 .EnumerateObject()
                 .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);

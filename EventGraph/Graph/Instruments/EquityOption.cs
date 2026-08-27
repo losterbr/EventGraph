@@ -20,7 +20,7 @@ namespace EventGraph
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
             : this(
                 GetString(definition, "name"),
-                GetNode<IForwardCurveNode>(definition, "constituent", nodesByName),
+                GetNode<IForwardCurveNode>(definition, "underlyer", nodesByName),
                 GetNode<IVolQuoteNode>(definition, "volatility", nodesByName),
                 GetNode<IDiscountCurveNode>(definition, "discountCurve", nodesByName),
                 GetMaturity(definition),
@@ -87,7 +87,7 @@ namespace EventGraph
 
         internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            return [GetString(definition, "constituent"), GetString(definition, "volatility"), GetString(definition, "discountCurve")];
+            return [GetString(definition, "underlyer"), GetString(definition, "volatility"), GetString(definition, "discountCurve")];
         }
 
         public DateTime Maturity { get; }

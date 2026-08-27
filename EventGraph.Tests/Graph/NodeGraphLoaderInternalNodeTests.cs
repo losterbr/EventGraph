@@ -36,7 +36,7 @@ namespace EventGraph.Tests
                 {
                   "type": "EquityOption",
                   "name": "AAPL_1Y_CALL",
-                  "constituent": "ForwardCurve::AAPL",
+                  "underlyer": "ForwardCurve::AAPL",
                   "volatility": "VolatilitySource::AAPL",
                   "discountCurve": "RateCurveSource::USD",
                   "maturity": "1Y",
