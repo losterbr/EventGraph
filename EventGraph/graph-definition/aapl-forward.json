@@ -1,5 +1,0 @@
-{
-  "type": "ForwardCurve",
-  "spot": "SpotNode::AAPL",
-  "discountCurve": "RateCurveSource::USD"
-}

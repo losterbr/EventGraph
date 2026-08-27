@@ -20,9 +20,9 @@ namespace EventGraph
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
             : this(
                 GetString(definition, "name"),
-                GetNode<IForwardCurveNode>(definition, "underlyer", nodesByName),
-                GetNode<IVolQuoteNode>(definition, "volatility", nodesByName),
-                GetNode<IDiscountCurveNode>(definition, "discountCurve", nodesByName),
+                GetDerivedNode<IForwardCurveNode>(definition, nodesByName, 0),
+                GetDerivedNode<IVolQuoteNode>(definition, nodesByName, 1),
+                GetDerivedNode<IDiscountCurveNode>(definition, nodesByName, 2),
                 GetMaturity(definition),
                 GetDouble(definition, "strike"),
                 GetOptionType(definition))
@@ -85,9 +85,16 @@ namespace EventGraph
 
         public IReadOnlyList<IGraphNode> Dependencies => [forwardNode, volatilitySource, discountCurveNode];
 
-        internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
+        public static IReadOnlyList<string> GetDerivedDependencyKeys(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            return [GetString(definition, "underlyer"), GetString(definition, "volatility"), GetString(definition, "discountCurve")];
+            var underlyer = GetString(definition, "underlyer");
+            var currency = GetString(definition, "currency");
+            return
+            [
+                GraphKey.Of(nameof(ForwardCurve), underlyer),
+                GraphKey.Of(nameof(VolatilitySource), underlyer),
+                GraphKey.Of(nameof(RateCurveSource), currency)
+            ];
         }
 
         public DateTime Maturity { get; }
@@ -134,16 +141,16 @@ namespace EventGraph
                 : DateTime.Parse(maturity, CultureInfo.InvariantCulture);
         }
 
-        private static TNode GetNode<TNode>(
+        private static TNode GetDerivedNode<TNode>(
             IReadOnlyDictionary<string, JsonElement> definition,
-            string propertyName,
-            IReadOnlyDictionary<string, IGraphNode> nodesByName)
+            IReadOnlyDictionary<string, IGraphNode> nodesByName,
+            int dependencyIndex)
             where TNode : class, IGraphNode
         {
-            var nodeName = GetString(definition, propertyName);
-            return nodesByName != null && nodesByName.TryGetValue(nodeName, out var node) && node is TNode typedNode
+            var key = GetDerivedDependencyKeys(definition)[dependencyIndex];
+            return nodesByName != null && nodesByName.TryGetValue(key, out var node) && node is TNode typedNode
                 ? typedNode
-                : throw new InvalidDataException($"EquityOption references an invalid {propertyName} '{nodeName}'.");
+                : throw new InvalidDataException($"EquityOption could not resolve derived dependency '{key}'.");
         }
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)

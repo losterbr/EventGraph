@@ -20,7 +20,7 @@ namespace EventGraph
                 [nameof(RateNode)] = definition => [GraphKey.Of(nameof(CurrencyRateSource), GetNodeName(definition))],
                 [nameof(ForwardCurve)] = ForwardCurve.GetDependencyNames,
                 [nameof(RateCurveSource)] = RateCurveSource.GetDependencyNames,
-                [nameof(EquityOption)] = EquityOption.GetDependencyNames
+                [nameof(EquityOption)] = EquityOption.GetDerivedDependencyKeys
             };
 
         private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>> Factories =

@@ -71,8 +71,7 @@ namespace EventGraph
                 }
                 else if (type == nameof(EquityOption))
                 {
-                    AddIfMissing(toAdd, definitionsByKey, definition, "discountCurve");
-                    AddIfMissing(toAdd, definitionsByKey, definition, "volatility");
+                    AddForwardChainIfMissing(toAdd, definitionsByKey, definition);
                 }
                 else if (type == nameof(CurrencyRateSource))
                 {
@@ -168,7 +167,7 @@ namespace EventGraph
 
         private static string ResolveDependencyKey(
             string dependencyKey,
-            IReadOnlyDictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey)
+            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey)
         {
             if (definitionsByKey.ContainsKey(dependencyKey))
             {
@@ -191,7 +190,7 @@ namespace EventGraph
 
         private static string GetAliasKey(
             string dependencyKey,
-            IReadOnlyDictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey)
+            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey)
         {
             var separator = dependencyKey.IndexOf("::", StringComparison.Ordinal);
             if (separator < 0)
@@ -253,7 +252,7 @@ namespace EventGraph
 
         private static void AddIfMissing(
             List<IReadOnlyDictionary<string, JsonElement>> toAdd,
-            IReadOnlyDictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
+            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
             IReadOnlyDictionary<string, JsonElement> definition,
             string propertyName)
         {
@@ -286,6 +285,53 @@ namespace EventGraph
                 synthetic["name"] = JsonSerializer.SerializeToElement(refName);
             }
 
+            toAdd.Add(synthetic);
+        }
+
+        private static void AddForwardChainIfMissing(
+            List<IReadOnlyDictionary<string, JsonElement>> toAdd,
+            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
+            IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            var underlyer = GetStringProperty(definition, "underlyer");
+            var currency = GetStringProperty(definition, "currency");
+
+            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(SpotNode), underlyer, new Dictionary<string, JsonElement>
+            {
+                ["name"] = JsonSerializer.SerializeToElement(underlyer)
+            });
+            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(VolatilitySource), underlyer, new Dictionary<string, JsonElement>
+            {
+                ["name"] = JsonSerializer.SerializeToElement(underlyer)
+            });
+            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(RateCurveSource), currency, new Dictionary<string, JsonElement>
+            {
+                ["rate"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateNode), currency))
+            });
+            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(ForwardCurve), underlyer, new Dictionary<string, JsonElement>
+            {
+                ["spot"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(SpotNode), underlyer)),
+                ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveSource), currency))
+            });
+        }
+
+        private static void AddSyntheticIfMissing(
+            List<IReadOnlyDictionary<string, JsonElement>> toAdd,
+            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
+            string type,
+            string name,
+            Dictionary<string, JsonElement> extraProperties)
+        {
+            var key = GraphKey.Of(type, name);
+            if (definitionsByKey.ContainsKey(key))
+            {
+                return;
+            }
+
+            var synthetic = new Dictionary<string, JsonElement>(extraProperties, StringComparer.OrdinalIgnoreCase)
+            {
+                ["type"] = JsonSerializer.SerializeToElement(type)
+            };
             toAdd.Add(synthetic);
         }
 

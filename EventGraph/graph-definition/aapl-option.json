@@ -1,9 +1,8 @@
 {
   "type": "EquityOption",
   "name": "AAPL_1Y_CALL",
-  "underlyer": "ForwardCurve::AAPL",
-  "volatility": "VolatilitySource::AAPL",
-  "discountCurve": "RateCurveSource::USD",
+  "underlyer": "AAPL",
+  "currency": "USD",
   "maturity": "1Y",
   "strike": 225.0,
   "optionType": "Call"

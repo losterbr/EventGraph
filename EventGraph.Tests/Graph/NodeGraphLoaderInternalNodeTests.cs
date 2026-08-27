@@ -25,20 +25,12 @@ namespace EventGraph.Tests
                   "interestRate": 0.02
                 }
                 """);
-                File.WriteAllText(Path.Combine(directory, "forward.json"), /*lang=json,strict*/ """
-                {
-                  "type": "ForwardCurve",
-                  "spot": "SpotNode::AAPL",
-                  "discountCurve": "RateCurveSource::USD"
-                }
-                """);
                 File.WriteAllText(Path.Combine(directory, "option.json"), /*lang=json,strict*/ """
                 {
                   "type": "EquityOption",
                   "name": "AAPL_1Y_CALL",
-                  "underlyer": "ForwardCurve::AAPL",
-                  "volatility": "VolatilitySource::AAPL",
-                  "discountCurve": "RateCurveSource::USD",
+                  "underlyer": "AAPL",
+                  "currency": "USD",
                   "maturity": "1Y",
                   "strike": 225.0,
                   "optionType": "Call"
@@ -54,6 +46,49 @@ namespace EventGraph.Tests
                 Assert.Contains(graph.Nodes, node => node is RateCurveSource);
                 Assert.Contains(graph.Nodes, node => node is ForwardCurve);
                 Assert.Contains(graph.Nodes, node => node is EquityOption);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
+        [Fact]
+        public void LoadGraphAutoMaterializesForwardCurveFromExplicitJson()
+        {
+            var directory = CreateDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(directory, "aapl.json"), /*lang=json,strict*/ """
+                {
+                  "type": "SimulatedAssetSource",
+                  "name": "AAPL",
+                  "currency": "USD",
+                  "spot": 225.0,
+                  "volatility": 0.28,
+                  "meanTickTimeSeconds": 4.5
+                }
+                """);
+                File.WriteAllText(Path.Combine(directory, "usd.json"), /*lang=json,strict*/ """
+                {
+                  "type": "CurrencyRateSource",
+                  "name": "USD",
+                  "interestRate": 0.02
+                }
+                """);
+                File.WriteAllText(Path.Combine(directory, "forward.json"), /*lang=json,strict*/ """
+                {
+                  "type": "ForwardCurve",
+                  "spot": "SpotNode::AAPL",
+                  "discountCurve": "RateCurveSource::USD"
+                }
+                """);
+
+                var graph = NodeGraphLoader.LoadGraph(directory);
+
+                Assert.Contains(graph.Nodes, node => node is ForwardCurve);
+                Assert.Contains(graph.Nodes, node => node is SpotNode);
+                Assert.Contains(graph.Nodes, node => node is RateCurveSource);
             }
             finally
             {
