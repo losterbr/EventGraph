@@ -1,73 +1,63 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
 
 namespace EventGraph
 {
     /// <summary>
-    /// Provides a continuously compounded flat interest-rate curve.
+    /// Internal node that converts a flat interest rate into a continuously compounded discount factor curve.
     /// </summary>
-    public sealed class RateCurveSource : IDiscountFactorNode
+    public sealed class RateCurveSource : IDiscountFactorNode, IDiscountCurveNode
     {
-        public RateCurveSource(IReadOnlyDictionary<string, JsonElement> definition)
+        private readonly RateNode rateNode;
+
+        public RateCurveSource(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
             : this(
-                GetString(definition, "name"),
-                GetDouble(definition, "interestRate"),
-                GetStringOrDefault(definition, "currency", "USD"))
+                GetNode<RateNode>(definition, "rate", nodesByName))
         {
         }
 
-        public RateCurveSource(string name, double interestRate, string currency = "USD")
+        public RateCurveSource(RateNode rateNode)
         {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentException("Rate curve name cannot be empty.", nameof(name));
-            }
-
-            if (double.IsNaN(interestRate) || double.IsInfinity(interestRate))
-            {
-                throw new ArgumentOutOfRangeException(nameof(interestRate), "Interest rate must be a finite number.");
-            }
-
-            if (string.IsNullOrWhiteSpace(currency))
-            {
-                throw new ArgumentException("Currency cannot be empty.", nameof(currency));
-            }
-
-            Name = name;
-            InterestRate = interestRate;
-            Currency = currency;
-            DiscountFactor = date => Math.Exp(-InterestRate * (date - DateTime.Today).TotalDays / 365.0);
+            this.rateNode = rateNode ?? throw new ArgumentNullException(nameof(rateNode));
+            DiscountFactor = date => Math.Exp(-this.rateNode.InterestRate * (date - DateTime.Today).TotalDays / 365.0);
         }
 
-        public string Name { get; }
+        public string Name => rateNode.Name;
 
         public string Type => nameof(RateCurveSource);
 
-        public double InterestRate { get; }
+        public double InterestRate => rateNode.InterestRate;
 
-        public string Currency { get; }
+        public string Currency => rateNode.Name;
 
         public Func<DateTime, double> DiscountFactor { get; }
 
-        public IReadOnlyList<IGraphNode> Dependencies => [];
+        public IReadOnlyList<IGraphNode> Dependencies => [rateNode];
+
+        internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return [GetString(definition, "rate")];
+        }
+
+        private static TNode GetNode<TNode>(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            string propertyName,
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
+            where TNode : class, IGraphNode
+        {
+            var key = GetString(definition, propertyName);
+            return nodesByName != null && nodesByName.TryGetValue(key, out var node) && node is TNode typedNode
+                ? typedNode
+                : throw new InvalidDataException($"RateCurveSource references an invalid {propertyName} '{key}'.");
+        }
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
             return JsonDefinitionReader.GetString(definition, propertyName, nameof(RateCurveSource));
-        }
-
-        private static double GetDouble(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
-        {
-            return JsonDefinitionReader.GetDouble(definition, propertyName, nameof(RateCurveSource));
-        }
-
-        private static string GetStringOrDefault(
-            IReadOnlyDictionary<string, JsonElement> definition,
-            string propertyName,
-            string defaultValue)
-        {
-            return JsonDefinitionReader.GetStringOrDefault(definition, propertyName, defaultValue, nameof(RateCurveSource));
         }
     }
 }

@@ -21,14 +21,15 @@ namespace EventGraph
             for (int i = 0; i < Nodes.Count; i++)
             {
                 var node = Nodes[i] ?? throw new ArgumentException("Quote graph nodes cannot be null.", nameof(nodes));
-                if (!indices.TryAdd(node.Name, i))
+                var key = GraphKey.Of(node.Type, node.Name);
+                if (!indices.TryAdd(key, i))
                 {
-                    throw new ArgumentException($"Duplicate graph node name '{node.Name}' detected.", nameof(nodes));
+                    throw new ArgumentException($"Duplicate graph node key '{key}' detected.", nameof(nodes));
                 }
             }
 
             nodeIndexByName = indices;
-            DependenciesByNode = [.. Nodes.Select(node => (IReadOnlyList<int>)[.. node.Dependencies.Select(dependency => GetIndex(dependency.Name))])];
+            DependenciesByNode = [.. Nodes.Select(node => (IReadOnlyList<int>)[.. node.Dependencies.Select(dependency => GetIndex(GraphKey.Of(dependency.Type, dependency.Name)))])];
             var dependentsByNode = Enumerable.Range(0, Nodes.Count)
                 .Select(_ => new List<int>())
                 .ToArray();
@@ -55,9 +56,21 @@ namespace EventGraph
 
         public int GetIndex(string name)
         {
-            return nodeIndexByName.GetValueOrDefault(name, -1) is var index && index >= 0
-                ? index
-                : throw new KeyNotFoundException($"Graph node '{name}' was not found in the graph.");
+            // Try as a canonical key first, then as a bare name resolved to a single match.
+            if (nodeIndexByName.TryGetValue(name, out var index))
+            {
+                return index;
+            }
+
+            var matches = nodeIndexByName
+                .Where(pair => pair.Key.EndsWith($"::{name}", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (matches.Count == 1)
+            {
+                return matches[0].Value;
+            }
+
+            throw new KeyNotFoundException($"Graph node '{name}' was not found in the graph.");
         }
     }
 }

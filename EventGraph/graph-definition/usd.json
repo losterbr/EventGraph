@@ -1,6 +1,5 @@
 {
-  "type": "RateCurveSource",
+  "type": "CurrencyRateSource",
   "name": "USD",
-  "currency": "USD",
   "interestRate": 0.02
 }

@@ -4,22 +4,22 @@ using System.Collections.Generic;
 namespace EventGraph
 {
     /// <summary>
-    /// Pass-through node that exposes an equity's constant volatility.
+    /// Pass-through node that exposes a currency's flat interest rate.
     /// </summary>
-    public sealed class VolatilitySource : IVolQuoteNode
+    public sealed class RateNode : IGraphNode
     {
-        private readonly EquitySource source;
+        private readonly CurrencyRateSource source;
 
-        public VolatilitySource(EquitySource source)
+        public RateNode(CurrencyRateSource source)
         {
             this.source = source ?? throw new ArgumentNullException(nameof(source));
         }
 
         public string Name => source.Name;
 
-        public string Type => nameof(VolatilitySource);
+        public string Type => nameof(RateNode);
 
-        public double Volatility => source.Volatility;
+        public double InterestRate => source.InterestRate;
 
         public IReadOnlyList<IGraphNode> Dependencies => [source];
     }

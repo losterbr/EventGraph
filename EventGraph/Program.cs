@@ -20,7 +20,7 @@ namespace EventGraph
             var definitionDirectory = Path.Combine(AppContext.BaseDirectory, "graph-definition");
             var graph = NodeGraphLoader.LoadGraph(definitionDirectory);
             var nodes = graph.Nodes;
-            var quotes = nodes.OfType<SimulatedAssetSource>()
+            var quotes = nodes.OfType<EquitySource>()
                 .OrderBy(quote => quote.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
             var optionNodes = nodes.OfType<IEquityOptionNode>()

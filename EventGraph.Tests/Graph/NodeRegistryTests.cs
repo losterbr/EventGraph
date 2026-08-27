@@ -8,9 +8,11 @@ namespace EventGraph.Tests
         public void SupportedTypesIncludeRegisteredNodeTypes()
         {
             Assert.Contains("SimulatedAssetSource", NodeRegistry.SupportedTypes);
+            Assert.Contains(nameof(EquitySource), NodeRegistry.SupportedTypes);
+            Assert.Contains(nameof(CurrencyRateSource), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(BasketAggregate), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(ForwardCurve), NodeRegistry.SupportedTypes);
-            Assert.Contains(nameof(VolatilitySource), NodeRegistry.SupportedTypes);
+            Assert.Contains(nameof(EquityOption), NodeRegistry.SupportedTypes);
         }
 
         [Fact]

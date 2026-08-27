@@ -125,7 +125,7 @@ namespace EventGraph.Tests
 
                 Assert.Equal(["A", "B", "EquityBasket"], graph.Nodes.Select(node => node.Name));
                 Assert.Equal(0, graph.GetIndex("a"));
-                Assert.Equal(1, graph.NodeIndexByName["B"]);
+                Assert.Equal(1, graph.NodeIndexByName["SimulatedAssetSource::B"]);
                 Assert.Equal([0, 1], graph.DependenciesByNode[graph.GetIndex("EquityBasket")]);
                 Assert.Empty(graph.DependenciesByNode[graph.GetIndex("A")]);
             }
@@ -212,7 +212,7 @@ namespace EventGraph.Tests
 
                 var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
 
-                Assert.Contains("Duplicate graph node name", exception.Message);
+                Assert.Contains("Duplicate graph node key", exception.Message);
             }
             finally
             {

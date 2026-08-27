@@ -13,7 +13,7 @@ namespace EventGraph
     {
         private readonly IForwardCurveNode forwardNode;
         private readonly IVolQuoteNode volatilitySource;
-        private readonly IDiscountFactorNode discountFactorNode;
+        private readonly IDiscountCurveNode discountCurveNode;
 
         public EquityOption(
             IReadOnlyDictionary<string, JsonElement> definition,
@@ -22,7 +22,7 @@ namespace EventGraph
                 GetString(definition, "name"),
                 GetNode<IForwardCurveNode>(definition, "constituent", nodesByName),
                 GetNode<IVolQuoteNode>(definition, "volatility", nodesByName),
-                GetNode<IDiscountFactorNode>(definition, "currency", nodesByName),
+                GetNode<IDiscountCurveNode>(definition, "discountCurve", nodesByName),
                 GetMaturity(definition),
                 GetDouble(definition, "strike"),
                 GetOptionType(definition))
@@ -33,7 +33,7 @@ namespace EventGraph
             string name,
             IForwardCurveNode forwardNode,
             IVolQuoteNode volatilitySource,
-            IDiscountFactorNode discountFactorNode,
+            IDiscountCurveNode discountCurveNode,
             DateTime maturity,
             double strike,
             EquityOptionType optionType = EquityOptionType.Call)
@@ -45,10 +45,10 @@ namespace EventGraph
 
             ArgumentNullException.ThrowIfNull(forwardNode);
             ArgumentNullException.ThrowIfNull(volatilitySource);
-            ArgumentNullException.ThrowIfNull(discountFactorNode);
-            if (!string.Equals(forwardNode.Currency, discountFactorNode.Currency, StringComparison.OrdinalIgnoreCase))
+            ArgumentNullException.ThrowIfNull(discountCurveNode);
+            if (!string.Equals(forwardNode.Currency, discountCurveNode.Currency, StringComparison.OrdinalIgnoreCase))
             {
-                throw new ArgumentException("Option and underlying currencies must match.", nameof(discountFactorNode));
+                throw new ArgumentException("Option and underlying currencies must match.", nameof(discountCurveNode));
             }
 
             if (maturity.Date <= DateTime.Today)
@@ -69,7 +69,7 @@ namespace EventGraph
             Name = name;
             this.forwardNode = forwardNode;
             this.volatilitySource = volatilitySource;
-            this.discountFactorNode = discountFactorNode;
+            this.discountCurveNode = discountCurveNode;
             Maturity = maturity.Date;
             Strike = strike;
             OptionType = optionType;
@@ -83,11 +83,11 @@ namespace EventGraph
 
         public string Type => nameof(EquityOption);
 
-        public IReadOnlyList<IGraphNode> Dependencies => [forwardNode, volatilitySource, discountFactorNode];
+        public IReadOnlyList<IGraphNode> Dependencies => [forwardNode, volatilitySource, discountCurveNode];
 
         internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            return [GetString(definition, "constituent"), GetString(definition, "currency"), GetString(definition, "volatility")];
+            return [GetString(definition, "constituent"), GetString(definition, "volatility"), GetString(definition, "discountCurve")];
         }
 
         public DateTime Maturity { get; }
@@ -98,7 +98,7 @@ namespace EventGraph
 
         public double Price { get; private set; }
 
-        public string Currency => discountFactorNode.Currency;
+        public string Currency => discountCurveNode.Currency;
 
         private void ForwardTicked(object sender, QuoteTick e)
         {
@@ -111,7 +111,7 @@ namespace EventGraph
             var timeToMaturity = (Maturity - DateTime.Today).TotalDays / 365.0;
             var volatility = volatilitySource.Volatility;
             var forward = forwardNode.Forward(Maturity);
-            var discountFactor = discountFactorNode.DiscountFactor(Maturity);
+            var discountFactor = discountCurveNode.DiscountFactor(Maturity);
             var standardDeviation = volatility * Math.Sqrt(timeToMaturity);
             if (standardDeviation <= 0.0)
             {

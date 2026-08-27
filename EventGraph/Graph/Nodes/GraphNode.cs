@@ -62,6 +62,16 @@ namespace EventGraph
     }
 
     /// <summary>
+    /// Represents an internal graph node that provides a discount factor curve derived from a flat rate.
+    /// </summary>
+    public interface IDiscountCurveNode : IGraphNode
+    {
+        Func<DateTime, double> DiscountFactor { get; }
+
+        string Currency { get; }
+    }
+
+    /// <summary>
     /// Represents an equity option price derived from an equity, its volatility, and a discount factor curve.
     /// </summary>
     public interface IEquityOptionNode : ITickingNode

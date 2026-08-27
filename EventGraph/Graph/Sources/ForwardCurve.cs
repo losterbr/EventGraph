@@ -10,60 +10,53 @@ namespace EventGraph
     /// </summary>
     public sealed class ForwardCurve : IForwardCurveNode
     {
-        private readonly ISpotQuoteNode equity;
-        private readonly IDiscountFactorNode discountFactorNode;
+        private readonly ISpotQuoteNode spotNode;
+        private readonly IDiscountCurveNode discountCurveNode;
 
         public ForwardCurve(
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
             : this(
-                GetString(definition, "name"),
-                GetNode<ISpotQuoteNode>(definition, "constituent", nodesByName),
-                GetNode<IDiscountFactorNode>(definition, "currency", nodesByName))
+                GetNode<ISpotQuoteNode>(definition, "spot", nodesByName),
+                GetNode<IDiscountCurveNode>(definition, "discountCurve", nodesByName))
         {
         }
 
-        public ForwardCurve(string name, ISpotQuoteNode equity, IDiscountFactorNode discountFactorNode)
+        public ForwardCurve(ISpotQuoteNode spotNode, IDiscountCurveNode discountCurveNode)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            ArgumentNullException.ThrowIfNull(spotNode);
+            ArgumentNullException.ThrowIfNull(discountCurveNode);
+            if (!string.Equals(spotNode.Currency, discountCurveNode.Currency, StringComparison.OrdinalIgnoreCase))
             {
-                throw new ArgumentException("Forward curve name cannot be empty.", nameof(name));
+                throw new ArgumentException("Forward curve and discount curve currencies must match.", nameof(discountCurveNode));
             }
 
-            ArgumentNullException.ThrowIfNull(equity);
-            ArgumentNullException.ThrowIfNull(discountFactorNode);
-            if (!string.Equals(equity.Currency, discountFactorNode.Currency, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new ArgumentException("Forward curve and discount curve currencies must match.", nameof(discountFactorNode));
-            }
-
-            Name = name;
-            this.equity = equity;
-            this.discountFactorNode = discountFactorNode;
-            Forward = maturity => this.equity.Spot / this.discountFactorNode.DiscountFactor(maturity);
-            this.equity.Tick += EquityTicked;
+            this.spotNode = spotNode;
+            this.discountCurveNode = discountCurveNode;
+            Forward = maturity => this.spotNode.Spot / this.discountCurveNode.DiscountFactor(maturity);
+            this.spotNode.Tick += SpotTicked;
         }
 
         public event EventHandler<QuoteTick> Tick;
 
-        public string Name { get; }
+        public string Name => spotNode.Name;
 
         public string Type => nameof(ForwardCurve);
 
-        public string Currency => discountFactorNode.Currency;
+        public string Currency => discountCurveNode.Currency;
 
         public Func<DateTime, double> Forward { get; }
 
-        public IReadOnlyList<IGraphNode> Dependencies => [equity, discountFactorNode];
+        public IReadOnlyList<IGraphNode> Dependencies => [spotNode, discountCurveNode];
 
         internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            return [GetString(definition, "constituent"), GetString(definition, "currency")];
+            return [GetString(definition, "spot"), GetString(definition, "discountCurve")];
         }
 
-        private void EquityTicked(object sender, QuoteTick e)
+        private void SpotTicked(object sender, QuoteTick e)
         {
-            Tick?.Invoke(this, new QuoteTick(Name, equity.Spot));
+            Tick?.Invoke(this, new QuoteTick(Name, spotNode.Spot));
         }
 
         private static TNode GetNode<TNode>(

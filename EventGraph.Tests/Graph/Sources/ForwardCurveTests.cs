@@ -8,43 +8,58 @@ namespace EventGraph.Tests
         public void ForwardEvaluatesSpotDividedByDiscountFactor()
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
-            var discountFactor = new RateCurveSource("USD", 0.05);
+            var spotNode = new SpotNode(equity);
+            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
+            var discountFactor = new RateCurveSource(rateNode);
             var maturity = DateTime.Today.AddYears(1);
 
-            var forward = new ForwardCurve("AAPL_FWD", equity, discountFactor);
+            var forward = new ForwardCurve(spotNode, discountFactor);
 
             Assert.Equal(equity.Spot / discountFactor.DiscountFactor(maturity), forward.Forward(maturity), precision: 12);
             Assert.Equal(nameof(ForwardCurve), forward.Type);
             Assert.Equal("USD", forward.Currency);
-            Assert.Equal([equity, discountFactor], forward.Dependencies);
+            Assert.Equal([spotNode, discountFactor], forward.Dependencies);
         }
 
         [Fact]
-        public void ForwardCurveRejectsBlankName()
+        public void ForwardCurveRejectsNullSpotNode()
+        {
+            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
+            var discountFactor = new RateCurveSource(rateNode);
+
+            _ = Assert.Throws<ArgumentNullException>(() => new ForwardCurve(null, discountFactor));
+        }
+
+        [Fact]
+        public void ForwardCurveRejectsNullDiscountCurveNode()
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
-            var discountFactor = new RateCurveSource("USD", 0.05);
+            var spotNode = new SpotNode(equity);
 
-            _ = Assert.Throws<ArgumentException>(() => new ForwardCurve(" ", equity, discountFactor));
+            _ = Assert.Throws<ArgumentNullException>(() => new ForwardCurve(spotNode, null));
         }
 
         [Fact]
         public void ForwardCurveRejectsCurrencyMismatch()
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0, "USD");
-            var discountFactor = new RateCurveSource("EUR", 0.05, "EUR");
+            var spotNode = new SpotNode(equity);
+            var eurRateNode = new RateNode(new CurrencyRateSource("EUR", 0.05));
+            var eurDiscountFactor = new RateCurveSource(eurRateNode);
 
-            var exception = Assert.Throws<ArgumentException>(() => new ForwardCurve("AAPL_FWD", equity, discountFactor));
+            var exception = Assert.Throws<ArgumentException>(() => new ForwardCurve(spotNode, eurDiscountFactor));
 
             Assert.Contains("currencies must match", exception.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
-        public async Task ForwardCurveTicksWhenTheUnderlyingEquityTicks()
+        public async Task ForwardCurveTicksWhenTheUnderlyingSpotNodeTicks()
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
-            var discountFactor = new RateCurveSource("USD", 0.05);
-            var forward = new ForwardCurve("AAPL_FWD", equity, discountFactor);
+            var spotNode = new SpotNode(equity);
+            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
+            var discountFactor = new RateCurveSource(rateNode);
+            var forward = new ForwardCurve(spotNode, discountFactor);
             QuoteTick? update = null;
             forward.Tick += (_, message) => update = message;
 
@@ -58,20 +73,22 @@ namespace EventGraph.Tests
         public void ForwardCurveLoadsItsDependenciesFromJson()
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
-            var discountFactor = new RateCurveSource("USD", 0.05);
-            using var document = JsonDocument.Parse("{\"name\":\"AAPL_FWD\",\"constituent\":\"AAPL\",\"currency\":\"USD\"}");
+            var spotNode = new SpotNode(equity);
+            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
+            var discountFactor = new RateCurveSource(rateNode);
+            using var document = JsonDocument.Parse("{\"spot\":\"SpotNode::AAPL\",\"discountCurve\":\"RateCurveSource::USD\"}");
             var definition = document.RootElement
                 .EnumerateObject()
                 .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
 
             var forward = new ForwardCurve(definition, new Dictionary<string, IGraphNode>
             {
-                [equity.Name] = equity,
-                [discountFactor.Name] = discountFactor
+                ["SpotNode::AAPL"] = spotNode,
+                ["RateCurveSource::USD"] = discountFactor
             });
 
-            Assert.Equal("AAPL_FWD", forward.Name);
-            Assert.Equal([equity, discountFactor], forward.Dependencies);
+            Assert.Equal("AAPL", forward.Name);
+            Assert.Equal([spotNode, discountFactor], forward.Dependencies);
         }
     }
 }

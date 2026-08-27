@@ -1,9 +1,9 @@
 {
   "type": "EquityOption",
   "name": "AAPL_1Y_CALL",
-  "constituent": "AAPL_FWD",
-  "volatility": "AAPL_VOL",
-  "currency": "USD",
+  "constituent": "ForwardCurve::AAPL",
+  "volatility": "VolatilitySource::AAPL",
+  "discountCurve": "RateCurveSource::USD",
   "maturity": "1Y",
   "strike": 225.0,
   "optionType": "Call"

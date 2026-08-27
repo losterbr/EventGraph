@@ -95,6 +95,44 @@ namespace EventGraph.Tests
         }
 
         [Fact]
+        public void SimulatedAssetSourceRejectsInfiniteMeanTickTime()
+        {
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", 100.0, 0.1, double.PositiveInfinity));
+        }
+
+        [Fact]
+        public void SimulatedAssetSourceRejectsBlankCurrency()
+        {
+            _ = Assert.Throws<ArgumentException>(() => new SimulatedAssetSource("A", 100.0, 0.1, 1.0, " "));
+        }
+
+        [Fact]
+        public void SimulatedAssetSourceRejectsNegativeInfinitySpot()
+        {
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", double.NegativeInfinity, 0.1));
+        }
+
+        [Fact]
+        public void SimulatedAssetSourceRejectsNaNVolatility()
+        {
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", 100.0, double.NaN));
+        }
+
+        [Fact]
+        public void SimulatedAssetSourceRejectsInfiniteVolatility()
+        {
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", 100.0, double.PositiveInfinity));
+        }
+
+        [Fact]
+        public void SimulatedAssetSourceDefaultsCurrencyToUsd()
+        {
+            var source = new SimulatedAssetSource("A", 100.0, 0.1);
+
+            Assert.Equal("USD", source.Currency);
+        }
+
+        [Fact]
         public async Task SimulatedAssetSourceEmitsInitialValueBeforeMovement()
         {
             var source = new SimulatedAssetSource("INIT", 100.0, 0.0, 0.0);
