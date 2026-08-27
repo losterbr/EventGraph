@@ -7,7 +7,7 @@ using System.Text.Json;
 namespace EventGraph
 {
     /// <summary>
-    /// Prices a one-constituent equity call with the Black-Scholes formula.
+    /// Prices a one-constituent equity option with the Black-Scholes formula.
     /// </summary>
     public sealed class EquityOption : IEquityOptionNode
     {
@@ -21,9 +21,10 @@ namespace EventGraph
             : this(
                 GetString(definition, "name"),
                 GetNode<ISpotQuoteNode>(definition, "constituent", nodesByName),
-                GetNode<IDiscountFactorNode>(definition, "discountFactor", nodesByName),
+                GetNode<IDiscountFactorNode>(definition, "currency", nodesByName),
                 GetMaturity(definition),
-                GetDouble(definition, "strike"))
+                GetDouble(definition, "strike"),
+                GetOptionType(definition))
         {
         }
 
@@ -32,7 +33,8 @@ namespace EventGraph
             ISpotQuoteNode equity,
             IDiscountFactorNode discountFactorNode,
             DateTime maturity,
-            double strike)
+            double strike,
+            EquityOptionType optionType = EquityOptionType.Call)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -53,11 +55,17 @@ namespace EventGraph
                 throw new ArgumentOutOfRangeException(nameof(strike), "Option strike must be a positive finite number.");
             }
 
+            if (!Enum.IsDefined(optionType))
+            {
+                throw new ArgumentOutOfRangeException(nameof(optionType), "Option type must be Call or Put.");
+            }
+
             Name = name;
             this.equity = equity;
             this.discountFactorNode = discountFactorNode;
             Maturity = maturity.Date;
             Strike = strike;
+            OptionType = optionType;
             Price = CalculatePrice();
             this.equity.SpotTick += EquitySpotTicked;
         }
@@ -70,9 +78,16 @@ namespace EventGraph
 
         public IReadOnlyList<IGraphNode> Dependencies => [equity, discountFactorNode];
 
+        internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return [GetString(definition, "constituent"), GetString(definition, "currency")];
+        }
+
         public DateTime Maturity { get; }
 
         public double Strike { get; }
+
+        public EquityOptionType OptionType { get; }
 
         public double Price { get; private set; }
 
@@ -97,7 +112,9 @@ namespace EventGraph
             var d1 = (Math.Log(spot / Strike) + (0.5 * volatility * volatility * timeToMaturity)) / standardDeviation;
             var d2 = d1 - standardDeviation;
             var normal = new MathNet.Numerics.Distributions.Normal(0.0, 1.0);
-            return discountFactor * ((spot * normal.CumulativeDistribution(d1)) - (Strike * normal.CumulativeDistribution(d2)));
+            return OptionType == EquityOptionType.Call
+                ? discountFactor * ((spot * normal.CumulativeDistribution(d1)) - (Strike * normal.CumulativeDistribution(d2)))
+                : discountFactor * ((Strike * normal.CumulativeDistribution(-d2)) - (spot * normal.CumulativeDistribution(-d1)));
         }
 
         private static DateTime GetMaturity(IReadOnlyDictionary<string, JsonElement> definition)
@@ -132,6 +149,14 @@ namespace EventGraph
             return definition == null || !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.Number || !property.TryGetDouble(out var value)
                 ? throw new InvalidDataException($"EquityOption requires a numeric '{propertyName}' property.")
                 : value;
+        }
+
+        private static EquityOptionType GetOptionType(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            var optionType = GetString(definition, "optionType");
+            return Enum.TryParse<EquityOptionType>(optionType, ignoreCase: true, out var parsed)
+                ? parsed
+                : throw new InvalidDataException("EquityOption optionType must be Call or Put.");
         }
     }
 }

@@ -54,4 +54,5 @@ namespace EventGraph
 
         double Price { get; }
     }
+
 }

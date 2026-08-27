@@ -14,7 +14,20 @@ namespace EventGraph.Tests
             var option = new EquityOption("AAPL_CALL", equity, discountFactor, maturity, 100.0);
 
             Assert.Equal(7.5771, option.Price, precision: 3);
+            Assert.Equal(EquityOptionType.Call, option.OptionType);
             Assert.Equal([equity, discountFactor], option.Dependencies);
+        }
+
+        [Fact]
+        public void EquityOptionCalculatesBlackScholesPutPrice()
+        {
+            var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
+            var discountFactor = new RateCurveSource("USD", 0.05);
+
+            var option = new EquityOption("AAPL_PUT", equity, discountFactor, DateTime.Today.AddYears(1), 100.0, EquityOptionType.Put);
+
+            Assert.Equal(7.5771, option.Price, precision: 3);
+            Assert.Equal(EquityOptionType.Put, option.OptionType);
         }
 
         [Fact]
@@ -45,6 +58,18 @@ namespace EventGraph.Tests
         }
 
         [Fact]
+        public void EquityOptionHandlesSpotMuchGreaterThanStrike()
+        {
+            var equity = new SimulatedAssetSource("AAPL", 1_000_000_000.0, 0.2, 0.0);
+            var discountFactor = new RateCurveSource("USD", 0.05);
+
+            var option = new EquityOption("AAPL_CALL", equity, discountFactor, DateTime.Today.AddYears(1), 1.0);
+
+            Assert.True(double.IsFinite(option.Price));
+            Assert.True(option.Price > 900_000_000.0);
+        }
+
+        [Fact]
         public async Task EquityOptionPublishesARecalculatedPriceWhenEquityTicks()
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
@@ -64,7 +89,7 @@ namespace EventGraph.Tests
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
             var discountFactor = new RateCurveSource("USD", 0.05);
-            using var document = JsonDocument.Parse("{\"name\":\"AAPL_CALL\",\"constituent\":\"AAPL\",\"discountFactor\":\"USD\",\"maturity\":\"1Y\",\"strike\":100}");
+            using var document = JsonDocument.Parse("{\"name\":\"AAPL_CALL\",\"constituent\":\"AAPL\",\"currency\":\"USD\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Put\"}");
             var definition = document.RootElement
                 .EnumerateObject()
                 .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
@@ -77,6 +102,7 @@ namespace EventGraph.Tests
 
             Assert.Equal(DateTime.Today.AddYears(1), option.Maturity);
             Assert.Equal(100.0, option.Strike);
+            Assert.Equal(EquityOptionType.Put, option.OptionType);
         }
     }
 }

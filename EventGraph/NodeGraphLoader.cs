@@ -65,7 +65,7 @@ namespace EventGraph
             foreach (var definition in definitionsByName.Values)
             {
                 var name = GetName(definition);
-                foreach (var dependencyName in GetDependencies(definition))
+                foreach (var dependencyName in NodeRegistry.GetDependencyNames(definition))
                 {
                     if (!definitionsByName.ContainsKey(dependencyName))
                     {
@@ -125,37 +125,6 @@ namespace EventGraph
             return !definition.TryGetValue("name", out var name) || name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString())
                 ? throw new InvalidDataException("Every graph definition must provide a non-empty string name.")
                 : name.GetString();
-        }
-
-        private static List<string> GetDependencies(IReadOnlyDictionary<string, JsonElement> definition)
-        {
-            var dependencies = new List<string>();
-            if (definition.TryGetValue("constituents", out var constituents) && constituents.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var name in constituents.EnumerateArray())
-                {
-                    if (name.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(name.GetString()))
-                    {
-                        dependencies.Add(name.GetString());
-                    }
-                }
-            }
-
-            AddDependency(definition, dependencies, "constituent");
-            AddDependency(definition, dependencies, "discountFactor");
-
-            return dependencies;
-        }
-
-        private static void AddDependency(
-            IReadOnlyDictionary<string, JsonElement> definition,
-            List<string> dependencies,
-            string propertyName)
-        {
-            if (definition.TryGetValue(propertyName, out var dependency) && dependency.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(dependency.GetString()))
-            {
-                dependencies.Add(dependency.GetString());
-            }
         }
 
         private static IReadOnlyDictionary<string, JsonElement> LoadDefinition(string path)

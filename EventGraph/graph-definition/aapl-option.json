@@ -2,7 +2,8 @@
   "type": "EquityOption",
   "name": "AAPL_1Y_CALL",
   "constituent": "AAPL",
-  "discountFactor": "USD",
+  "currency": "USD",
   "maturity": "1Y",
-  "strike": 225.0
+  "strike": 225.0,
+  "optionType": "Call"
 }
