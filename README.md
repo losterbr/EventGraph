@@ -14,22 +14,21 @@ EventGraph is a small .NET sample that demonstrates an event-driven market quote
 
 ```mermaid
 flowchart LR
-	equity[EquitySource]
-	rate[CurrencyRateSource]
+	equity["EquitySource [ISpotSourceNode, IVolSourceNode]"]
+	rate["CurrencyRateSource [IRateSourceNode]"]
 
-	equity --> spot[SpotNode]
-	equity --> volatility[VolatilityNode]
-	rate --> discount[RateCurveNode]
+	equity --> spot["SpotNode [ISpotNode]"]
+	equity --> volatility["VolatilityNode [IVolNode]"]
+	rate --> discount["RateCurveNode [IDiscountCurveNode]"]
 
-	spot --> forward[ForwardCurveNode]
+	spot --> forward["ForwardCurveNode [IForwardCurveNode]"]
 	discount --> forward
-	forward --> option[EquityOption]
+	forward --> option["EquityOption [IEquityOptionNode]"]
 	volatility --> option
 	discount --> option
 
-	spot -->|one or more constituents| basket[BasketSpotNode]
-	basket --> basketSpot[SpotNode]
-	basketSpot --> downstream[Downstream node]
+	spot -->|one or more constituents| basket["BasketSpotNode [ISpotNode]"]
+	basket --> spot
 ```
 
 ### Graph definitions
