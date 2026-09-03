@@ -21,7 +21,7 @@ namespace EventGraph
             new(StringComparer.OrdinalIgnoreCase)
             {
                 [nameof(BasketAggregate)] = BasketAggregate.GetDependencyNames,
-                [nameof(SpotNode)] = definition => [GraphKey.Of(nameof(EquitySource), GetNodeName(definition))],
+                [nameof(SpotNode)] = definition => [GetSpotDependencyName(definition)],
                 [nameof(VolatilityNode)] = definition => [GraphKey.Of(nameof(EquitySource), GetNodeName(definition))],
                 [nameof(ForwardCurve)] = ForwardCurve.GetDependencyNames,
                 [nameof(RateCurveNode)] = definition => [GraphKey.Of(nameof(CurrencyRateSource), GetNodeName(definition))],
@@ -33,7 +33,7 @@ namespace EventGraph
             {
                 [nameof(EquitySource)] = (definition, _) => new EquitySource(definition),
                 [nameof(CurrencyRateSource)] = (definition, _) => new CurrencyRateSource(definition),
-                [nameof(SpotNode)] = (definition, nodesByName) => new SpotNode(Resolve<EquitySource>(definition, nodesByName, nameof(EquitySource))),
+                [nameof(SpotNode)] = (definition, nodesByName) => new SpotNode(ResolveByKey<ISpotQuoteNode>(GetSpotDependencyName(definition), nodesByName)),
                 [nameof(VolatilityNode)] = (definition, nodesByName) => new VolatilityNode(Resolve<EquitySource>(definition, nodesByName, nameof(EquitySource))),
                 [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName),
                 [nameof(RateCurveNode)] = (definition, nodesByName) => new RateCurveNode(Resolve<CurrencyRateSource>(definition, nodesByName, nameof(CurrencyRateSource))),
@@ -89,6 +89,13 @@ namespace EventGraph
                 : name.GetString();
         }
 
+            private static string GetSpotDependencyName(IReadOnlyDictionary<string, JsonElement> definition)
+            {
+                return definition.TryGetValue("source", out var source) && source.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(source.GetString())
+                ? source.GetString()
+                : GraphKey.Of(nameof(EquitySource), GetNodeName(definition));
+            }
+
         private static TNode Resolve<TNode>(
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IGraphNode> nodesByName,
@@ -97,6 +104,14 @@ namespace EventGraph
         {
             var name = GetNodeName(definition);
             var key = GraphKey.Of(sourceType, name);
+            return nodesByName != null && nodesByName.TryGetValue(key, out var node) && node is TNode typedNode
+                ? typedNode
+                : throw new InvalidDataException($"Could not resolve '{key}' as {typeof(TNode).Name}.");
+        }
+
+        private static TNode ResolveByKey<TNode>(string key, IReadOnlyDictionary<string, IGraphNode> nodesByName)
+            where TNode : class, IGraphNode
+        {
             return nodesByName != null && nodesByName.TryGetValue(key, out var node) && node is TNode typedNode
                 ? typedNode
                 : throw new InvalidDataException($"Could not resolve '{key}' as {typeof(TNode).Name}.");

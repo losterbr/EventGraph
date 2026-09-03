@@ -10,9 +10,29 @@ EventGraph is a small .NET sample that demonstrates an event-driven market quote
 - Validates the graph-node dependency graph at startup and rejects cycles before processing begins.
 - Keeps the sample self-contained, deterministic enough for tests, and suitable for public release as a demo project.
 
+### Node dependencies
+
+```mermaid
+flowchart LR
+	equity[EquitySource]
+	rate[CurrencyRateSource]
+
+	equity --> spot[SpotNode]
+	equity --> volatility[VolatilityNode]
+	rate --> discount[RateCurveNode]
+
+	spot --> forward[ForwardCurve]
+	discount --> forward
+	forward --> option[EquityOption]
+	volatility --> option
+	discount --> option
+
+	spot -->|one or more constituents| basket[BasketAggregate]
+```
+
 ### Graph definitions
 
-Each JSON file in `EventGraph/graph-definition` defines one `EquitySource`. The required fields are:
+An `EquitySource` JSON definition in `EventGraph/graph-definition` uses the following fields:
 
 ```json
 {
@@ -25,7 +45,7 @@ Each JSON file in `EventGraph/graph-definition` defines one `EquitySource`. The 
 }
 ```
 
-The `type` field selects the node implementation. Each `EquitySource` includes static `currency` metadata, currently set to `USD` for all assets. Each node constructor owns the interpretation and validation of its complete JSON property dictionary, so adding or removing a property only requires changing that node's code. A `BasketAggregate` definition uses `name`, `constituents`, and `weights` to reference source nodes and assign their weights. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
+The `type` field selects the node implementation. Each `EquitySource` includes static `currency` metadata, currently set to `USD` for all assets. Each node constructor owns the interpretation and validation of its complete JSON property dictionary, so adding or removing a property only requires changing that node's code. A `BasketAggregate` definition uses `name`, `constituents`, and `weights`; the loader materializes a `SpotNode` for each constituent before constructing the basket. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
 
 A `CurrencyRateSource` provides a named flat `interestRate` (for example, `0.02` for 2%). The loader materializes a dependent `RateCurveNode` when a forward curve or equity option needs a discount curve. Its `DiscountFactor` property is a `date -> double` function implemented as `exp(-interestRate * (date - today) / 365)`.
 

@@ -52,6 +52,11 @@ namespace EventGraph
             }
 
             this.constituents = [.. constituents];
+            if (this.constituents.Any(constituent => constituent is not SpotNode))
+            {
+                throw new ArgumentException("Basket constituents must be SpotNode instances.", nameof(constituents));
+            }
+
             Name = name;
             Currency = this.constituents[0].Currency;
             if (this.constituents.Any(constituent => !string.Equals(constituent.Currency, Currency, StringComparison.OrdinalIgnoreCase)))
@@ -122,7 +127,7 @@ namespace EventGraph
                 ? []
                 : [.. constituents.EnumerateArray()
                 .Where(name => name.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(name.GetString()))
-                .Select(name => name.GetString())];
+                .Select(name => GraphKey.Of(nameof(SpotNode), name.GetString()))];
         }
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
@@ -142,9 +147,12 @@ namespace EventGraph
             var constituents = new List<ISpotQuoteNode>();
             foreach (var name in constituentsDefinition.EnumerateArray())
             {
-                if (name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString()) || !nodesByName.TryGetValue(name.GetString(), out var node) || node is not ISpotQuoteNode constituent)
+                var key = name.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(name.GetString())
+                    ? GraphKey.Of(nameof(SpotNode), name.GetString())
+                    : null;
+                if (key == null || !nodesByName.TryGetValue(key, out var node) || node is not SpotNode constituent)
                 {
-                    throw new InvalidDataException($"BasketAggregate references an unknown source '{name}'.");
+                    throw new InvalidDataException($"BasketAggregate references an unknown spot node '{name}'.");
                 }
 
                 constituents.Add(constituent);

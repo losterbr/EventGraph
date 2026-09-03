@@ -13,7 +13,7 @@ namespace EventGraph.Tests
                 new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
-            var basket = new BasketAggregate(quotes);
+            var basket = new BasketAggregate(CreateSpotNodes(quotes));
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
 
@@ -32,7 +32,7 @@ namespace EventGraph.Tests
                 new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
-            var basket = new BasketAggregate(quotes, [0.25, 0.75]);
+            var basket = new BasketAggregate(CreateSpotNodes(quotes), [0.25, 0.75]);
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
 
@@ -51,7 +51,7 @@ namespace EventGraph.Tests
                 new EquitySource("B", 50.0, 0.0, 0.0)
             };
 
-            var basket = new BasketAggregate(quotes, [2.0, -1.0]);
+            var basket = new BasketAggregate(CreateSpotNodes(quotes), [2.0, -1.0]);
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
 
@@ -67,6 +67,8 @@ namespace EventGraph.Tests
         {
             var sourceA = new EquitySource("A", 120.0, 0.0, 0.0);
             var sourceB = new EquitySource("B", 50.0, 0.0, 0.0);
+            var spotA = new SpotNode(sourceA);
+            var spotB = new SpotNode(sourceB);
             using var definition = JsonDocument.Parse("""
         {
           "name": "PAIR_TRADE",
@@ -79,8 +81,8 @@ namespace EventGraph.Tests
                 ToDictionary(definition),
                 new Dictionary<string, IGraphNode>
                 {
-                    [sourceA.Name] = sourceA,
-                    [sourceB.Name] = sourceB
+                    [GraphKey.Of(nameof(SpotNode), spotA.Name)] = spotA,
+                    [GraphKey.Of(nameof(SpotNode), spotB.Name)] = spotB
                 });
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
@@ -100,7 +102,7 @@ namespace EventGraph.Tests
                 new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
-            var basket = new BasketAggregate(quotes, [0.0, 1.0]);
+            var basket = new BasketAggregate(CreateSpotNodes(quotes), [0.0, 1.0]);
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
 
@@ -113,7 +115,7 @@ namespace EventGraph.Tests
         public async Task BasketAggregateDoesNotSubscribeUntilConnected()
         {
             var source = new EquitySource("A", 100.0, 0.0, 0.0);
-            var basket = new BasketAggregate([source]);
+            var basket = new BasketAggregate([new SpotNode(source)]);
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
 
@@ -126,7 +128,7 @@ namespace EventGraph.Tests
         public async Task BasketAggregatePublishesSourceTicksAfterConnect()
         {
             var source = new EquitySource("A", 100.0, 0.0, 0.0);
-            var basket = new BasketAggregate([source]);
+            var basket = new BasketAggregate([new SpotNode(source)]);
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
 
@@ -142,8 +144,8 @@ namespace EventGraph.Tests
         {
             var zeroWeightSource = new EquitySource("ZERO", 100.0, 0.0, 0.0);
             var activeSource = new EquitySource("ACTIVE", 200.0, 0.0, 0.0);
-            var zeroWeightBasket = new BasketAggregate("ZERO_BASKET", [zeroWeightSource]);
-            var basket = new BasketAggregate("BASKET", [zeroWeightBasket, activeSource], [0.0, 1.0]);
+            var zeroWeightBasket = new BasketAggregate("ZERO_BASKET", [new SpotNode(zeroWeightSource)]);
+            var basket = new BasketAggregate("BASKET", [new SpotNode(zeroWeightBasket), new SpotNode(activeSource)], [0.0, 1.0]);
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
 
@@ -162,7 +164,7 @@ namespace EventGraph.Tests
                 new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
-            _ = Assert.Throws<ArgumentException>(() => new BasketAggregate(quotes, [0.6, 0.3]));
+            _ = Assert.Throws<ArgumentException>(() => new BasketAggregate(CreateSpotNodes(quotes), [0.6, 0.3]));
         }
 
         [Fact]
@@ -174,7 +176,7 @@ namespace EventGraph.Tests
                 new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
-            _ = Assert.Throws<ArgumentException>(() => new BasketAggregate(quotes, [0.5]));
+            _ = Assert.Throws<ArgumentException>(() => new BasketAggregate(CreateSpotNodes(quotes), [0.5]));
         }
 
         [Fact]
@@ -186,7 +188,7 @@ namespace EventGraph.Tests
                 new EquitySource("EUR_ASSET", 200.0, 0.0, 0.0, "EUR")
             };
 
-            var exception = Assert.Throws<ArgumentException>(() => new BasketAggregate(quotes));
+            var exception = Assert.Throws<ArgumentException>(() => new BasketAggregate(CreateSpotNodes(quotes)));
 
             Assert.Contains("same currency", exception.Message, StringComparison.OrdinalIgnoreCase);
         }
@@ -203,10 +205,27 @@ namespace EventGraph.Tests
             _ = Assert.Throws<ArgumentException>(() => new BasketAggregate([]));
         }
 
+        [Fact]
+        public void BasketAggregateRejectsDirectEquitySources()
+        {
+            var source = new EquitySource("A", 100.0, 0.0, 0.0);
+
+            _ = Assert.Throws<ArgumentException>(() => new BasketAggregate([source]));
+        }
+
+        [Fact]
+        public void BasketAggregateRejectsDirectBasketDependencies()
+        {
+            var source = new EquitySource("A", 100.0, 0.0, 0.0);
+            var parent = new BasketAggregate([new SpotNode(source)]);
+
+            _ = Assert.Throws<ArgumentException>(() => new BasketAggregate([parent]));
+        }
+
         [Theory]
         [InlineData("{}", "name")]
         [InlineData(/*lang=json,strict*/ "{\"name\":\"BASKET\"}", "constituents")]
-        [InlineData(/*lang=json,strict*/ "{\"name\":\"BASKET\",\"constituents\":[\"Missing\"],\"weights\":[1]}", "unknown source")]
+        [InlineData(/*lang=json,strict*/ "{\"name\":\"BASKET\",\"constituents\":[\"Missing\"],\"weights\":[1]}", "unknown spot node")]
         public void BasketAggregateRejectsInvalidDefinitions(string json, string expectedMessage)
         {
             using var definition = JsonDocument.Parse(json);
@@ -222,11 +241,12 @@ namespace EventGraph.Tests
         public void BasketAggregateRejectsNonNumericWeights()
         {
             var source = new EquitySource("A", 100.0, 0.0, 0.0);
+            var spot = new SpotNode(source);
             using var definition = JsonDocument.Parse("{\"name\":\"BASKET\",\"constituents\":[\"A\"],\"weights\":[\"bad\"]}");
 
             var exception = Assert.Throws<InvalidDataException>(() => new BasketAggregate(
                 ToDictionary(definition),
-                new Dictionary<string, IGraphNode> { [source.Name] = source }));
+                new Dictionary<string, IGraphNode> { [GraphKey.Of(nameof(SpotNode), spot.Name)] = spot }));
 
             Assert.Contains("weights", exception.Message);
         }
@@ -239,7 +259,7 @@ namespace EventGraph.Tests
                 new EquitySource("A", 100.0, 0.0, 0.0)
             };
 
-            var basket = new BasketAggregate(quotes);
+            var basket = new BasketAggregate(CreateSpotNodes(quotes));
 
             Assert.Equal(nameof(BasketAggregate), basket.Type);
         }
@@ -253,7 +273,7 @@ namespace EventGraph.Tests
                 new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
-            var basket = new BasketAggregate(quotes);
+            var basket = new BasketAggregate(CreateSpotNodes(quotes));
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
 
@@ -271,7 +291,7 @@ namespace EventGraph.Tests
                 new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
-            var basket = new BasketAggregate(quotes);
+            var basket = new BasketAggregate(CreateSpotNodes(quotes));
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
 
@@ -291,7 +311,7 @@ namespace EventGraph.Tests
                 new EquitySource("A", 100.0, 0.0, 0.0)
             };
 
-            var basket = new BasketAggregate(quotes);
+            var basket = new BasketAggregate(CreateSpotNodes(quotes));
 
             Assert.Contains("A=0.5", basket.GetWeights());
             Assert.Contains("B=0.5", basket.GetWeights());
@@ -302,6 +322,11 @@ namespace EventGraph.Tests
             return document.RootElement
                 .EnumerateObject()
                 .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static IReadOnlyList<ISpotQuoteNode> CreateSpotNodes(IEnumerable<EquitySource> sources)
+        {
+            return [.. sources.Select(source => new SpotNode(source))];
         }
     }
 }

@@ -63,6 +63,7 @@ namespace EventGraph.Tests
         public void CreateNodeCreatesBasketAggregate()
         {
             var source = new EquitySource("A", 100.0, 0.0, 0.0);
+            var spot = new SpotNode(source);
             using var definition = JsonDocument.Parse("""
         {
           "type": "BasketAggregate",
@@ -74,7 +75,7 @@ namespace EventGraph.Tests
 
             var node = NodeRegistry.CreateNode(
                 ToDictionary(definition),
-                new Dictionary<string, IGraphNode> { [source.Name] = source });
+                new Dictionary<string, IGraphNode> { [GraphKey.Of(nameof(SpotNode), spot.Name)] = spot });
 
             var basket = Assert.IsType<BasketAggregate>(node);
             Assert.Equal("BASKET", basket.Name);

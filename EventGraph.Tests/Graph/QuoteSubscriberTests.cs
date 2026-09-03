@@ -5,6 +5,11 @@ namespace EventGraph.Tests
     [Collection(ConsoleTestGroup.Name)]
     public class QuoteSubscriberTests
     {
+        private static IReadOnlyList<ISpotQuoteNode> CreateSpotNodes(IEnumerable<EquitySource> sources)
+        {
+            return [.. sources.Select(source => new SpotNode(source))];
+        }
+
         private static string[] GetOutputLines(StringWriter output)
         {
             return output.ToString()
@@ -69,7 +74,7 @@ namespace EventGraph.Tests
                     new EquitySource("MSFT", 400.0, 0.0, 0.0)
                 };
 
-                var basket = new BasketAggregate(sources);
+                var basket = new BasketAggregate(CreateSpotNodes(sources));
                 subscriber.Subscribe(basket);
                 await basket.RunOnceAsync();
 
@@ -142,7 +147,7 @@ namespace EventGraph.Tests
 
                 subscriber.Subscribe(sources[0]);
                 subscriber.Subscribe(sources[1]);
-                var basket = new BasketAggregate(sources);
+                var basket = new BasketAggregate(CreateSpotNodes(sources));
                 subscriber.Subscribe(basket);
                 basket.Connect();
 
@@ -187,7 +192,7 @@ namespace EventGraph.Tests
                 .Select(index => new EquitySource($"SOURCE_{index}", 100.0, 0.0, 0.0))
                 .ToArray();
             var baskets = sources
-                .Select((source, index) => new BasketAggregate($"BASKET_{index}", [source]))
+                .Select((source, index) => new BasketAggregate($"BASKET_{index}", [new SpotNode(source)]))
                 .ToArray();
 
             foreach (var source in sources)
@@ -235,7 +240,7 @@ namespace EventGraph.Tests
                     new EquitySource("A", 100.0, 0.0, 0.0),
                     new EquitySource("B", 200.0, 0.0, 0.0)
                 };
-                var basket = new BasketAggregate(sources);
+                var basket = new BasketAggregate(CreateSpotNodes(sources));
 
                 coloredSubscriber.Subscribe(basket);
                 await basket.RunOnceAsync();
@@ -263,12 +268,13 @@ namespace EventGraph.Tests
 
                 var nodes = NodeGraphLoader.LoadNodes(directory);
 
-                var nodeByName = nodes.ToDictionary(node => node.Name, StringComparer.OrdinalIgnoreCase);
-                Assert.True(nodeByName.ContainsKey("A"));
-                Assert.True(nodeByName.ContainsKey("B"));
-                Assert.True(nodeByName.ContainsKey("C"));
-                Assert.Contains(nodeByName["B"].Dependencies, dependency => dependency.Name == "A");
-                Assert.Contains(nodeByName["C"].Dependencies, dependency => dependency.Name == "B");
+                var basketByName = nodes.OfType<BasketAggregate>().ToDictionary(node => node.Name, StringComparer.OrdinalIgnoreCase);
+                Assert.True(basketByName.ContainsKey("B"));
+                Assert.True(basketByName.ContainsKey("C"));
+                Assert.All(basketByName["B"].Dependencies, dependency => Assert.IsType<SpotNode>(dependency));
+                Assert.All(basketByName["C"].Dependencies, dependency => Assert.IsType<SpotNode>(dependency));
+                Assert.Contains(basketByName["B"].Dependencies, dependency => dependency.Name == "A");
+                Assert.Contains(basketByName["C"].Dependencies, dependency => dependency.Name == "B");
 
                 var order = nodes.Select(node => node.Name).ToList();
                 Assert.True(order.IndexOf("A") < order.IndexOf("B"));
@@ -318,8 +324,8 @@ namespace EventGraph.Tests
 
                 var baseSource = new EquitySource("BASE", 100.0, 0.0, 0.0);
                 var childSource = new EquitySource("CHILD", 200.0, 0.0, 0.0);
-                var parent = new BasketAggregate("PARENT", [baseSource]);
-                var child = new BasketAggregate("CHILD_BASKET", [parent, childSource]);
+                var parent = new BasketAggregate("PARENT", [new SpotNode(baseSource)]);
+                var child = new BasketAggregate("CHILD_BASKET", [new SpotNode(parent), new SpotNode(childSource)]);
                 var subscriber = new QuoteSubscriber();
 
                 subscriber.Subscribe(parent);
@@ -362,9 +368,9 @@ namespace EventGraph.Tests
                 var sourceC = new EquitySource("C", 300.0, 0.0, 0.0);
                 var sourceD = new EquitySource("D", 400.0, 0.0, 0.0);
 
-                var parent = new BasketAggregate("PARENT", [sourceA, sourceB]);
-                var child = new BasketAggregate("CHILD", [parent, sourceC]);
-                var root = new BasketAggregate("ROOT", [child, sourceD]);
+                var parent = new BasketAggregate("PARENT", [new SpotNode(sourceA), new SpotNode(sourceB)]);
+                var child = new BasketAggregate("CHILD", [new SpotNode(parent), new SpotNode(sourceC)]);
+                var root = new BasketAggregate("ROOT", [new SpotNode(child), new SpotNode(sourceD)]);
                 var subscriber = new QuoteSubscriber();
 
                 foreach (var source in new IGraphNode[] { sourceA, sourceB, sourceC, sourceD, parent, child, root })
@@ -422,9 +428,9 @@ namespace EventGraph.Tests
                 var sourceC = new EquitySource("C", 300.0, 0.0, 0.0);
                 var sourceD = new EquitySource("D", 400.0, 0.0, 0.0);
 
-                var leftParent = new BasketAggregate("LEFT_PARENT", [sourceA, sourceB]);
-                var rightParent = new BasketAggregate("RIGHT_PARENT", [sourceC, sourceD]);
-                var child = new BasketAggregate("CHILD", [leftParent, rightParent]);
+                var leftParent = new BasketAggregate("LEFT_PARENT", [new SpotNode(sourceA), new SpotNode(sourceB)]);
+                var rightParent = new BasketAggregate("RIGHT_PARENT", [new SpotNode(sourceC), new SpotNode(sourceD)]);
+                var child = new BasketAggregate("CHILD", [new SpotNode(leftParent), new SpotNode(rightParent)]);
                 var subscriber = new QuoteSubscriber();
 
                 subscriber.Subscribe(leftParent);

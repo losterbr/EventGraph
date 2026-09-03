@@ -69,6 +69,10 @@ namespace EventGraph
                     AddIfMissing(toAdd, definitionsByKey, definition, "discountCurve");
                     AddIfMissing(toAdd, definitionsByKey, definition, "spot");
                 }
+                else if (type == nameof(BasketAggregate))
+                {
+                    AddBasketSpotNodesIfMissing(toAdd, definitionsByKey, definition);
+                }
                 else if (type == nameof(EquityOption))
                 {
                     var optionKey = GetNodeKey(definition);
@@ -248,6 +252,26 @@ namespace EventGraph
             }
 
             toAdd.Add(synthetic);
+        }
+
+        private static void AddBasketSpotNodesIfMissing(
+            List<IReadOnlyDictionary<string, JsonElement>> toAdd,
+            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
+            IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            foreach (var dependencyKey in BasketAggregate.GetDependencyNames(definition))
+            {
+                var name = dependencyKey[(dependencyKey.IndexOf("::", StringComparison.Ordinal) + 2)..];
+                var basketKey = GraphKey.Of(nameof(BasketAggregate), name);
+                var sourceKey = definitionsByKey.ContainsKey(basketKey)
+                    ? basketKey
+                    : GraphKey.Of(nameof(EquitySource), name);
+                AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(SpotNode), name, new Dictionary<string, JsonElement>
+                {
+                    ["name"] = JsonSerializer.SerializeToElement(name),
+                    ["source"] = JsonSerializer.SerializeToElement(sourceKey)
+                });
+            }
         }
 
         private static Dictionary<string, JsonElement> EnrichEquityOptionDefinition(

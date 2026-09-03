@@ -4,19 +4,38 @@ using System.Collections.Generic;
 namespace EventGraph
 {
     /// <summary>
-    /// Pass-through node that exposes an equity's ticking spot.
+    /// Pass-through node that exposes a graph node's ticking spot.
     /// </summary>
     public sealed class SpotNode : ISpotQuoteNode
     {
-        private readonly EquitySource source;
+        private readonly ISpotQuoteNode source;
+        private EventHandler<QuoteTick> tick;
 
-        public SpotNode(EquitySource source)
+        public SpotNode(ISpotQuoteNode source)
         {
             this.source = source ?? throw new ArgumentNullException(nameof(source));
-            this.source.Tick += SourceTicked;
         }
 
-        public event EventHandler<QuoteTick> Tick;
+        public event EventHandler<QuoteTick> Tick
+        {
+            add
+            {
+                var shouldSubscribe = tick == null;
+                tick += value;
+                if (shouldSubscribe)
+                {
+                    source.Tick += SourceTicked;
+                }
+            }
+            remove
+            {
+                tick -= value;
+                if (tick == null)
+                {
+                    source.Tick -= SourceTicked;
+                }
+            }
+        }
 
         public string Name => source.Name;
 
@@ -30,7 +49,7 @@ namespace EventGraph
 
         private void SourceTicked(object sender, QuoteTick e)
         {
-            Tick?.Invoke(this, new QuoteTick(Name, e.Value));
+            tick?.Invoke(this, new QuoteTick(Name, e.Value));
         }
     }
 }

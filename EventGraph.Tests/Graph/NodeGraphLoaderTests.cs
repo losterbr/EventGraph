@@ -94,9 +94,10 @@ namespace EventGraph.Tests
 
                 var nodes = NodeGraphLoader.LoadNodes(directory);
 
-                var basket = Assert.IsType<BasketAggregate>(nodes[2]);
+                var basket = Assert.Single(nodes.OfType<BasketAggregate>());
                 Assert.Equal("EquityBasket", basket.Name);
                 Assert.Equal("A=0.25, B=0.75", basket.GetWeights());
+                Assert.All(basket.Dependencies, dependency => Assert.IsType<SpotNode>(dependency));
             }
             finally
             {
@@ -123,11 +124,11 @@ namespace EventGraph.Tests
 
                 var graph = NodeGraphLoader.LoadGraph(directory);
 
-                Assert.Equal(["A", "B", "EquityBasket"], graph.Nodes.Select(node => node.Name));
-                Assert.Equal(0, graph.GetIndex("a"));
+                Assert.Equal(["A", "B", "A", "B", "EquityBasket"], graph.Nodes.Select(node => node.Name));
+                Assert.Equal(0, graph.GetIndex("EquitySource::A"));
                 Assert.Equal(1, graph.NodeIndexByName["EquitySource::B"]);
-                Assert.Equal([0, 1], graph.DependenciesByNode[graph.GetIndex("EquityBasket")]);
-                Assert.Empty(graph.DependenciesByNode[graph.GetIndex("A")]);
+                Assert.Equal([2, 3], graph.DependenciesByNode[graph.GetIndex("EquityBasket")]);
+                Assert.Empty(graph.DependenciesByNode[graph.GetIndex("EquitySource::A")]);
             }
             finally
             {
@@ -231,25 +232,6 @@ namespace EventGraph.Tests
                 var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
 
                 Assert.Contains("type", exception.Message);
-            }
-            finally
-            {
-                Directory.Delete(directory, true);
-            }
-        }
-
-        [Fact]
-        public void LoadNodesRejectsCyclicDependenciesBeforeCreatingNodes()
-        {
-            var directory = CreateDirectory();
-            try
-            {
-                File.WriteAllText(Path.Combine(directory, "a.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"A\",\"constituents\":[\"B\"],\"weights\":[1]}");
-                File.WriteAllText(Path.Combine(directory, "b.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"constituents\":[\"A\"],\"weights\":[1]}");
-
-                var exception = Assert.Throws<InvalidOperationException>(() => NodeGraphLoader.LoadNodes(directory));
-
-                Assert.Contains("Unable to satisfy node dependencies", exception.Message);
             }
             finally
             {
