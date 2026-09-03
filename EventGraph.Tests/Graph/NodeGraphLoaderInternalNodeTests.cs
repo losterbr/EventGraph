@@ -19,7 +19,7 @@ namespace EventGraph.Tests
                 """);
                 File.WriteAllText(Path.Combine(directory, "msft.json"), /*lang=json,strict*/ """
                 {
-                  "type": "SimulatedAssetSource",
+                  "type": "EquitySource",
                   "name": "MSFT",
                   "spot": 400.0,
                   "volatility": 0.25,
@@ -37,9 +37,9 @@ namespace EventGraph.Tests
                 var graph = NodeGraphLoader.LoadGraph(directory);
 
                 Assert.Equal(3, graph.Nodes.Count);
-                Assert.Contains(graph.Nodes, node => node is EquitySource and not SimulatedAssetSource);
-                Assert.Contains(graph.Nodes, node => node is SimulatedAssetSource);
-                Assert.Contains(graph.Nodes, node => node is CurrencyRateSource);
+                Assert.Contains(graph.Nodes, node => node is EquitySource && node.Name == "AAPL");
+                Assert.Contains(graph.Nodes, node => node is EquitySource && node.Name == "MSFT");
+                Assert.Contains(graph.Nodes, node => node is CurrencyRateSource && node.Name == "USD");
             }
             finally
             {
@@ -55,7 +55,7 @@ namespace EventGraph.Tests
             {
                 File.WriteAllText(Path.Combine(directory, "aapl.json"), /*lang=json,strict*/ """
                 {
-                  "type": "SimulatedAssetSource",
+                  "type": "EquitySource",
                   "name": "AAPL",
                   "currency": "USD",
                   "spot": 225.0,
@@ -85,7 +85,7 @@ namespace EventGraph.Tests
 
                 Assert.Equal(7, graph.Nodes.Count);
                 Assert.Contains(graph.Nodes, node => node is SpotNode);
-                Assert.Contains(graph.Nodes, node => node is VolatilitySource);
+                Assert.Contains(graph.Nodes, node => node is VolatilityNode);
                 Assert.Contains(graph.Nodes, node => node is RateCurveNode);
                 Assert.Contains(graph.Nodes, node => node is ForwardCurve);
                 Assert.Contains(graph.Nodes, node => node is EquityOption);
@@ -104,7 +104,7 @@ namespace EventGraph.Tests
             {
                 File.WriteAllText(Path.Combine(directory, "aapl.json"), /*lang=json,strict*/ """
                 {
-                  "type": "SimulatedAssetSource",
+                  "type": "EquitySource",
                   "name": "AAPL",
                   "currency": "USD",
                   "spot": 225.0,

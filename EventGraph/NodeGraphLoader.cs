@@ -78,6 +78,12 @@ namespace EventGraph
 
             foreach (var definition in toAdd)
             {
+                var type = GetType(definition);
+                if (NodeRegistry.IsSourceType(type))
+                {
+                    throw new InvalidDataException($"Source node type '{type}' must be defined by a JSON file and cannot be synthesized.");
+                }
+
                 var key = GetNodeKey(definition);
                 if (!definitionsByKey.ContainsKey(key))
                 {
@@ -118,11 +124,12 @@ namespace EventGraph
 
                 var definition = definitionsByKey[key];
                 var node = NodeRegistry.CreateNode(definition, new CompositeNodeLookup(nodesByKey, nodesByName));
-                nodesByKey[GraphKey.Of(node.Type, node.Name)] = node;
-                if (node is SimulatedAssetSource)
+                if (NodeRegistry.IsSourceType(node.Type) && node.Dependencies.Count != 0)
                 {
-                    nodesByKey[GraphKey.Of(nameof(EquitySource), node.Name)] = node;
+                    throw new InvalidDataException($"Source node '{GraphKey.Of(node.Type, node.Name)}' cannot depend on other nodes.");
                 }
+
+                nodesByKey[GraphKey.Of(node.Type, node.Name)] = node;
                 nodesByName.TryAdd(node.Name, node);
                 resolvedOrder.Add(node);
 
@@ -162,39 +169,11 @@ namespace EventGraph
                 return dependencyKey;
             }
 
-            // Aliases: a SimulatedAssetSource is also an EquitySource.
-            var aliasKey = GetAliasKey(dependencyKey, definitionsByKey);
-            if (aliasKey != null)
-            {
-                return aliasKey;
-            }
-
             // Bare name: match exactly one key whose name suffix equals it.
             var matches = definitionsByKey.Keys
                 .Where(key => key.EndsWith($"::{dependencyKey}", StringComparison.OrdinalIgnoreCase))
                 .ToList();
             return matches.Count == 1 ? matches[0] : null;
-        }
-
-        private static string GetAliasKey(
-            string dependencyKey,
-            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey)
-        {
-            var separator = dependencyKey.IndexOf("::", StringComparison.Ordinal);
-            if (separator < 0)
-            {
-                return null;
-            }
-
-            var refType = dependencyKey[..separator];
-            var refName = dependencyKey[(separator + 2)..];
-            if (refType != nameof(EquitySource))
-            {
-                return null;
-            }
-
-            var simulatedKey = GraphKey.Of(nameof(SimulatedAssetSource), refName);
-            return definitionsByKey.ContainsKey(simulatedKey) ? simulatedKey : null;
         }
 
         private static string GetNodeKey(IReadOnlyDictionary<string, JsonElement> definition)
@@ -263,7 +242,7 @@ namespace EventGraph
             {
                 ["type"] = JsonSerializer.SerializeToElement(refType)
             };
-            if (refType is nameof(RateCurveNode) or nameof(SpotNode) or nameof(VolatilitySource))
+            if (refType is nameof(RateCurveNode) or nameof(SpotNode) or nameof(VolatilityNode))
             {
                 synthetic["name"] = JsonSerializer.SerializeToElement(refName);
             }
@@ -284,7 +263,7 @@ namespace EventGraph
             {
                 ["name"] = JsonSerializer.SerializeToElement(underlyer)
             });
-            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(VolatilitySource), underlyer, new Dictionary<string, JsonElement>
+            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(VolatilityNode), underlyer, new Dictionary<string, JsonElement>
             {
                 ["name"] = JsonSerializer.SerializeToElement(underlyer)
             });
@@ -301,7 +280,7 @@ namespace EventGraph
             return new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase)
             {
                 ["forward"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(ForwardCurve), underlyer)),
-                ["volatility"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(VolatilitySource), underlyer)),
+                ["volatility"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(VolatilityNode), underlyer)),
                 ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveNode), rateSourceName))
             };
         }
@@ -311,14 +290,9 @@ namespace EventGraph
             string underlyer)
         {
             var sourceKey = GraphKey.Of(nameof(EquitySource), underlyer);
-            if (!definitionsByKey.TryGetValue(sourceKey, out var sourceDefinition))
-            {
-                var simulatedKey = GraphKey.Of(nameof(SimulatedAssetSource), underlyer);
-                if (!definitionsByKey.TryGetValue(simulatedKey, out sourceDefinition))
-                {
-                    throw new InvalidDataException($"EquityOption references an unknown underlyer '{underlyer}'.");
-                }
-            }
+            var sourceDefinition = definitionsByKey.TryGetValue(sourceKey, out var definition)
+                ? definition
+                : throw new InvalidDataException($"EquityOption references an unknown underlyer '{underlyer}'.");
 
             return GetOptionalString(sourceDefinition, "currency") ?? "USD";
         }

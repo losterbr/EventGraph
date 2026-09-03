@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedAssetSource",
+  "type": "EquitySource",
   "name": "NFLX",
   "currency": "USD",
   "spot": 1200.0,

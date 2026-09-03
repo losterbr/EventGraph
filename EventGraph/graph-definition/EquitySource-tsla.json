@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedAssetSource",
+  "type": "EquitySource",
   "name": "TSLA",
   "currency": "USD",
   "spot": 350.0,

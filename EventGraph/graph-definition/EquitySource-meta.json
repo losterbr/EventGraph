@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedAssetSource",
+  "type": "EquitySource",
   "name": "META",
   "currency": "USD",
   "spot": 750.0,

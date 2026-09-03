@@ -9,8 +9,8 @@ namespace EventGraph.Tests
         {
             var quotes = new[]
             {
-                new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
-                new SimulatedAssetSource("B", 200.0, 0.0, 0.0)
+                new EquitySource("A", 100.0, 0.0, 0.0),
+                new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
             var basket = new BasketAggregate(quotes);
@@ -28,8 +28,8 @@ namespace EventGraph.Tests
         {
             var quotes = new[]
             {
-                new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
-                new SimulatedAssetSource("B", 200.0, 0.0, 0.0)
+                new EquitySource("A", 100.0, 0.0, 0.0),
+                new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
             var basket = new BasketAggregate(quotes, [0.25, 0.75]);
@@ -47,8 +47,8 @@ namespace EventGraph.Tests
         {
             var quotes = new[]
             {
-                new SimulatedAssetSource("A", 120.0, 0.0, 0.0),
-                new SimulatedAssetSource("B", 50.0, 0.0, 0.0)
+                new EquitySource("A", 120.0, 0.0, 0.0),
+                new EquitySource("B", 50.0, 0.0, 0.0)
             };
 
             var basket = new BasketAggregate(quotes, [2.0, -1.0]);
@@ -65,8 +65,8 @@ namespace EventGraph.Tests
         [Fact]
         public async Task BasketAggregateCreatedFromDefinitionAllowsNegativeWeightsWhenTheySumToOne()
         {
-            var sourceA = new SimulatedAssetSource("A", 120.0, 0.0, 0.0);
-            var sourceB = new SimulatedAssetSource("B", 50.0, 0.0, 0.0);
+            var sourceA = new EquitySource("A", 120.0, 0.0, 0.0);
+            var sourceB = new EquitySource("B", 50.0, 0.0, 0.0);
             using var definition = JsonDocument.Parse("""
         {
           "name": "PAIR_TRADE",
@@ -96,8 +96,8 @@ namespace EventGraph.Tests
         {
             var quotes = new[]
             {
-                new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
-                new SimulatedAssetSource("B", 200.0, 0.0, 0.0)
+                new EquitySource("A", 100.0, 0.0, 0.0),
+                new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
             var basket = new BasketAggregate(quotes, [0.0, 1.0]);
@@ -112,7 +112,7 @@ namespace EventGraph.Tests
         [Fact]
         public async Task BasketAggregateDoesNotSubscribeUntilConnected()
         {
-            var source = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
+            var source = new EquitySource("A", 100.0, 0.0, 0.0);
             var basket = new BasketAggregate([source]);
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
@@ -125,7 +125,7 @@ namespace EventGraph.Tests
         [Fact]
         public async Task BasketAggregatePublishesSourceTicksAfterConnect()
         {
-            var source = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
+            var source = new EquitySource("A", 100.0, 0.0, 0.0);
             var basket = new BasketAggregate([source]);
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
@@ -140,8 +140,8 @@ namespace EventGraph.Tests
         [Fact]
         public async Task BasketAggregateIgnoresZeroWeightBasketConstituentsAfterConnect()
         {
-            var zeroWeightSource = new SimulatedAssetSource("ZERO", 100.0, 0.0, 0.0);
-            var activeSource = new SimulatedAssetSource("ACTIVE", 200.0, 0.0, 0.0);
+            var zeroWeightSource = new EquitySource("ZERO", 100.0, 0.0, 0.0);
+            var activeSource = new EquitySource("ACTIVE", 200.0, 0.0, 0.0);
             var zeroWeightBasket = new BasketAggregate("ZERO_BASKET", [zeroWeightSource]);
             var basket = new BasketAggregate("BASKET", [zeroWeightBasket, activeSource], [0.0, 1.0]);
             var updates = new List<QuoteTick>();
@@ -158,8 +158,8 @@ namespace EventGraph.Tests
         {
             var quotes = new[]
             {
-                new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
-                new SimulatedAssetSource("B", 200.0, 0.0, 0.0)
+                new EquitySource("A", 100.0, 0.0, 0.0),
+                new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
             _ = Assert.Throws<ArgumentException>(() => new BasketAggregate(quotes, [0.6, 0.3]));
@@ -170,8 +170,8 @@ namespace EventGraph.Tests
         {
             var quotes = new[]
             {
-                new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
-                new SimulatedAssetSource("B", 200.0, 0.0, 0.0)
+                new EquitySource("A", 100.0, 0.0, 0.0),
+                new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
             _ = Assert.Throws<ArgumentException>(() => new BasketAggregate(quotes, [0.5]));
@@ -182,8 +182,8 @@ namespace EventGraph.Tests
         {
             var quotes = new[]
             {
-                new SimulatedAssetSource("USD_ASSET", 100.0, 0.0, 0.0, "USD"),
-                new SimulatedAssetSource("EUR_ASSET", 200.0, 0.0, 0.0, "EUR")
+                new EquitySource("USD_ASSET", 100.0, 0.0, 0.0, "USD"),
+                new EquitySource("EUR_ASSET", 200.0, 0.0, 0.0, "EUR")
             };
 
             var exception = Assert.Throws<ArgumentException>(() => new BasketAggregate(quotes));
@@ -221,7 +221,7 @@ namespace EventGraph.Tests
         [Fact]
         public void BasketAggregateRejectsNonNumericWeights()
         {
-            var source = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
+            var source = new EquitySource("A", 100.0, 0.0, 0.0);
             using var definition = JsonDocument.Parse("{\"name\":\"BASKET\",\"constituents\":[\"A\"],\"weights\":[\"bad\"]}");
 
             var exception = Assert.Throws<InvalidDataException>(() => new BasketAggregate(
@@ -236,7 +236,7 @@ namespace EventGraph.Tests
         {
             var quotes = new[]
             {
-                new SimulatedAssetSource("A", 100.0, 0.0, 0.0)
+                new EquitySource("A", 100.0, 0.0, 0.0)
             };
 
             var basket = new BasketAggregate(quotes);
@@ -249,8 +249,8 @@ namespace EventGraph.Tests
         {
             var quotes = new[]
             {
-                new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
-                new SimulatedAssetSource("B", 200.0, 0.0, 0.0)
+                new EquitySource("A", 100.0, 0.0, 0.0),
+                new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
             var basket = new BasketAggregate(quotes);
@@ -267,8 +267,8 @@ namespace EventGraph.Tests
         {
             var quotes = new[]
             {
-                new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
-                new SimulatedAssetSource("B", 200.0, 0.0, 0.0)
+                new EquitySource("A", 100.0, 0.0, 0.0),
+                new EquitySource("B", 200.0, 0.0, 0.0)
             };
 
             var basket = new BasketAggregate(quotes);
@@ -287,8 +287,8 @@ namespace EventGraph.Tests
         {
             var quotes = new[]
             {
-                new SimulatedAssetSource("B", 200.0, 0.0, 0.0),
-                new SimulatedAssetSource("A", 100.0, 0.0, 0.0)
+                new EquitySource("B", 200.0, 0.0, 0.0),
+                new EquitySource("A", 100.0, 0.0, 0.0)
             };
 
             var basket = new BasketAggregate(quotes);

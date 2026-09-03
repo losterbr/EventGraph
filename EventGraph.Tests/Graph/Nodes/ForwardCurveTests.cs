@@ -7,7 +7,7 @@ namespace EventGraph.Tests
         [Fact]
         public void ForwardEvaluatesSpotDividedByDiscountFactor()
         {
-            var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
+            var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = new RateCurveNode(new CurrencyRateSource("USD", 0.05));
             var maturity = DateTime.Today.AddYears(1);
@@ -31,7 +31,7 @@ namespace EventGraph.Tests
         [Fact]
         public void ForwardCurveRejectsNullDiscountCurveNode()
         {
-            var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
+            var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
 
             _ = Assert.Throws<ArgumentNullException>(() => new ForwardCurve(spotNode, null));
@@ -40,7 +40,7 @@ namespace EventGraph.Tests
         [Fact]
         public void ForwardCurveRejectsCurrencyMismatch()
         {
-            var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0, "USD");
+            var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0, "USD");
             var spotNode = new SpotNode(equity);
             var eurDiscountFactor = new RateCurveNode(new CurrencyRateSource("EUR", 0.05));
 
@@ -52,7 +52,7 @@ namespace EventGraph.Tests
         [Fact]
         public async Task ForwardCurveTicksWhenTheUnderlyingSpotNodeTicks()
         {
-            var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
+            var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = new RateCurveNode(new CurrencyRateSource("USD", 0.05));
             var forward = new ForwardCurve(spotNode, discountFactor);
@@ -68,7 +68,7 @@ namespace EventGraph.Tests
         [Fact]
         public void ForwardCurveLoadsItsDependenciesFromJson()
         {
-            var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
+            var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = new RateCurveNode(new CurrencyRateSource("USD", 0.05));
             using var document = JsonDocument.Parse("{\"spot\":\"SpotNode::AAPL\",\"discountCurve\":\"RateCurveNode::USD\"}");

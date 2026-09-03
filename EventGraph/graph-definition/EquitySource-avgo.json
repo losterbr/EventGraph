@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedAssetSource",
+  "type": "EquitySource",
   "name": "AVGO",
   "currency": "USD",
   "spot": 300.0,

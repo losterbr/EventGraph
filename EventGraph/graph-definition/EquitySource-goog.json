@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedAssetSource",
+  "type": "EquitySource",
   "name": "GOOG",
   "currency": "USD",
   "spot": 190.0,

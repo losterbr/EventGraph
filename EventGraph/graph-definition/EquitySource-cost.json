@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedAssetSource",
+  "type": "EquitySource",
   "name": "COST",
   "currency": "USD",
   "spot": 980.0,

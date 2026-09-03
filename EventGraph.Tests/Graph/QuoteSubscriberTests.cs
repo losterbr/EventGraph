@@ -33,25 +33,25 @@ namespace EventGraph.Tests
             {
                 Console.SetOut(output);
                 var subscriber = new QuoteSubscriber();
-                var source = new SimulatedAssetSource("XYZ", 100.0, 0.0, 0.0);
+                var source = new EquitySource("XYZ", 100.0, 0.0, 0.0);
 
                 subscriber.Subscribe(source);
                 await source.Start(1);
 
                 var rendered = output.ToString();
                 Assert.Contains("Subscribed to XYZ", rendered);
-                Assert.Contains("SimulatedAssetSource::XYZ", rendered);
+                Assert.Contains("EquitySource::XYZ", rendered);
 
                 var sourceLine = GetOutputLines(output)
-                    .Single(line => line.Contains("SimulatedAssetSource::XYZ") && line.Contains("updated to"));
+                    .Single(line => line.Contains("EquitySource::XYZ") && line.Contains("updated to"));
                 var sourceIdentifier = GetIdentifier(sourceLine);
 
                 Assert.Equal(40, sourceIdentifier.Length);
-                Assert.StartsWith("SimulatedAssetSource::XYZ", sourceIdentifier);
+                Assert.StartsWith("EquitySource::XYZ", sourceIdentifier);
 
                 var discountFactor = new RateCurveNode(new CurrencyRateSource("USD", 0.05));
                 var forward = new ForwardCurve(new SpotNode(source), discountFactor);
-                var volatility = new VolatilitySource(source);
+                var volatility = new VolatilityNode(source);
                 var option = new EquityOption("XYZ_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0);
                 subscriber.Subscribe(option);
                 await source.Start(1);
@@ -63,10 +63,10 @@ namespace EventGraph.Tests
 
                 var sources = new[]
                 {
-                    new SimulatedAssetSource("TSLA", 100.0, 0.0, 0.0),
-                    new SimulatedAssetSource("GOOG", 200.0, 0.0, 0.0),
-                    new SimulatedAssetSource("AMZN", 300.0, 0.0, 0.0),
-                    new SimulatedAssetSource("MSFT", 400.0, 0.0, 0.0)
+                    new EquitySource("TSLA", 100.0, 0.0, 0.0),
+                    new EquitySource("GOOG", 200.0, 0.0, 0.0),
+                    new EquitySource("AMZN", 300.0, 0.0, 0.0),
+                    new EquitySource("MSFT", 400.0, 0.0, 0.0)
                 };
 
                 var basket = new BasketAggregate(sources);
@@ -98,9 +98,9 @@ namespace EventGraph.Tests
                 var subscriber = new QuoteSubscriber();
                 var sources = new[]
                 {
-                    new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
-                    new SimulatedAssetSource("B", 200.0, 0.0, 0.0),
-                    new SimulatedAssetSource("C", 300.0, 0.0, 0.0)
+                    new EquitySource("A", 100.0, 0.0, 0.0),
+                    new EquitySource("B", 200.0, 0.0, 0.0),
+                    new EquitySource("C", 300.0, 0.0, 0.0)
                 };
 
                 foreach (var source in sources)
@@ -111,7 +111,7 @@ namespace EventGraph.Tests
                 await Task.WhenAll(sources.Select(source => source.Start(1)));
 
                 var updateLines = GetOutputLines(output)
-                    .Where(line => line.Contains("SimulatedAssetSource::A") || line.Contains("SimulatedAssetSource::B") || line.Contains("SimulatedAssetSource::C"))
+                    .Where(line => line.Contains("EquitySource::A") || line.Contains("EquitySource::B") || line.Contains("EquitySource::C"))
                     .ToArray();
 
                 Assert.Equal(3, updateLines.Length);
@@ -136,8 +136,8 @@ namespace EventGraph.Tests
                 var subscriber = new QuoteSubscriber();
                 var sources = new[]
                 {
-                    new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
-                    new SimulatedAssetSource("B", 200.0, 0.0, 0.0)
+                    new EquitySource("A", 100.0, 0.0, 0.0),
+                    new EquitySource("B", 200.0, 0.0, 0.0)
                 };
 
                 subscriber.Subscribe(sources[0]);
@@ -150,7 +150,7 @@ namespace EventGraph.Tests
                 await sources[1].Start(1);
 
                 var lines = GetOutputLines(output);
-                var sourceIndex = Array.FindIndex(lines, line => line.Contains("SimulatedAssetSource::B") && line.Contains("updated to"));
+                var sourceIndex = Array.FindIndex(lines, line => line.Contains("EquitySource::B") && line.Contains("updated to"));
                 var basketIndex = Array.FindIndex(lines, line => line.Contains("BasketAggregate::B A,B") && line.Contains("updated to"));
 
                 Assert.True(sourceIndex >= 0);
@@ -184,7 +184,7 @@ namespace EventGraph.Tests
                 ConsoleColor.DarkGray
             };
             var sources = Enumerable.Range(0, expectedPalette.Length + 1)
-                .Select(index => new SimulatedAssetSource($"SOURCE_{index}", 100.0, 0.0, 0.0))
+                .Select(index => new EquitySource($"SOURCE_{index}", 100.0, 0.0, 0.0))
                 .ToArray();
             var baskets = sources
                 .Select((source, index) => new BasketAggregate($"BASKET_{index}", [source]))
@@ -221,7 +221,7 @@ namespace EventGraph.Tests
             {
                 Console.SetOut(output);
                 var quietSubscriber = new QuoteSubscriber(quiet: true);
-                var source = new SimulatedAssetSource("XYZ", 100.0, 0.0, 0.0);
+                var source = new EquitySource("XYZ", 100.0, 0.0, 0.0);
 
                 quietSubscriber.Subscribe(source);
                 await source.Start(1);
@@ -232,8 +232,8 @@ namespace EventGraph.Tests
                 var coloredSubscriber = new QuoteSubscriber(quiet: false, basketColor: ConsoleColor.Red);
                 var sources = new[]
                 {
-                    new SimulatedAssetSource("A", 100.0, 0.0, 0.0),
-                    new SimulatedAssetSource("B", 200.0, 0.0, 0.0)
+                    new EquitySource("A", 100.0, 0.0, 0.0),
+                    new EquitySource("B", 200.0, 0.0, 0.0)
                 };
                 var basket = new BasketAggregate(sources);
 
@@ -257,7 +257,7 @@ namespace EventGraph.Tests
 
             try
             {
-                File.WriteAllText(Path.Combine(directory, "a.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedAssetSource\",\"name\":\"A\",\"spot\":10,\"volatility\":0,\"meanTickTimeSeconds\":1}");
+                File.WriteAllText(Path.Combine(directory, "a.json"), /*lang=json,strict*/ "{\"type\":\"EquitySource\",\"name\":\"A\",\"spot\":10,\"volatility\":0,\"meanTickTimeSeconds\":1}");
                 File.WriteAllText(Path.Combine(directory, "b.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"constituents\":[\"A\"],\"weights\":[1.0]}");
                 File.WriteAllText(Path.Combine(directory, "c.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"C\",\"constituents\":[\"B\"],\"weights\":[1.0]}");
 
@@ -288,8 +288,8 @@ namespace EventGraph.Tests
 
             try
             {
-                File.WriteAllText(Path.Combine(directory, "alpha.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedAssetSource\",\"name\":\"ALPHA\",\"spot\":10,\"volatility\":0,\"meanTickTimeSeconds\":1}");
-                File.WriteAllText(Path.Combine(directory, "beta.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedAssetSource\",\"name\":\"BETA\",\"spot\":20,\"volatility\":0,\"meanTickTimeSeconds\":1}");
+                File.WriteAllText(Path.Combine(directory, "alpha.json"), /*lang=json,strict*/ "{\"type\":\"EquitySource\",\"name\":\"ALPHA\",\"spot\":10,\"volatility\":0,\"meanTickTimeSeconds\":1}");
+                File.WriteAllText(Path.Combine(directory, "beta.json"), /*lang=json,strict*/ "{\"type\":\"EquitySource\",\"name\":\"BETA\",\"spot\":20,\"volatility\":0,\"meanTickTimeSeconds\":1}");
                 File.WriteAllText(Path.Combine(directory, "mix.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"MIX\",\"constituents\":[\"ALPHA\",\"BETA\"],\"weights\":[0.5,0.5]}");
                 File.WriteAllText(Path.Combine(directory, "combo.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"COMBO\",\"constituents\":[\"MIX\"],\"weights\":[1.0]}");
 
@@ -316,8 +316,8 @@ namespace EventGraph.Tests
             {
                 Console.SetOut(output);
 
-                var baseSource = new SimulatedAssetSource("BASE", 100.0, 0.0, 0.0);
-                var childSource = new SimulatedAssetSource("CHILD", 200.0, 0.0, 0.0);
+                var baseSource = new EquitySource("BASE", 100.0, 0.0, 0.0);
+                var childSource = new EquitySource("CHILD", 200.0, 0.0, 0.0);
                 var parent = new BasketAggregate("PARENT", [baseSource]);
                 var child = new BasketAggregate("CHILD_BASKET", [parent, childSource]);
                 var subscriber = new QuoteSubscriber();
@@ -357,10 +357,10 @@ namespace EventGraph.Tests
             {
                 Console.SetOut(output);
 
-                var sourceA = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
-                var sourceB = new SimulatedAssetSource("B", 200.0, 0.0, 0.0);
-                var sourceC = new SimulatedAssetSource("C", 300.0, 0.0, 0.0);
-                var sourceD = new SimulatedAssetSource("D", 400.0, 0.0, 0.0);
+                var sourceA = new EquitySource("A", 100.0, 0.0, 0.0);
+                var sourceB = new EquitySource("B", 200.0, 0.0, 0.0);
+                var sourceC = new EquitySource("C", 300.0, 0.0, 0.0);
+                var sourceD = new EquitySource("D", 400.0, 0.0, 0.0);
 
                 var parent = new BasketAggregate("PARENT", [sourceA, sourceB]);
                 var child = new BasketAggregate("CHILD", [parent, sourceC]);
@@ -375,7 +375,7 @@ namespace EventGraph.Tests
                     }
                     else
                     {
-                        subscriber.Subscribe((SimulatedAssetSource)source);
+                        subscriber.Subscribe((EquitySource)source);
                     }
                 }
 
@@ -417,10 +417,10 @@ namespace EventGraph.Tests
             {
                 Console.SetOut(output);
 
-                var sourceA = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
-                var sourceB = new SimulatedAssetSource("B", 200.0, 0.0, 0.0);
-                var sourceC = new SimulatedAssetSource("C", 300.0, 0.0, 0.0);
-                var sourceD = new SimulatedAssetSource("D", 400.0, 0.0, 0.0);
+                var sourceA = new EquitySource("A", 100.0, 0.0, 0.0);
+                var sourceB = new EquitySource("B", 200.0, 0.0, 0.0);
+                var sourceC = new EquitySource("C", 300.0, 0.0, 0.0);
+                var sourceD = new EquitySource("D", 400.0, 0.0, 0.0);
 
                 var leftParent = new BasketAggregate("LEFT_PARENT", [sourceA, sourceB]);
                 var rightParent = new BasketAggregate("RIGHT_PARENT", [sourceC, sourceD]);

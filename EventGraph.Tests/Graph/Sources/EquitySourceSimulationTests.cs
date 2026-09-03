@@ -8,7 +8,7 @@ namespace EventGraph.Tests
         public async Task SimulatedAssetSourceCanRunMultipleTicks()
         {
             var updates = new List<QuoteTick>();
-            var source = new SimulatedAssetSource("XYZ", 100.0, 0.2, 0.0);
+            var source = new EquitySource("XYZ", 100.0, 0.2, 0.0);
             source.Tick += (_, message) => updates.Add(message);
 
             await source.Start(2);
@@ -20,7 +20,7 @@ namespace EventGraph.Tests
         public async Task SimulatedAssetSourceCanRunInContinuousModeUntilCancelled()
         {
             var updates = new List<QuoteTick>();
-            var source = new SimulatedAssetSource("CONT", 50.0, 0.1, 0.0);
+            var source = new EquitySource("CONT", 50.0, 0.1, 0.0);
             using var cts = new CancellationTokenSource();
             source.Tick += (_, message) =>
             {
@@ -36,7 +36,7 @@ namespace EventGraph.Tests
         [Fact]
         public void SimulatedAssetSourceRejectsInvalidName()
         {
-            _ = Assert.Throws<ArgumentException>(() => new SimulatedAssetSource(" ", 100.0, 0.1));
+            _ = Assert.Throws<ArgumentException>(() => new EquitySource(" ", 100.0, 0.1));
         }
 
         [Fact]
@@ -51,7 +51,7 @@ namespace EventGraph.Tests
         """);
 
             var exception = Assert.Throws<InvalidDataException>(() =>
-                new SimulatedAssetSource(ToDictionary(definition)));
+                new EquitySource(ToDictionary(definition)));
 
             Assert.Contains("name", exception.Message);
         }
@@ -59,15 +59,15 @@ namespace EventGraph.Tests
         [Fact]
         public void SimulatedAssetSourceHasTheExpectedType()
         {
-            var source = new SimulatedAssetSource("TYPE", 100.0, 0.1);
+            var source = new EquitySource("TYPE", 100.0, 0.1);
 
-            Assert.Equal(nameof(SimulatedAssetSource), source.Type);
+            Assert.Equal(nameof(EquitySource), source.Type);
         }
 
         [Fact]
         public void SimulatedAssetSourceExposesVolatilityQuote()
         {
-            var source = new SimulatedAssetSource("VOL", 100.0, 0.25);
+            var source = new EquitySource("VOL", 100.0, 0.25);
 
             var volNode = Assert.IsAssignableFrom<IVolQuoteNode>(source);
             var spotNode = Assert.IsAssignableFrom<ISpotQuoteNode>(source);
@@ -79,55 +79,55 @@ namespace EventGraph.Tests
         [Fact]
         public void SimulatedAssetSourceRejectsInvalidStartingSpot()
         {
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", double.NaN, 0.1));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquitySource("A", double.NaN, 0.1));
         }
 
         [Fact]
         public void SimulatedAssetSourceRejectsNegativeVolatility()
         {
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", 100.0, -0.1));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquitySource("A", 100.0, -0.1));
         }
 
         [Fact]
         public void SimulatedAssetSourceRejectsNegativeMeanTickTime()
         {
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", 100.0, 0.1, -1.0));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquitySource("A", 100.0, 0.1, -1.0));
         }
 
         [Fact]
         public void SimulatedAssetSourceRejectsInfiniteMeanTickTime()
         {
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", 100.0, 0.1, double.PositiveInfinity));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquitySource("A", 100.0, 0.1, double.PositiveInfinity));
         }
 
         [Fact]
         public void SimulatedAssetSourceRejectsBlankCurrency()
         {
-            _ = Assert.Throws<ArgumentException>(() => new SimulatedAssetSource("A", 100.0, 0.1, 1.0, " "));
+            _ = Assert.Throws<ArgumentException>(() => new EquitySource("A", 100.0, 0.1, 1.0, " "));
         }
 
         [Fact]
         public void SimulatedAssetSourceRejectsNegativeInfinitySpot()
         {
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", double.NegativeInfinity, 0.1));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquitySource("A", double.NegativeInfinity, 0.1));
         }
 
         [Fact]
         public void SimulatedAssetSourceRejectsNaNVolatility()
         {
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", 100.0, double.NaN));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquitySource("A", 100.0, double.NaN));
         }
 
         [Fact]
         public void SimulatedAssetSourceRejectsInfiniteVolatility()
         {
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new SimulatedAssetSource("A", 100.0, double.PositiveInfinity));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquitySource("A", 100.0, double.PositiveInfinity));
         }
 
         [Fact]
         public void SimulatedAssetSourceDefaultsCurrencyToUsd()
         {
-            var source = new SimulatedAssetSource("A", 100.0, 0.1);
+            var source = new EquitySource("A", 100.0, 0.1);
 
             Assert.Equal("USD", source.Currency);
         }
@@ -135,7 +135,7 @@ namespace EventGraph.Tests
         [Fact]
         public async Task SimulatedAssetSourceEmitsInitialValueBeforeMovement()
         {
-            var source = new SimulatedAssetSource("INIT", 100.0, 0.0, 0.0);
+            var source = new EquitySource("INIT", 100.0, 0.0, 0.0);
             QuoteTick? message = null;
             source.Tick += (_, update) => message = update;
 

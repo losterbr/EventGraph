@@ -7,11 +7,11 @@ namespace EventGraph.Tests
         [Fact]
         public void SupportedTypesIncludeRegisteredNodeTypes()
         {
-            Assert.Contains("SimulatedAssetSource", NodeRegistry.SupportedTypes);
+            Assert.Contains("EquitySource", NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(EquitySource), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(CurrencyRateSource), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(RateCurveNode), NodeRegistry.SupportedTypes);
-            Assert.Contains(nameof(VolatilitySource), NodeRegistry.SupportedTypes);
+            Assert.Contains(nameof(VolatilityNode), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(BasketAggregate), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(ForwardCurve), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(EquityOption), NodeRegistry.SupportedTypes);
@@ -21,7 +21,23 @@ namespace EventGraph.Tests
         public void IsSupportedTypeRejectsBlankNamesAndMatchesCaseInsensitively()
         {
             Assert.False(NodeRegistry.IsSupportedType(" "));
-            Assert.True(NodeRegistry.IsSupportedType("simulatedassetsource"));
+            Assert.True(NodeRegistry.IsSupportedType("equitysource"));
+        }
+
+        [Fact]
+        public void SourceTypesAreJsonBackedAndHaveNoDependencies()
+        {
+            Assert.True(NodeRegistry.IsSourceType(nameof(EquitySource)));
+            Assert.True(NodeRegistry.IsSourceType(nameof(CurrencyRateSource)));
+            Assert.False(NodeRegistry.IsSourceType(nameof(SpotNode)));
+            Assert.False(NodeRegistry.IsSourceType(nameof(VolatilityNode)));
+            Assert.False(NodeRegistry.IsSourceType(nameof(RateCurveNode)));
+
+            foreach (var type in NodeRegistry.SupportedTypes.Where(NodeRegistry.IsSourceType))
+            {
+                using var document = JsonDocument.Parse($"{{\"type\":\"{type}\"}}");
+                Assert.Empty(NodeRegistry.GetDependencyNames(ToDictionary(document)));
+            }
         }
 
         [Fact]
@@ -29,7 +45,7 @@ namespace EventGraph.Tests
         {
             using var definition = JsonDocument.Parse("""
         {
-          "type": "SimulatedAssetSource",
+          "type": "EquitySource",
           "name": "A",
           "spot": 100,
           "volatility": 0.2,
@@ -39,14 +55,14 @@ namespace EventGraph.Tests
 
             var node = NodeRegistry.CreateNode(ToDictionary(definition), new Dictionary<string, IGraphNode>());
 
-            var source = Assert.IsType<SimulatedAssetSource>(node);
+            var source = Assert.IsType<EquitySource>(node);
             Assert.Equal("A", source.Name);
         }
 
         [Fact]
         public void CreateNodeCreatesBasketAggregate()
         {
-            var source = new SimulatedAssetSource("A", 100.0, 0.0, 0.0);
+            var source = new EquitySource("A", 100.0, 0.0, 0.0);
             using var definition = JsonDocument.Parse("""
         {
           "type": "BasketAggregate",

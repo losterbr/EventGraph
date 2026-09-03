@@ -11,12 +11,18 @@ namespace EventGraph
     /// </summary>
     public static class NodeRegistry
     {
+        private static readonly HashSet<string> SourceTypes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            nameof(EquitySource),
+            nameof(CurrencyRateSource)
+        };
+
         private static readonly Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyList<string>>> DependencyResolvers =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 [nameof(BasketAggregate)] = BasketAggregate.GetDependencyNames,
                 [nameof(SpotNode)] = definition => [GraphKey.Of(nameof(EquitySource), GetNodeName(definition))],
-                [nameof(VolatilitySource)] = definition => [GraphKey.Of(nameof(EquitySource), GetNodeName(definition))],
+                [nameof(VolatilityNode)] = definition => [GraphKey.Of(nameof(EquitySource), GetNodeName(definition))],
                 [nameof(ForwardCurve)] = ForwardCurve.GetDependencyNames,
                 [nameof(RateCurveNode)] = definition => [GraphKey.Of(nameof(CurrencyRateSource), GetNodeName(definition))],
                 [nameof(EquityOption)] = EquityOption.GetDependencyNames
@@ -25,11 +31,10 @@ namespace EventGraph
         private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>> Factories =
             new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>>(StringComparer.OrdinalIgnoreCase)
             {
-                [nameof(SimulatedAssetSource)] = (definition, _) => new SimulatedAssetSource(definition),
                 [nameof(EquitySource)] = (definition, _) => new EquitySource(definition),
                 [nameof(CurrencyRateSource)] = (definition, _) => new CurrencyRateSource(definition),
                 [nameof(SpotNode)] = (definition, nodesByName) => new SpotNode(Resolve<EquitySource>(definition, nodesByName, nameof(EquitySource))),
-                [nameof(VolatilitySource)] = (definition, nodesByName) => new VolatilitySource(Resolve<EquitySource>(definition, nodesByName, nameof(EquitySource))),
+                [nameof(VolatilityNode)] = (definition, nodesByName) => new VolatilityNode(Resolve<EquitySource>(definition, nodesByName, nameof(EquitySource))),
                 [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName),
                 [nameof(RateCurveNode)] = (definition, nodesByName) => new RateCurveNode(Resolve<CurrencyRateSource>(definition, nodesByName, nameof(CurrencyRateSource))),
                 [nameof(ForwardCurve)] = (definition, nodesByName) => new ForwardCurve(definition, nodesByName),
@@ -41,6 +46,11 @@ namespace EventGraph
         public static bool IsSupportedType(string type)
         {
             return !string.IsNullOrWhiteSpace(type) && Factories.ContainsKey(type);
+        }
+
+        public static bool IsSourceType(string type)
+        {
+            return !string.IsNullOrWhiteSpace(type) && SourceTypes.Contains(type);
         }
 
         public static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)

@@ -1,5 +1,5 @@
 {
-  "type": "SimulatedAssetSource",
+  "type": "EquitySource",
   "name": "AAPL",
   "currency": "USD",
   "spot": 225.0,

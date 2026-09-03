@@ -10,7 +10,7 @@ namespace EventGraph.Tests
             {
                 File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ """
             {
-                            "type": "SimulatedAssetSource",
+                            "type": "EquitySource",
               "name": "JSON",
               "currency": "USD",
               "spot": 123.0,
@@ -25,7 +25,7 @@ namespace EventGraph.Tests
                 var source = Assert.Single(sources);
                 Assert.Equal("JSON", source.Name);
                 Assert.Equal("USD", source.Currency);
-                Assert.Equal(nameof(SimulatedAssetSource), source.Type);
+                Assert.Equal(nameof(EquitySource), source.Type);
                 Assert.Equal(123.0, source.Spot);
             }
             finally
@@ -125,7 +125,7 @@ namespace EventGraph.Tests
 
                 Assert.Equal(["A", "B", "EquityBasket"], graph.Nodes.Select(node => node.Name));
                 Assert.Equal(0, graph.GetIndex("a"));
-                Assert.Equal(1, graph.NodeIndexByName["SimulatedAssetSource::B"]);
+                Assert.Equal(1, graph.NodeIndexByName["EquitySource::B"]);
                 Assert.Equal([0, 1], graph.DependenciesByNode[graph.GetIndex("EquityBasket")]);
                 Assert.Empty(graph.DependenciesByNode[graph.GetIndex("A")]);
             }
@@ -157,7 +157,7 @@ namespace EventGraph.Tests
             var directory = CreateDirectory();
             try
             {
-                File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ "{\"type\":\"SimulatedAssetSource\",\"name\":\"A\",\"spot\":100}");
+                File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ "{\"type\":\"EquitySource\",\"name\":\"A\",\"spot\":100}");
 
                 var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
 
@@ -333,7 +333,7 @@ namespace EventGraph.Tests
 
         private static void WriteDefinition(string directory, string fileName, string name)
         {
-            File.WriteAllText(Path.Combine(directory, fileName), $"{{\"type\":\"SimulatedAssetSource\",\"name\":\"{name}\",\"spot\":100,\"volatility\":0.2,\"meanTickTimeSeconds\":1}}");
+            File.WriteAllText(Path.Combine(directory, fileName), $"{{\"type\":\"EquitySource\",\"name\":\"{name}\",\"spot\":100,\"volatility\":0.2,\"meanTickTimeSeconds\":1}}");
         }
     }
 }

@@ -5,7 +5,7 @@ namespace EventGraph.Tests
         [Fact]
         public void SpotNodeDelegatesToTheUnderlyingEquitySource()
         {
-            var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
+            var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
 
             var spotNode = new SpotNode(equity);
 
@@ -25,7 +25,7 @@ namespace EventGraph.Tests
         [Fact]
         public async Task SpotNodeTicksWhenTheUnderlyingEquitySourceTicks()
         {
-            var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
+            var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             QuoteTick? update = null;
             spotNode.Tick += (_, message) => update = message;
