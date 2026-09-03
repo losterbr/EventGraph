@@ -79,7 +79,10 @@ namespace EventGraph
                 }
                 else if (type == nameof(BasketSpotNode))
                 {
-                    AddBasketSpotNodesIfMissing(toAdd, definitionsByKey, definition);
+                    var basketKey = GetNodeKey(definition);
+                    var normalizedDefinition = EnrichBasketDefinition(definitionsByKey, definition);
+                    definitionsByKey[basketKey] = normalizedDefinition;
+                    AddBasketSpotNodesIfMissing(toAdd, definitionsByKey, normalizedDefinition);
                 }
                 else if (type == nameof(EquityOption))
                 {
@@ -266,26 +269,42 @@ namespace EventGraph
             Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
             IReadOnlyDictionary<string, JsonElement> definition)
         {
-            var basketName = GetNodeName(definition);
-            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(SpotNode), basketName, new Dictionary<string, JsonElement>
-            {
-                ["name"] = JsonSerializer.SerializeToElement(basketName),
-                ["source"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(BasketSpotNode), basketName))
-            });
-
             foreach (var dependencyKey in BasketSpotNode.GetDependencyNames(definition))
             {
+                if (dependencyKey.StartsWith($"{nameof(BasketSpotNode)}::", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
                 var name = dependencyKey[(dependencyKey.IndexOf("::", StringComparison.Ordinal) + 2)..];
-                var basketKey = GraphKey.Of(nameof(BasketSpotNode), name);
-                var sourceKey = definitionsByKey.ContainsKey(basketKey)
-                    ? basketKey
-                    : GraphKey.Of(nameof(EquitySource), name);
                 AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(SpotNode), name, new Dictionary<string, JsonElement>
                 {
                     ["name"] = JsonSerializer.SerializeToElement(name),
-                    ["source"] = JsonSerializer.SerializeToElement(sourceKey)
+                    ["source"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(EquitySource), name))
                 });
             }
+        }
+
+        private static Dictionary<string, JsonElement> EnrichBasketDefinition(
+            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
+            IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            if (!definition.TryGetValue("constituents", out var constituents) || constituents.ValueKind != JsonValueKind.Array)
+            {
+                return new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase);
+            }
+
+            var normalizedConstituents = constituents.EnumerateArray()
+                .Select(constituent => constituent.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(constituent.GetString())
+                    ? definitionsByKey.ContainsKey(GraphKey.Of(nameof(BasketSpotNode), constituent.GetString()))
+                        ? GraphKey.Of(nameof(BasketSpotNode), constituent.GetString())
+                        : GraphKey.Of(nameof(SpotNode), constituent.GetString())
+                    : constituent.GetRawText())
+                .ToArray();
+            return new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase)
+            {
+                ["constituents"] = JsonSerializer.SerializeToElement(normalizedConstituents)
+            };
         }
 
         private static Dictionary<string, JsonElement> EnrichEquityOptionDefinition(

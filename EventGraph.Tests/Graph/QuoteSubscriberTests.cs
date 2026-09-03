@@ -271,8 +271,8 @@ namespace EventGraph.Tests
                 var basketByName = nodes.OfType<BasketSpotNode>().ToDictionary(node => node.Name, StringComparer.OrdinalIgnoreCase);
                 Assert.True(basketByName.ContainsKey("B"));
                 Assert.True(basketByName.ContainsKey("C"));
-                Assert.All(basketByName["B"].Dependencies, dependency => Assert.IsType<SpotNode>(dependency));
-                Assert.All(basketByName["C"].Dependencies, dependency => Assert.IsType<SpotNode>(dependency));
+                Assert.All(basketByName["B"].Dependencies, dependency => Assert.IsAssignableFrom<ISpotNode>(dependency));
+                Assert.All(basketByName["C"].Dependencies, dependency => Assert.IsAssignableFrom<ISpotNode>(dependency));
                 Assert.Contains(basketByName["B"].Dependencies, dependency => dependency.Name == "A");
                 Assert.Contains(basketByName["C"].Dependencies, dependency => dependency.Name == "B");
 
@@ -325,7 +325,7 @@ namespace EventGraph.Tests
                 var baseSource = new EquitySource("BASE", 100.0, 0.0, 0.0);
                 var childSource = new EquitySource("CHILD", 200.0, 0.0, 0.0);
                 var parent = new BasketSpotNode("PARENT", [new SpotNode(baseSource)]);
-                var child = new BasketSpotNode("CHILD_BASKET", [new SpotNode(parent), new SpotNode(childSource)]);
+                var child = new BasketSpotNode("CHILD_BASKET", [parent, new SpotNode(childSource)]);
                 var subscriber = new QuoteSubscriber();
 
                 subscriber.Subscribe(parent);
@@ -369,8 +369,8 @@ namespace EventGraph.Tests
                 var sourceD = new EquitySource("D", 400.0, 0.0, 0.0);
 
                 var parent = new BasketSpotNode("PARENT", [new SpotNode(sourceA), new SpotNode(sourceB)]);
-                var child = new BasketSpotNode("CHILD", [new SpotNode(parent), new SpotNode(sourceC)]);
-                var root = new BasketSpotNode("ROOT", [new SpotNode(child), new SpotNode(sourceD)]);
+                var child = new BasketSpotNode("CHILD", [parent, new SpotNode(sourceC)]);
+                var root = new BasketSpotNode("ROOT", [child, new SpotNode(sourceD)]);
                 var subscriber = new QuoteSubscriber();
 
                 foreach (var source in new IGraphNode[] { sourceA, sourceB, sourceC, sourceD, parent, child, root })
@@ -430,7 +430,7 @@ namespace EventGraph.Tests
 
                 var leftParent = new BasketSpotNode("LEFT_PARENT", [new SpotNode(sourceA), new SpotNode(sourceB)]);
                 var rightParent = new BasketSpotNode("RIGHT_PARENT", [new SpotNode(sourceC), new SpotNode(sourceD)]);
-                var child = new BasketSpotNode("CHILD", [new SpotNode(leftParent), new SpotNode(rightParent)]);
+                var child = new BasketSpotNode("CHILD", [leftParent, rightParent]);
                 var subscriber = new QuoteSubscriber();
 
                 subscriber.Subscribe(leftParent);

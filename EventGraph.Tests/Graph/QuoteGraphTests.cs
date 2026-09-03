@@ -49,16 +49,14 @@ namespace EventGraph.Tests
             var spotA = new SpotNode(sourceA);
             var spotB = new SpotNode(sourceB);
             var parent = new BasketSpotNode("PARENT", [spotA, spotB]);
-            var childSpot = new SpotNode(parent);
-            var child = new BasketSpotNode("CHILD", [childSpot]);
-            var graph = new QuoteGraph([sourceA, sourceB, spotA, spotB, parent, childSpot, child]);
+            var child = new BasketSpotNode("CHILD", [parent]);
+            var graph = new QuoteGraph([sourceA, sourceB, spotA, spotB, parent, child]);
 
             Assert.Equal([graph.GetIndex("SpotNode::A")], graph.DependentsByNode[graph.GetIndex("EquitySource::A")]);
             Assert.Equal([graph.GetIndex("SpotNode::B")], graph.DependentsByNode[graph.GetIndex("EquitySource::B")]);
             Assert.Equal([graph.GetIndex("BasketSpotNode::PARENT")], graph.DependentsByNode[graph.GetIndex("SpotNode::A")]);
             Assert.Equal([graph.GetIndex("BasketSpotNode::PARENT")], graph.DependentsByNode[graph.GetIndex("SpotNode::B")]);
-            Assert.Equal([graph.GetIndex("SpotNode::PARENT")], graph.DependentsByNode[graph.GetIndex("BasketSpotNode::PARENT")]);
-            Assert.Equal([graph.GetIndex("CHILD")], graph.DependentsByNode[graph.GetIndex("SpotNode::PARENT")]);
+            Assert.Equal([graph.GetIndex("BasketSpotNode::CHILD")], graph.DependentsByNode[graph.GetIndex("BasketSpotNode::PARENT")]);
             Assert.Empty(graph.DependentsByNode[graph.GetIndex("CHILD")]);
         }
     }

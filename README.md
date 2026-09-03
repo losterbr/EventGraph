@@ -28,7 +28,7 @@ flowchart LR
 	discount --> option
 
 	spot -->|one or more constituents| basket["BasketSpotNode [ISpotNode]"]
-	basket --> spot
+	basket --> forward
 ```
 
 ### Graph definitions

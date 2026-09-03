@@ -145,7 +145,7 @@ namespace EventGraph.Tests
             var zeroWeightSource = new EquitySource("ZERO", 100.0, 0.0, 0.0);
             var activeSource = new EquitySource("ACTIVE", 200.0, 0.0, 0.0);
             var zeroWeightBasket = new BasketSpotNode("ZERO_BASKET", [new SpotNode(zeroWeightSource)]);
-            var basket = new BasketSpotNode("BASKET", [new SpotNode(zeroWeightBasket), new SpotNode(activeSource)], [0.0, 1.0]);
+            var basket = new BasketSpotNode("BASKET", [zeroWeightBasket, new SpotNode(activeSource)], [0.0, 1.0]);
             var updates = new List<QuoteTick>();
             basket.Tick += (_, message) => updates.Add(message);
 

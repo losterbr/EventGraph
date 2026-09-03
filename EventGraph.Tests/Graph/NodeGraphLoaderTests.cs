@@ -35,27 +35,6 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void GraphDefinitionLoaderDelegatesToNodeGraphLoader()
-        {
-            var directory = CreateDirectory();
-            try
-            {
-                WriteDefinition(directory, "source.json", "A");
-
-#pragma warning disable CS0618
-                var nodes = GraphDefinitionLoader.LoadNodes(directory);
-#pragma warning restore CS0618
-
-                var source = Assert.Single(nodes);
-                Assert.Equal("A", source.Name);
-            }
-            finally
-            {
-                Directory.Delete(directory, true);
-            }
-        }
-
-        [Fact]
         public void LoadNodesReadsFilesInStableOrder()
         {
             var directory = CreateDirectory();
@@ -98,8 +77,6 @@ namespace EventGraph.Tests
                 Assert.Equal("EquityBasket", basket.Name);
                 Assert.Equal("A=0.25, B=0.75", basket.GetWeights());
                 Assert.All(basket.Dependencies, dependency => Assert.IsType<SpotNode>(dependency));
-                var output = Assert.Single(nodes.OfType<SpotNode>().Where(node => node.Name == basket.Name));
-                Assert.Equal([basket], output.Dependencies);
             }
             finally
             {
@@ -126,12 +103,11 @@ namespace EventGraph.Tests
 
                 var graph = NodeGraphLoader.LoadGraph(directory);
 
-                Assert.Equal(["A", "B", "A", "B", "EquityBasket", "EquityBasket"], graph.Nodes.Select(node => node.Name));
+                Assert.Equal(["A", "B", "A", "B", "EquityBasket"], graph.Nodes.Select(node => node.Name));
                 Assert.Equal(0, graph.GetIndex("EquitySource::A"));
                 Assert.Equal(1, graph.NodeIndexByName["EquitySource::B"]);
                 Assert.Equal([2, 3], graph.DependenciesByNode[graph.GetIndex("BasketSpotNode::EquityBasket")]);
                 Assert.Empty(graph.DependenciesByNode[graph.GetIndex("EquitySource::A")]);
-                Assert.Equal([graph.GetIndex("BasketSpotNode::EquityBasket")], graph.DependenciesByNode[graph.GetIndex("SpotNode::EquityBasket")]);
             }
             finally
             {

@@ -52,11 +52,6 @@ namespace EventGraph
             }
 
             this.constituents = [.. constituents];
-            if (this.constituents.Any(constituent => constituent is not SpotNode))
-            {
-                throw new ArgumentException("Basket constituents must be SpotNode instances.", nameof(constituents));
-            }
-
             Name = name;
             Currency = this.constituents[0].Currency;
             if (this.constituents.Any(constituent => !string.Equals(constituent.Currency, Currency, StringComparison.OrdinalIgnoreCase)))
@@ -127,7 +122,7 @@ namespace EventGraph
                 ? []
                 : [.. constituents.EnumerateArray()
                 .Where(name => name.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(name.GetString()))
-                .Select(name => GraphKey.Of(nameof(SpotNode), name.GetString()))];
+                .Select(name => GetDependencyKey(name.GetString()))];
         }
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
@@ -148,9 +143,9 @@ namespace EventGraph
             foreach (var name in constituentsDefinition.EnumerateArray())
             {
                 var key = name.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(name.GetString())
-                    ? GraphKey.Of(nameof(SpotNode), name.GetString())
+                    ? GetDependencyKey(name.GetString())
                     : null;
-                if (key == null || !nodesByName.TryGetValue(key, out var node) || node is not SpotNode constituent)
+                if (key == null || !nodesByName.TryGetValue(key, out var node) || node is not ISpotNode constituent)
                 {
                     throw new InvalidDataException($"BasketSpotNode references an unknown spot node '{name}'.");
                 }
@@ -159,6 +154,13 @@ namespace EventGraph
             }
 
             return constituents;
+        }
+
+        private static string GetDependencyKey(string reference)
+        {
+            return reference.Contains("::", StringComparison.Ordinal)
+                ? reference
+                : GraphKey.Of(nameof(SpotNode), reference);
         }
 
         private static List<double> GetWeights(IReadOnlyDictionary<string, JsonElement> definition)

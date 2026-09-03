@@ -11,3 +11,29 @@ dotnet_diagnostic.CA1710.severity = none
 
 [EventGraph.Tests/*.cs]
 dotnet_diagnostic.CA1861.severity = none
+
+[EventGraph/Graph/Sources/*.cs]
+# Source classes must use a *Source suffix. SourceNodeArchitectureTests also
+# requires their capability interfaces to follow the I*SourceNode convention.
+dotnet_naming_rule.source_classes_end_with_source.severity = warning
+dotnet_naming_rule.source_classes_end_with_source.symbols = source_classes
+dotnet_naming_rule.source_classes_end_with_source.style = source_suffix
+
+dotnet_naming_symbols.source_classes.applicable_kinds = class
+dotnet_naming_symbols.source_classes.applicable_accessibilities = *
+
+dotnet_naming_style.source_suffix.capitalization = pascal_case
+dotnet_naming_style.source_suffix.required_suffix = Source
+
+[EventGraph/Graph/Nodes/*.cs]
+# Concrete graph nodes must use a *Node suffix. NodeArchitectureTests also
+# requires them to avoid I*SourceNode interfaces.
+dotnet_naming_rule.node_classes_end_with_node.severity = warning
+dotnet_naming_rule.node_classes_end_with_node.symbols = node_classes
+dotnet_naming_rule.node_classes_end_with_node.style = node_suffix
+
+dotnet_naming_symbols.node_classes.applicable_kinds = class
+dotnet_naming_symbols.node_classes.applicable_accessibilities = *
+
+dotnet_naming_style.node_suffix.capitalization = pascal_case
+dotnet_naming_style.node_suffix.required_suffix = Node
