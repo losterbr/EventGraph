@@ -9,8 +9,7 @@ namespace EventGraph.Tests
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
-            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
-            var discountFactor = new RateCurveSource(rateNode);
+            var discountFactor = CreateDiscountCurve();
             var forward = new ForwardCurve(spotNode, discountFactor);
             var volatility = new VolatilitySource(equity);
             var maturity = DateTime.Today.AddYears(1);
@@ -28,8 +27,7 @@ namespace EventGraph.Tests
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
-            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
-            var discountFactor = new RateCurveSource(rateNode);
+            var discountFactor = CreateDiscountCurve();
             var forward = new ForwardCurve(spotNode, discountFactor);
             var volatility = new VolatilitySource(equity);
 
@@ -44,8 +42,7 @@ namespace EventGraph.Tests
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
-            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
-            var discountFactor = new RateCurveSource(rateNode);
+            var discountFactor = CreateDiscountCurve();
             var forward = new ForwardCurve(spotNode, discountFactor);
             var volatility = new VolatilitySource(equity);
 
@@ -57,8 +54,7 @@ namespace EventGraph.Tests
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
-            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
-            var discountFactor = new RateCurveSource(rateNode);
+            var discountFactor = CreateDiscountCurve();
             var forward = new ForwardCurve(spotNode, discountFactor);
             var volatility = new VolatilitySource(equity);
 
@@ -70,8 +66,7 @@ namespace EventGraph.Tests
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
-            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
-            var discountFactor = new RateCurveSource(rateNode);
+            var discountFactor = CreateDiscountCurve();
             var forward = new ForwardCurve(spotNode, discountFactor);
             var volatility = new VolatilitySource(equity);
 
@@ -83,11 +78,10 @@ namespace EventGraph.Tests
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0, "USD");
             var spotNode = new SpotNode(equity);
-            var usdRateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
-            var usdDiscountFactor = new RateCurveSource(usdRateNode);
+            var usdDiscountFactor = CreateDiscountCurve();
             var forward = new ForwardCurve(spotNode, usdDiscountFactor);
             var volatility = new VolatilitySource(equity);
-            var eurDiscountFactor = new RateCurveSource(new RateNode(new CurrencyRateSource("EUR", 0.05)));
+            var eurDiscountFactor = CreateDiscountCurve("EUR");
 
             var exception = Assert.Throws<ArgumentException>(() => new EquityOption("AAPL_CALL", forward, volatility, eurDiscountFactor, DateTime.Today.AddYears(1), 100.0));
 
@@ -99,8 +93,7 @@ namespace EventGraph.Tests
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
-            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
-            var discountFactor = new RateCurveSource(rateNode);
+            var discountFactor = CreateDiscountCurve();
             var forward = new ForwardCurve(spotNode, discountFactor);
             var volatility = new VolatilitySource(equity);
 
@@ -112,8 +105,7 @@ namespace EventGraph.Tests
         {
             var equity = new SimulatedAssetSource("AAPL", 1_000_000_000.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
-            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
-            var discountFactor = new RateCurveSource(rateNode);
+            var discountFactor = CreateDiscountCurve();
             var forward = new ForwardCurve(spotNode, discountFactor);
             var volatility = new VolatilitySource(equity);
 
@@ -128,8 +120,7 @@ namespace EventGraph.Tests
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
-            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
-            var discountFactor = new RateCurveSource(rateNode);
+            var discountFactor = CreateDiscountCurve();
             var forward = new ForwardCurve(spotNode, discountFactor);
             var volatility = new VolatilitySource(equity);
             var option = new EquityOption("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0);
@@ -147,11 +138,10 @@ namespace EventGraph.Tests
         {
             var equity = new SimulatedAssetSource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
-            var rateNode = new RateNode(new CurrencyRateSource("USD", 0.05));
-            var discountFactor = new RateCurveSource(rateNode);
+            var discountFactor = CreateDiscountCurve();
             var forward = new ForwardCurve(spotNode, discountFactor);
             var volatility = new VolatilitySource(equity);
-            using var document = JsonDocument.Parse("{\"name\":\"AAPL_CALL\",\"forward\":\"ForwardCurve::AAPL\",\"volatility\":\"VolatilitySource::AAPL\",\"discountCurve\":\"RateCurveSource::USD\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Put\"}");
+            using var document = JsonDocument.Parse("{\"name\":\"AAPL_CALL\",\"forward\":\"ForwardCurve::AAPL\",\"volatility\":\"VolatilitySource::AAPL\",\"discountCurve\":\"RateCurveNode::USD\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Put\"}");
             var definition = document.RootElement
                 .EnumerateObject()
                 .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
@@ -160,12 +150,17 @@ namespace EventGraph.Tests
             {
                 ["ForwardCurve::AAPL"] = forward,
                 ["VolatilitySource::AAPL"] = volatility,
-                ["RateCurveSource::USD"] = discountFactor
+                ["RateCurveNode::USD"] = discountFactor
             });
 
             Assert.Equal(DateTime.Today.AddYears(1), option.Maturity);
             Assert.Equal(100.0, option.Strike);
             Assert.Equal(EquityOptionType.Put, option.OptionType);
+        }
+
+        private static RateCurveNode CreateDiscountCurve(string currency = "USD")
+        {
+            return new RateCurveNode(new CurrencyRateSource(currency, 0.05));
         }
     }
 }

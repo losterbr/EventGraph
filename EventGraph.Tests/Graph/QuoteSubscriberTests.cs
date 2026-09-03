@@ -49,7 +49,7 @@ namespace EventGraph.Tests
                 Assert.Equal(40, sourceIdentifier.Length);
                 Assert.StartsWith("SimulatedAssetSource::XYZ", sourceIdentifier);
 
-                var discountFactor = new RateCurveSource(new RateNode(new CurrencyRateSource("USD", 0.05)));
+                var discountFactor = new RateCurveNode(new CurrencyRateSource("USD", 0.05));
                 var forward = new ForwardCurve(new SpotNode(source), discountFactor);
                 var volatility = new VolatilitySource(source);
                 var option = new EquityOption("XYZ_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0);

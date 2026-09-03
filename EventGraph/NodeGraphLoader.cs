@@ -74,19 +74,6 @@ namespace EventGraph
                     var optionKey = GetNodeKey(definition);
                     definitionsByKey[optionKey] = EnrichEquityOptionDefinition(toAdd, definitionsByKey, definition);
                 }
-                else if (type == nameof(CurrencyRateSource))
-                {
-                    // Auto-create a RateNode pass-through for each currency rate source.
-                    var rateNodeKey = GraphKey.Of(nameof(RateNode), GetNodeName(definition));
-                    if (!definitionsByKey.ContainsKey(rateNodeKey))
-                    {
-                        toAdd.Add(new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase)
-                        {
-                            ["type"] = JsonSerializer.SerializeToElement(nameof(RateNode)),
-                            ["name"] = JsonSerializer.SerializeToElement(GetNodeName(definition))
-                        });
-                    }
-                }
             }
 
             foreach (var definition in toAdd)
@@ -223,7 +210,6 @@ namespace EventGraph
             return type switch
             {
                 nameof(ForwardCurve) => GetReferencedNodeName(definition, "spot"),
-                nameof(RateCurveSource) => GetReferencedNodeName(definition, "rate"),
                 _ => throw new InvalidDataException($"Graph definitions of type '{type}' must provide a non-empty string name.")
             };
         }
@@ -277,11 +263,7 @@ namespace EventGraph
             {
                 ["type"] = JsonSerializer.SerializeToElement(refType)
             };
-            if (refType == nameof(RateCurveSource))
-            {
-                synthetic["rate"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateNode), refName));
-            }
-            else if (refType is nameof(SpotNode) or nameof(VolatilitySource))
+            if (refType is nameof(RateCurveNode) or nameof(SpotNode) or nameof(VolatilitySource))
             {
                 synthetic["name"] = JsonSerializer.SerializeToElement(refName);
             }
@@ -306,22 +288,21 @@ namespace EventGraph
             {
                 ["name"] = JsonSerializer.SerializeToElement(underlyer)
             });
-            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(RateCurveSource), rateSourceName, new Dictionary<string, JsonElement>
+            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(RateCurveNode), rateSourceName, new Dictionary<string, JsonElement>
             {
-                ["name"] = JsonSerializer.SerializeToElement(rateSourceName),
-                ["rate"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateNode), rateSourceName))
+                ["name"] = JsonSerializer.SerializeToElement(rateSourceName)
             });
             AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(ForwardCurve), underlyer, new Dictionary<string, JsonElement>
             {
                 ["spot"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(SpotNode), underlyer)),
-                ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveSource), rateSourceName))
+                ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveNode), rateSourceName))
             });
 
             return new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase)
             {
                 ["forward"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(ForwardCurve), underlyer)),
                 ["volatility"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(VolatilitySource), underlyer)),
-                ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveSource), rateSourceName))
+                ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveNode), rateSourceName))
             };
         }
 

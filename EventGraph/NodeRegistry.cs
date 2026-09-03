@@ -17,9 +17,8 @@ namespace EventGraph
                 [nameof(BasketAggregate)] = BasketAggregate.GetDependencyNames,
                 [nameof(SpotNode)] = definition => [GraphKey.Of(nameof(EquitySource), GetNodeName(definition))],
                 [nameof(VolatilitySource)] = definition => [GraphKey.Of(nameof(EquitySource), GetNodeName(definition))],
-                [nameof(RateNode)] = definition => [GraphKey.Of(nameof(CurrencyRateSource), GetNodeName(definition))],
                 [nameof(ForwardCurve)] = ForwardCurve.GetDependencyNames,
-                [nameof(RateCurveSource)] = RateCurveSource.GetDependencyNames,
+                [nameof(RateCurveNode)] = definition => [GraphKey.Of(nameof(CurrencyRateSource), GetNodeName(definition))],
                 [nameof(EquityOption)] = EquityOption.GetDependencyNames
             };
 
@@ -31,9 +30,8 @@ namespace EventGraph
                 [nameof(CurrencyRateSource)] = (definition, _) => new CurrencyRateSource(definition),
                 [nameof(SpotNode)] = (definition, nodesByName) => new SpotNode(Resolve<EquitySource>(definition, nodesByName, nameof(EquitySource))),
                 [nameof(VolatilitySource)] = (definition, nodesByName) => new VolatilitySource(Resolve<EquitySource>(definition, nodesByName, nameof(EquitySource))),
-                [nameof(RateNode)] = (definition, nodesByName) => new RateNode(Resolve<CurrencyRateSource>(definition, nodesByName, nameof(CurrencyRateSource))),
                 [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName),
-                [nameof(RateCurveSource)] = (definition, nodesByName) => new RateCurveSource(definition, nodesByName),
+                [nameof(RateCurveNode)] = (definition, nodesByName) => new RateCurveNode(Resolve<CurrencyRateSource>(definition, nodesByName, nameof(CurrencyRateSource))),
                 [nameof(ForwardCurve)] = (definition, nodesByName) => new ForwardCurve(definition, nodesByName),
                 [nameof(EquityOption)] = (definition, nodesByName) => new EquityOption(definition, nodesByName)
             };

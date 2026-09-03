@@ -27,7 +27,7 @@ Each JSON file in `EventGraph/graph-definition` defines one `SimulatedAssetSourc
 
 The `type` field selects the node implementation. Each `SimulatedAssetSource` includes static `currency` metadata, currently set to `USD` for all assets. Each node constructor owns the interpretation and validation of its complete JSON property dictionary, so adding or removing a property only requires changing that node's code. A `BasketAggregate` definition uses `name`, `constituents`, and `weights` to reference source nodes and assign their weights. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
 
-A `RateCurveSource` definition uses `name` and `interestRate` (for example, `0.02` for 2%). Its `DiscountFactor` property is a `date -> double` function implemented as `exp(-interestRate * (date - today) / 365)`.
+A `CurrencyRateSource` provides a named flat `interestRate` (for example, `0.02` for 2%). The loader materializes a dependent `RateCurveNode` when a forward curve or equity option needs a discount curve. Its `DiscountFactor` property is a `date -> double` function implemented as `exp(-interestRate * (date - today) / 365)`.
 
 An `EquityOption` definition uses `constituent`, `discountFactor`, `maturity`, and `strike`. The current example uses `maturity: "1Y"`, meaning today plus one year, and sets the strike to the equity's current spot. The initial approximation sets the forward equal to spot and uses the forward Black-Scholes form: `discountFactor * (forward * N(d1) - strike * N(d2))`, with the rate-curve discount factor at maturity.
 
