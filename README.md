@@ -21,13 +21,15 @@ flowchart LR
 	equity --> volatility[VolatilityNode]
 	rate --> discount[RateCurveNode]
 
-	spot --> forward[ForwardCurve]
+	spot --> forward[ForwardCurveNode]
 	discount --> forward
 	forward --> option[EquityOption]
 	volatility --> option
 	discount --> option
 
-	spot -->|one or more constituents| basket[BasketAggregate]
+	spot -->|one or more constituents| basket[BasketSpotNode]
+	basket --> basketSpot[SpotNode]
+	basketSpot --> downstream[Downstream node]
 ```
 
 ### Graph definitions
@@ -45,7 +47,7 @@ An `EquitySource` JSON definition in `EventGraph/graph-definition` uses the foll
 }
 ```
 
-The `type` field selects the node implementation. Each `EquitySource` includes static `currency` metadata, currently set to `USD` for all assets. Each node constructor owns the interpretation and validation of its complete JSON property dictionary, so adding or removing a property only requires changing that node's code. A `BasketAggregate` definition uses `name`, `constituents`, and `weights`; the loader materializes a `SpotNode` for each constituent before constructing the basket. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
+The `type` field selects the node implementation. Each `EquitySource` includes static `currency` metadata, currently set to `USD` for all assets. Each node constructor owns the interpretation and validation of its complete JSON property dictionary, so adding or removing a property only requires changing that node's code. A `BasketSpotNode` definition uses `name`, `constituents`, and `weights`; the loader materializes a `SpotNode` for each constituent before constructing the basket. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
 
 A `CurrencyRateSource` provides a named flat `interestRate` (for example, `0.02` for 2%). The loader materializes a dependent `RateCurveNode` when a forward curve or equity option needs a discount curve. Its `DiscountFactor` property is a `date -> double` function implemented as `exp(-interestRate * (date - today) / 365)`.
 
@@ -119,7 +121,7 @@ The repo enforces at least 97% line coverage for the production code path.
 ## Public-repo readiness checklist
 
 - Source is organized around a single library and a focused test project.
-- Test naming follows production types (`AppOptions`, `BasketAggregate`, `QuoteSubscriber`, `EquitySource`, `QuoteTick`).
+- Test naming follows production types (`AppOptions`, `BasketSpotNode`, `QuoteSubscriber`, `EquitySource`, `QuoteTick`).
 - Coverage, quality checks, and clean test execution are included in the repo workflow.
 - The project includes a permissive open-source license in the root of the repository.
 - No secrets, credentials, or local-only environment artifacts are required to build or run the sample.
