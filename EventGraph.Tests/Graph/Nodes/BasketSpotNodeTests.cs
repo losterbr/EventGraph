@@ -205,14 +205,6 @@ namespace EventGraph.Tests
             _ = Assert.Throws<ArgumentException>(() => new BasketSpotNode([]));
         }
 
-        [Fact]
-        public void BasketAggregateRejectsDirectEquitySources()
-        {
-            var source = new EquitySource("A", 100.0, 0.0, 0.0);
-
-            _ = Assert.Throws<ArgumentException>(() => new BasketSpotNode([source]));
-        }
-
         [Theory]
         [InlineData("{}", "name")]
         [InlineData(/*lang=json,strict*/ "{\"name\":\"BASKET\"}", "constituents")]
@@ -254,7 +246,6 @@ namespace EventGraph.Tests
 
             Assert.Equal(nameof(BasketSpotNode), basket.Type);
             Assert.IsAssignableFrom<ISpotNode>(basket);
-            Assert.IsNotAssignableFrom<ISpotSourceNode>(basket);
         }
 
         [Fact]
@@ -317,7 +308,7 @@ namespace EventGraph.Tests
                 .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
         }
 
-        private static IReadOnlyList<ISpotSourceNode> CreateSpotNodes(IEnumerable<EquitySource> sources)
+        private static IReadOnlyList<ISpotNode> CreateSpotNodes(IEnumerable<EquitySource> sources)
         {
             return [.. sources.Select(source => new SpotNode(source))];
         }

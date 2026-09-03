@@ -12,6 +12,7 @@ namespace EventGraph.Tests
             Assert.Equal(0.2, volatility.Volatility);
             Assert.Equal(nameof(VolatilityNode), volatility.Type);
             Assert.Equal([equity], volatility.Dependencies);
+            Assert.IsAssignableFrom<IVolNode>(volatility);
         }
 
         [Fact]

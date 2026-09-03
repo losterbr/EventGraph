@@ -10,19 +10,19 @@ namespace EventGraph
     /// </summary>
     public sealed class ForwardCurveNode : IForwardCurveNode
     {
-        private readonly ISpotSourceNode spotNode;
+        private readonly ISpotNode spotNode;
         private readonly IDiscountCurveNode discountCurveNode;
 
         public ForwardCurveNode(
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
             : this(
-                GetNode<ISpotSourceNode>(definition, "spot", nodesByName),
+                GetNode<ISpotNode>(definition, "spot", nodesByName),
                 GetNode<IDiscountCurveNode>(definition, "discountCurve", nodesByName))
         {
         }
 
-        public ForwardCurveNode(ISpotSourceNode spotNode, IDiscountCurveNode discountCurveNode)
+        public ForwardCurveNode(ISpotNode spotNode, IDiscountCurveNode discountCurveNode)
         {
             ArgumentNullException.ThrowIfNull(spotNode);
             ArgumentNullException.ThrowIfNull(discountCurveNode);

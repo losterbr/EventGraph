@@ -33,8 +33,8 @@ namespace EventGraph
             {
                 [nameof(EquitySource)] = (definition, _) => new EquitySource(definition),
                 [nameof(CurrencyRateSource)] = (definition, _) => new CurrencyRateSource(definition),
-                [nameof(SpotNode)] = (definition, nodesByName) => new SpotNode(ResolveByKey<ISpotNode>(GetSpotDependencyName(definition), nodesByName)),
-                [nameof(VolatilityNode)] = (definition, nodesByName) => new VolatilityNode(Resolve<EquitySource>(definition, nodesByName, nameof(EquitySource))),
+                [nameof(SpotNode)] = (definition, nodesByName) => new SpotNode(ResolveByKey<ISpotSourceNode>(GetSpotDependencyName(definition), nodesByName)),
+                [nameof(VolatilityNode)] = (definition, nodesByName) => new VolatilityNode(Resolve<IVolSourceNode>(definition, nodesByName, nameof(EquitySource))),
                 [nameof(BasketSpotNode)] = (definition, nodesByName) => new BasketSpotNode(definition, nodesByName),
                 [nameof(RateCurveNode)] = (definition, nodesByName) => new RateCurveNode(Resolve<IRateSourceNode>(definition, nodesByName, nameof(CurrencyRateSource))),
                 [nameof(ForwardCurveNode)] = (definition, nodesByName) => new ForwardCurveNode(definition, nodesByName),

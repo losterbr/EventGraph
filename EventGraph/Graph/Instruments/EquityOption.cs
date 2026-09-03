@@ -12,7 +12,7 @@ namespace EventGraph
     public sealed class EquityOption : IEquityOptionNode
     {
         private readonly IForwardCurveNode forwardNode;
-        private readonly IVolSourceNode volatilitySource;
+        private readonly IVolNode volatilitySource;
         private readonly IDiscountCurveNode discountCurveNode;
 
         public EquityOption(
@@ -21,7 +21,7 @@ namespace EventGraph
             : this(
                 GetString(definition, "name"),
                 GetNode<IForwardCurveNode>(definition, "forward", nodesByName),
-                GetNode<IVolSourceNode>(definition, "volatility", nodesByName),
+                GetNode<IVolNode>(definition, "volatility", nodesByName),
                 GetNode<IDiscountCurveNode>(definition, "discountCurve", nodesByName),
                 GetMaturity(definition),
                 GetDouble(definition, "strike"),
@@ -32,7 +32,7 @@ namespace EventGraph
         public EquityOption(
             string name,
             IForwardCurveNode forwardNode,
-            IVolSourceNode volatilitySource,
+            IVolNode volatilitySource,
             IDiscountCurveNode discountCurveNode,
             DateTime maturity,
             double strike,

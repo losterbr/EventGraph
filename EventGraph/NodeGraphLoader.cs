@@ -11,7 +11,7 @@ namespace EventGraph
     /// </summary>
     public static class NodeGraphLoader
     {
-        public static IReadOnlyList<ISpotSourceNode> LoadNodes(string directoryPath)
+        public static IReadOnlyList<ISpotNode> LoadNodes(string directoryPath)
         {
             return LoadGraph(directoryPath).QuoteNodes;
         }
@@ -64,7 +64,15 @@ namespace EventGraph
             foreach (var definition in definitionsByKey.Values)
             {
                 var type = GetType(definition);
-                if (type == nameof(ForwardCurveNode))
+                if (type == nameof(EquitySource))
+                {
+                    AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(SpotNode), GetNodeName(definition), new Dictionary<string, JsonElement>
+                    {
+                        ["name"] = JsonSerializer.SerializeToElement(GetNodeName(definition)),
+                        ["source"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(EquitySource), GetNodeName(definition)))
+                    });
+                }
+                else if (type == nameof(ForwardCurveNode))
                 {
                     AddIfMissing(toAdd, definitionsByKey, definition, "discountCurve");
                     AddIfMissing(toAdd, definitionsByKey, definition, "spot");

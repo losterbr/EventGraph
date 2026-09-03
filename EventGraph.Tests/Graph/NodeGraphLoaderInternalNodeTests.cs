@@ -3,7 +3,7 @@ namespace EventGraph.Tests
     public class NodeGraphLoaderInternalNodeTests
     {
         [Fact]
-        public void LoadGraphCreatesExactlyOneNodePerStandaloneSourceDefinition()
+        public void LoadGraphMaterializesSpotNodesForStandaloneEquitySources()
         {
             var directory = CreateDirectory();
             try
@@ -36,10 +36,12 @@ namespace EventGraph.Tests
 
                 var graph = NodeGraphLoader.LoadGraph(directory);
 
-                Assert.Equal(3, graph.Nodes.Count);
+                Assert.Equal(5, graph.Nodes.Count);
                 Assert.Contains(graph.Nodes, node => node is EquitySource && node.Name == "AAPL");
                 Assert.Contains(graph.Nodes, node => node is EquitySource && node.Name == "MSFT");
                 Assert.Contains(graph.Nodes, node => node is CurrencyRateSource && node.Name == "USD");
+                Assert.Contains(graph.Nodes, node => node is SpotNode && node.Name == "AAPL");
+                Assert.Contains(graph.Nodes, node => node is SpotNode && node.Name == "MSFT");
             }
             finally
             {

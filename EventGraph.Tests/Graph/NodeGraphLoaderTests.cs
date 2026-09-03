@@ -25,7 +25,7 @@ namespace EventGraph.Tests
                 var source = Assert.Single(sources);
                 Assert.Equal("JSON", source.Name);
                 Assert.Equal("USD", source.Currency);
-                Assert.Equal(nameof(EquitySource), source.Type);
+                Assert.Equal(nameof(SpotNode), source.Type);
                 Assert.Equal(123.0, source.Spot);
             }
             finally

@@ -5,7 +5,7 @@ namespace EventGraph.Tests
     [Collection(ConsoleTestGroup.Name)]
     public class QuoteSubscriberTests
     {
-        private static IReadOnlyList<ISpotSourceNode> CreateSpotNodes(IEnumerable<EquitySource> sources)
+        private static IReadOnlyList<ISpotNode> CreateSpotNodes(IEnumerable<EquitySource> sources)
         {
             return [.. sources.Select(source => new SpotNode(source))];
         }

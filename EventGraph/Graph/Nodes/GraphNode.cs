@@ -24,9 +24,9 @@ namespace EventGraph
     }
 
     /// <summary>
-    /// Represents a graph node that provides a spot value for another node to transform.
+    /// Represents a graph node that provides a spot value for a SpotNode to expose.
     /// </summary>
-    public interface ISpotNode : ITickingNode
+    public interface ISpotSourceNode : ITickingNode
     {
         double Spot { get; }
 
@@ -36,7 +36,7 @@ namespace EventGraph
     /// <summary>
     /// Represents a graph node that exposes a spot quote for downstream consumers.
     /// </summary>
-    public interface ISpotSourceNode : ISpotNode
+    public interface ISpotNode : ISpotSourceNode
     {
     }
 
@@ -46,6 +46,13 @@ namespace EventGraph
     public interface IVolSourceNode : IGraphNode
     {
         double Volatility { get; }
+    }
+
+    /// <summary>
+    /// Represents a graph node that exposes a volatility quote for downstream consumers.
+    /// </summary>
+    public interface IVolNode : IVolSourceNode
+    {
     }
 
     /// <summary>

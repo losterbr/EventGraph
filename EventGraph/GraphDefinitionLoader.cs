@@ -9,7 +9,7 @@ namespace EventGraph
     [Obsolete("Use NodeGraphLoader instead.")]
     public static class GraphDefinitionLoader
     {
-        public static IReadOnlyList<ISpotSourceNode> LoadNodes(string directoryPath)
+        public static IReadOnlyList<ISpotNode> LoadNodes(string directoryPath)
         {
             return NodeGraphLoader.LoadNodes(directoryPath);
         }
