@@ -57,13 +57,13 @@ namespace EventGraph.Tests
                 var discountFactor = new RateCurveNode(new CurrencyRateSource("USD", 0.05));
                 var forward = new ForwardCurveNode(new SpotNode(source), discountFactor);
                 var volatility = new VolatilityNode(source);
-                var option = new EquityOption("XYZ_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0);
+                var option = new EquityOptionNode("XYZ_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0);
                 subscriber.Subscribe(option);
                 await source.Start(1);
 
                 Assert.Contains("Subscribed to XYZ_CALL", output.ToString());
                 var optionLine = GetOutputLines(output)
-                    .Single(line => line.Contains("EquityOption::XYZ_CALL") && line.Contains("updated to"));
+                    .Single(line => line.Contains("EquityOptionNode::XYZ_CALL") && line.Contains("updated to"));
                 Assert.Equal(40, GetIdentifier(optionLine).Length);
 
                 var sources = new[]

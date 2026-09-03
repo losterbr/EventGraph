@@ -14,7 +14,7 @@ namespace EventGraph.Tests
             Assert.Contains(nameof(VolatilityNode), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(BasketSpotNode), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(ForwardCurveNode), NodeRegistry.SupportedTypes);
-            Assert.Contains(nameof(EquityOption), NodeRegistry.SupportedTypes);
+            Assert.Contains(nameof(EquityOptionNode), NodeRegistry.SupportedTypes);
         }
 
         [Fact]

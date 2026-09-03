@@ -23,7 +23,7 @@ flowchart LR
 
 	spot --> forward["ForwardCurveNode [IForwardCurveNode]"]
 	discount --> forward
-	forward --> option["EquityOption [IEquityOptionNode]"]
+	forward --> option["EquityOptionNode [IEquityOptionNode]"]
 	volatility --> option
 	discount --> option
 
@@ -50,7 +50,7 @@ The `type` field selects the node implementation. Each `EquitySource` includes s
 
 A `CurrencyRateSource` provides a named flat `interestRate` (for example, `0.02` for 2%). The loader materializes a dependent `RateCurveNode` when a forward curve or equity option needs a discount curve. Its `DiscountFactor` property is a `date -> double` function implemented as `exp(-interestRate * (date - today) / 365)`.
 
-An `EquityOption` definition uses `constituent`, `discountFactor`, `maturity`, and `strike`. The current example uses `maturity: "1Y"`, meaning today plus one year, and sets the strike to the equity's current spot. The initial approximation sets the forward equal to spot and uses the forward Black-Scholes form: `discountFactor * (forward * N(d1) - strike * N(d2))`, with the rate-curve discount factor at maturity.
+An `EquityOptionNode` definition uses `constituent`, `discountFactor`, `maturity`, and `strike`. The current example uses `maturity: "1Y"`, meaning today plus one year, and sets the strike to the equity's current spot. The initial approximation sets the forward equal to spot and uses the forward Black-Scholes form: `discountFactor * (forward * N(d1) - strike * N(d2))`, with the rate-curve discount factor at maturity.
 
 Graph loading uses Kahn's algorithm to resolve dependencies. The loader builds an in-degree count for each node, processes dependency-free nodes first, and then releases dependent nodes as their prerequisites are created. This keeps startup ordering deterministic while avoiding repeated full scans of unresolved definitions.
 

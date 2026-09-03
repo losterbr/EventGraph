@@ -14,7 +14,7 @@ namespace EventGraph.Tests
             var volatility = new VolatilityNode(equity);
             var maturity = DateTime.Today.AddYears(1);
 
-            var option = new EquityOption("AAPL_CALL", forward, volatility, discountFactor, maturity, 100.0);
+            var option = new EquityOptionNode("AAPL_CALL", forward, volatility, discountFactor, maturity, 100.0);
 
             Assert.Equal(10.4506, option.Price, precision: 3);
             Assert.Equal(EquityOptionType.Call, option.OptionType);
@@ -31,7 +31,7 @@ namespace EventGraph.Tests
             var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
 
-            var option = new EquityOption("AAPL_PUT", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0, EquityOptionType.Put);
+            var option = new EquityOptionNode("AAPL_PUT", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0, EquityOptionType.Put);
 
             Assert.Equal(5.5736, option.Price, precision: 3);
             Assert.Equal(EquityOptionType.Put, option.OptionType);
@@ -46,7 +46,7 @@ namespace EventGraph.Tests
             var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
 
-            _ = Assert.Throws<ArgumentException>(() => new EquityOption(" ", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0));
+            _ = Assert.Throws<ArgumentException>(() => new EquityOptionNode(" ", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0));
         }
 
         [Fact]
@@ -58,7 +58,7 @@ namespace EventGraph.Tests
             var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
 
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquityOption("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today, 100.0));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquityOptionNode("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today, 100.0));
         }
 
         [Fact]
@@ -70,7 +70,7 @@ namespace EventGraph.Tests
             var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
 
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquityOption("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 0.0));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquityOptionNode("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 0.0));
         }
 
         [Fact]
@@ -83,7 +83,7 @@ namespace EventGraph.Tests
             var volatility = new VolatilityNode(equity);
             var eurDiscountFactor = CreateDiscountCurve("EUR");
 
-            var exception = Assert.Throws<ArgumentException>(() => new EquityOption("AAPL_CALL", forward, volatility, eurDiscountFactor, DateTime.Today.AddYears(1), 100.0));
+            var exception = Assert.Throws<ArgumentException>(() => new EquityOptionNode("AAPL_CALL", forward, volatility, eurDiscountFactor, DateTime.Today.AddYears(1), 100.0));
 
             Assert.Contains("currencies must match", exception.Message, StringComparison.OrdinalIgnoreCase);
         }
@@ -97,7 +97,7 @@ namespace EventGraph.Tests
             var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
 
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquityOption("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0, (EquityOptionType)99));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquityOptionNode("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0, (EquityOptionType)99));
         }
 
         [Fact]
@@ -109,7 +109,7 @@ namespace EventGraph.Tests
             var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
 
-            var option = new EquityOption("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 1.0);
+            var option = new EquityOptionNode("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 1.0);
 
             Assert.True(double.IsFinite(option.Price));
             Assert.True(option.Price > 900_000_000.0);
@@ -123,7 +123,7 @@ namespace EventGraph.Tests
             var discountFactor = CreateDiscountCurve();
             var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
-            var option = new EquityOption("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0);
+            var option = new EquityOptionNode("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0);
             QuoteTick? update = null;
             option.Tick += (_, message) => update = message;
 
@@ -146,7 +146,7 @@ namespace EventGraph.Tests
                 .EnumerateObject()
                 .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
 
-            var option = new EquityOption(definition, new Dictionary<string, IGraphNode>
+            var option = new EquityOptionNode(definition, new Dictionary<string, IGraphNode>
             {
                 ["ForwardCurveNode::AAPL"] = forward,
                 ["VolatilityNode::AAPL"] = volatility,

@@ -5,7 +5,7 @@ namespace EventGraph.Tests
         [Fact]
         public void GraphKeyFormatsTypeAndName()
         {
-            Assert.Equal("EquityOption::AAPL", GraphKey.Of("EquityOption", "AAPL"));
+            Assert.Equal("EquityOptionNode::AAPL", GraphKey.Of("EquityOptionNode", "AAPL"));
         }
 
         [Fact]
@@ -17,7 +17,7 @@ namespace EventGraph.Tests
         [Fact]
         public void GraphKeyRejectsBlankName()
         {
-            _ = Assert.Throws<ArgumentException>(() => GraphKey.Of("EquityOption", " "));
+            _ = Assert.Throws<ArgumentException>(() => GraphKey.Of("EquityOptionNode", " "));
         }
     }
 }

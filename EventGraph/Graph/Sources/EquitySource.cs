@@ -67,7 +67,7 @@ namespace EventGraph
 
         public string Name { get; }
 
-        public virtual string Type => nameof(EquitySource);
+        public string Type => nameof(EquitySource);
 
         public double Spot { get; private set; }
 

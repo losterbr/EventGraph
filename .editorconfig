@@ -37,3 +37,13 @@ dotnet_naming_symbols.node_classes.applicable_accessibilities = *
 
 dotnet_naming_style.node_suffix.capitalization = pascal_case
 dotnet_naming_style.node_suffix.required_suffix = Node
+
+[EventGraph/Graph/Instruments/*.cs]
+# Concrete graph instruments follow the same *Node suffix and interface-boundary
+# rules as Graph/Nodes. NodeArchitectureTests enforces the interface constraint.
+dotnet_naming_rule.instrument_classes_end_with_node.severity = warning
+dotnet_naming_rule.instrument_classes_end_with_node.symbols = instrument_classes
+dotnet_naming_rule.instrument_classes_end_with_node.style = node_suffix
+
+dotnet_naming_symbols.instrument_classes.applicable_kinds = class
+dotnet_naming_symbols.instrument_classes.applicable_accessibilities = *

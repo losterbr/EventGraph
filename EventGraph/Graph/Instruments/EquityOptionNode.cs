@@ -9,13 +9,13 @@ namespace EventGraph
     /// <summary>
     /// Prices a one-constituent equity option with the Black-Scholes formula.
     /// </summary>
-    public sealed class EquityOption : IEquityOptionNode
+    public sealed class EquityOptionNode : IEquityOptionNode
     {
         private readonly IForwardCurveNode forwardNode;
         private readonly IVolNode volatilitySource;
         private readonly IDiscountCurveNode discountCurveNode;
 
-        public EquityOption(
+        public EquityOptionNode(
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
             : this(
@@ -29,7 +29,7 @@ namespace EventGraph
         {
         }
 
-        public EquityOption(
+        public EquityOptionNode(
             string name,
             IForwardCurveNode forwardNode,
             IVolNode volatilitySource,
@@ -81,7 +81,7 @@ namespace EventGraph
 
         public string Name { get; }
 
-        public string Type => nameof(EquityOption);
+        public string Type => nameof(EquityOptionNode);
 
         public IReadOnlyList<IGraphNode> Dependencies => [forwardNode, volatilitySource, discountCurveNode];
 
@@ -169,17 +169,17 @@ namespace EventGraph
             var key = GetString(definition, propertyName);
             return nodesByName != null && nodesByName.TryGetValue(key, out var node) && node is TNode typedNode
                 ? typedNode
-                : throw new InvalidDataException($"EquityOption references an invalid {propertyName} '{key}'.");
+                : throw new InvalidDataException($"EquityOptionNode references an invalid {propertyName} '{key}'.");
         }
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
-            return JsonDefinitionReader.GetString(definition, propertyName, nameof(EquityOption));
+            return JsonDefinitionReader.GetString(definition, propertyName, nameof(EquityOptionNode));
         }
 
         private static double GetDouble(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
-            return JsonDefinitionReader.GetDouble(definition, propertyName, nameof(EquityOption));
+            return JsonDefinitionReader.GetDouble(definition, propertyName, nameof(EquityOptionNode));
         }
 
         private static EquityOptionType GetOptionType(IReadOnlyDictionary<string, JsonElement> definition)
@@ -187,7 +187,7 @@ namespace EventGraph
             var optionType = GetString(definition, "optionType");
             return Enum.TryParse<EquityOptionType>(optionType, ignoreCase: true, out var parsed)
                 ? parsed
-                : throw new InvalidDataException("EquityOption optionType must be Call or Put.");
+                : throw new InvalidDataException("EquityOptionNode optionType must be Call or Put.");
         }
     }
 }

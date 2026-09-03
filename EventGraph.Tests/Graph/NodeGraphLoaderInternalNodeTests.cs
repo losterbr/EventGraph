@@ -74,7 +74,7 @@ namespace EventGraph.Tests
                 """);
                 File.WriteAllText(Path.Combine(directory, "option.json"), /*lang=json,strict*/ """
                 {
-                  "type": "EquityOption",
+                  "type": "EquityOptionNode",
                   "name": "AAPL_1Y_CALL",
                   "underlyer": "AAPL",
                   "maturity": "1Y",
@@ -90,7 +90,7 @@ namespace EventGraph.Tests
                 Assert.Contains(graph.Nodes, node => node is VolatilityNode);
                 Assert.Contains(graph.Nodes, node => node is RateCurveNode);
                 Assert.Contains(graph.Nodes, node => node is ForwardCurveNode);
-                Assert.Contains(graph.Nodes, node => node is EquityOption);
+                Assert.Contains(graph.Nodes, node => node is EquityOptionNode);
             }
             finally
             {

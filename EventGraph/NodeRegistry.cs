@@ -25,7 +25,7 @@ namespace EventGraph
                 [nameof(VolatilityNode)] = definition => [GraphKey.Of(nameof(EquitySource), GetNodeName(definition))],
                 [nameof(ForwardCurveNode)] = ForwardCurveNode.GetDependencyNames,
                 [nameof(RateCurveNode)] = definition => [GraphKey.Of(nameof(CurrencyRateSource), GetNodeName(definition))],
-                [nameof(EquityOption)] = EquityOption.GetDependencyNames
+                [nameof(EquityOptionNode)] = EquityOptionNode.GetDependencyNames
             };
 
         private static readonly Dictionary<string, IGraphDefinitionEnricher> DefinitionEnrichers =
@@ -34,7 +34,7 @@ namespace EventGraph
                 [nameof(EquitySource)] = new DelegateGraphDefinitionEnricher(EquitySource.EnrichDefinition),
                 [nameof(ForwardCurveNode)] = new DelegateGraphDefinitionEnricher(ForwardCurveNode.EnrichDefinition),
                 [nameof(BasketSpotNode)] = new DelegateGraphDefinitionEnricher(BasketSpotNode.EnrichDefinition),
-                [nameof(EquityOption)] = new DelegateGraphDefinitionEnricher(EquityOption.EnrichDefinition)
+                [nameof(EquityOptionNode)] = new DelegateGraphDefinitionEnricher(EquityOptionNode.EnrichDefinition)
             };
 
         private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>> Factories =
@@ -47,7 +47,7 @@ namespace EventGraph
                 [nameof(BasketSpotNode)] = (definition, nodesByName) => new BasketSpotNode(definition, nodesByName),
                 [nameof(RateCurveNode)] = (definition, nodesByName) => new RateCurveNode(Resolve<IRateSourceNode>(definition, nodesByName, nameof(CurrencyRateSource))),
                 [nameof(ForwardCurveNode)] = (definition, nodesByName) => new ForwardCurveNode(definition, nodesByName),
-                [nameof(EquityOption)] = (definition, nodesByName) => new EquityOption(definition, nodesByName)
+                [nameof(EquityOptionNode)] = (definition, nodesByName) => new EquityOptionNode(definition, nodesByName)
             };
 
         public static IReadOnlyCollection<string> SupportedTypes => [.. Factories.Keys];
