@@ -103,8 +103,7 @@ namespace EventGraph
                 var key = GetNodeKey(definition);
                 foreach (var dependencyKey in NodeRegistry.GetDependencyNames(definition))
                 {
-                    var resolvedKey = ResolveDependencyKey(dependencyKey, definitionsByKey);
-                    if (resolvedKey == null)
+                    if (ResolveDependencyKey(dependencyKey, definitionsByKey) is not { } resolvedKey)
                     {
                         throw new InvalidDataException($"Node '{key}' references an unknown dependency '{dependencyKey}'.");
                     }
@@ -134,7 +133,7 @@ namespace EventGraph
                 }
 
                 nodesByKey[GraphKey.Of(node.Type, node.Name)] = node;
-                nodesByName.TryAdd(node.Name, node);
+                _ = nodesByName.TryAdd(node.Name, node);
                 resolvedOrder.Add(node);
 
                 foreach (var dependentKey in dependentsByKey[key])
@@ -400,7 +399,10 @@ namespace EventGraph
 
             public int Count => nodesByKey.Count + nodesByName.Count;
 
-            public bool ContainsKey(string key) => nodesByKey.ContainsKey(key) || nodesByName.ContainsKey(key);
+            public bool ContainsKey(string key)
+            {
+                return nodesByKey.ContainsKey(key) || nodesByName.ContainsKey(key);
+            }
 
             public bool TryGetValue(string key, out IGraphNode value)
             {
@@ -427,7 +429,10 @@ namespace EventGraph
                 }
             }
 
-            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
         }
     }
 }
