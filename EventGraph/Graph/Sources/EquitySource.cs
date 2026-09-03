@@ -77,6 +77,18 @@ namespace EventGraph
 
         public IReadOnlyList<IGraphNode> Dependencies => [];
 
+        internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
+            GraphDefinitionEnrichmentContext context,
+            IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            var name = GraphDefinitionEnrichmentContext.GetNodeName(definition);
+            context.AddSyntheticIfMissing(nameof(SpotNode), name, new Dictionary<string, JsonElement>
+            {
+                ["source"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(EquitySource), name))
+            });
+            return definition;
+        }
+
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
             return JsonDefinitionReader.GetString(definition, propertyName, nameof(EquitySource));

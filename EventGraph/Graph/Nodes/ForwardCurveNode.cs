@@ -54,6 +54,15 @@ namespace EventGraph
             return [GetString(definition, "spot"), GetString(definition, "discountCurve")];
         }
 
+        internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
+            GraphDefinitionEnrichmentContext context,
+            IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            context.AddReferencedDefinitionIfMissing(definition, "spot");
+            context.AddReferencedDefinitionIfMissing(definition, "discountCurve");
+            return definition;
+        }
+
         private void SpotTicked(object sender, QuoteTick e)
         {
             Tick?.Invoke(this, new QuoteTick(Name, spotNode.Spot));

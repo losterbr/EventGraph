@@ -90,6 +90,32 @@ namespace EventGraph
             return [GetString(definition, "forward"), GetString(definition, "volatility"), GetString(definition, "discountCurve")];
         }
 
+        internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
+            GraphDefinitionEnrichmentContext context,
+            IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            var underlyer = GraphDefinitionEnrichmentContext.GetString(definition, "underlyer");
+            var sourceDefinition = context.GetDefinition(GraphKey.Of(nameof(EquitySource), underlyer));
+            var currency = GraphDefinitionEnrichmentContext.GetOptionalString(sourceDefinition, "currency") ?? "USD";
+            var rateSourceName = context.GetRateSourceName(currency);
+
+            context.AddSyntheticIfMissing(nameof(SpotNode), underlyer);
+            context.AddSyntheticIfMissing(nameof(VolatilityNode), underlyer);
+            context.AddSyntheticIfMissing(nameof(RateCurveNode), rateSourceName);
+            context.AddSyntheticIfMissing(nameof(ForwardCurveNode), underlyer, new Dictionary<string, JsonElement>
+            {
+                ["spot"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(SpotNode), underlyer)),
+                ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveNode), rateSourceName))
+            });
+
+            return new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase)
+            {
+                ["forward"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(ForwardCurveNode), underlyer)),
+                ["volatility"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(VolatilityNode), underlyer)),
+                ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveNode), rateSourceName))
+            };
+        }
+
         public DateTime Maturity { get; }
 
         public double Strike { get; }

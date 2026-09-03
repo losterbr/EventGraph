@@ -125,6 +125,42 @@ namespace EventGraph
                 .Select(name => GetDependencyKey(name.GetString()))];
         }
 
+        internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
+            GraphDefinitionEnrichmentContext context,
+            IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            if (!definition.TryGetValue("constituents", out var constituents) || constituents.ValueKind != JsonValueKind.Array)
+            {
+                return definition;
+            }
+
+            var normalizedConstituents = constituents.EnumerateArray()
+                .Select(constituent => constituent.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(constituent.GetString())
+                    ? context.ContainsDefinition(GraphKey.Of(nameof(BasketSpotNode), constituent.GetString()))
+                        ? GraphKey.Of(nameof(BasketSpotNode), constituent.GetString())
+                        : GraphKey.Of(nameof(SpotNode), constituent.GetString())
+                    : constituent.GetRawText())
+                .ToArray();
+            var enrichedDefinition = new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase)
+            {
+                ["constituents"] = JsonSerializer.SerializeToElement(normalizedConstituents)
+            };
+
+            foreach (var dependencyKey in GetDependencyNames(enrichedDefinition))
+            {
+                if (!dependencyKey.StartsWith($"{nameof(BasketSpotNode)}::", StringComparison.Ordinal))
+                {
+                    var name = dependencyKey[(dependencyKey.IndexOf("::", StringComparison.Ordinal) + 2)..];
+                    context.AddSyntheticIfMissing(nameof(SpotNode), name, new Dictionary<string, JsonElement>
+                    {
+                        ["source"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(EquitySource), name))
+                    });
+                }
+            }
+
+            return enrichedDefinition;
+        }
+
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
             return JsonDefinitionReader.GetString(definition, propertyName, nameof(BasketSpotNode));

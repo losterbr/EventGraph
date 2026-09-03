@@ -28,6 +28,15 @@ namespace EventGraph
                 [nameof(EquityOption)] = EquityOption.GetDependencyNames
             };
 
+        private static readonly Dictionary<string, IGraphDefinitionEnricher> DefinitionEnrichers =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                [nameof(EquitySource)] = new DelegateGraphDefinitionEnricher(EquitySource.EnrichDefinition),
+                [nameof(ForwardCurveNode)] = new DelegateGraphDefinitionEnricher(ForwardCurveNode.EnrichDefinition),
+                [nameof(BasketSpotNode)] = new DelegateGraphDefinitionEnricher(BasketSpotNode.EnrichDefinition),
+                [nameof(EquityOption)] = new DelegateGraphDefinitionEnricher(EquityOption.EnrichDefinition)
+            };
+
         private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>> Factories =
             new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>>(StringComparer.OrdinalIgnoreCase)
             {
@@ -61,6 +70,19 @@ namespace EventGraph
             return DependencyResolvers.TryGetValue(type, out var resolver)
                 ? resolver(definition)
                 : [];
+        }
+
+        internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
+            GraphDefinitionEnrichmentContext context,
+            IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            ArgumentNullException.ThrowIfNull(context);
+            ArgumentNullException.ThrowIfNull(definition);
+
+            var type = GetType(definition);
+            return DefinitionEnrichers.TryGetValue(type, out var enricher)
+                ? enricher.Enrich(context, definition)
+                : definition;
         }
 
         public static IGraphNode CreateNode(

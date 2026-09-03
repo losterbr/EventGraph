@@ -59,36 +59,11 @@ namespace EventGraph
                 throw new InvalidDataException($"Unsupported graph node type: '{unsupportedType}'.");
             }
 
-            // Auto-materialize internal wrapper nodes referenced by other definitions.
             var toAdd = new List<IReadOnlyDictionary<string, JsonElement>>();
-            foreach (var definition in definitionsByKey.Values)
+            var enrichmentContext = new GraphDefinitionEnrichmentContext(definitionsByKey, toAdd);
+            foreach (var definition in definitionsByKey.Values.ToList())
             {
-                var type = GetType(definition);
-                if (type == nameof(EquitySource))
-                {
-                    AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(SpotNode), GetNodeName(definition), new Dictionary<string, JsonElement>
-                    {
-                        ["name"] = JsonSerializer.SerializeToElement(GetNodeName(definition)),
-                        ["source"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(EquitySource), GetNodeName(definition)))
-                    });
-                }
-                else if (type == nameof(ForwardCurveNode))
-                {
-                    AddIfMissing(toAdd, definitionsByKey, definition, "discountCurve");
-                    AddIfMissing(toAdd, definitionsByKey, definition, "spot");
-                }
-                else if (type == nameof(BasketSpotNode))
-                {
-                    var basketKey = GetNodeKey(definition);
-                    var normalizedDefinition = EnrichBasketDefinition(definitionsByKey, definition);
-                    definitionsByKey[basketKey] = normalizedDefinition;
-                    AddBasketSpotNodesIfMissing(toAdd, definitionsByKey, normalizedDefinition);
-                }
-                else if (type == nameof(EquityOption))
-                {
-                    var optionKey = GetNodeKey(definition);
-                    definitionsByKey[optionKey] = EnrichEquityOptionDefinition(toAdd, definitionsByKey, definition);
-                }
+                definitionsByKey[GetNodeKey(definition)] = NodeRegistry.EnrichDefinition(enrichmentContext, definition);
             }
 
             foreach (var definition in toAdd)
@@ -216,186 +191,11 @@ namespace EventGraph
                 : reference[(separator + 2)..];
         }
 
-        private static string GetNodeName(IReadOnlyDictionary<string, JsonElement> definition)
-        {
-            return !definition.TryGetValue("name", out var name) || name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString())
-                ? throw new InvalidDataException("Every graph definition must provide a non-empty string name.")
-                : name.GetString();
-        }
-
         private static string GetStringProperty(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
             return !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString())
                 ? throw new InvalidDataException($"Every graph definition must provide a non-empty string '{propertyName}' property.")
                 : property.GetString();
-        }
-
-        private static void AddIfMissing(
-            List<IReadOnlyDictionary<string, JsonElement>> toAdd,
-            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
-            IReadOnlyDictionary<string, JsonElement> definition,
-            string propertyName)
-        {
-            var reference = GetStringProperty(definition, propertyName);
-            var separator = reference.IndexOf("::", StringComparison.Ordinal);
-            if (separator < 0)
-            {
-                return;
-            }
-
-            var refType = reference[..separator];
-            var refName = reference[(separator + 2)..];
-            var key = GraphKey.Of(refType, refName);
-            if (definitionsByKey.ContainsKey(key))
-            {
-                return;
-            }
-
-            // Auto-create internal wrapper definitions from referenced source keys.
-            var synthetic = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["type"] = JsonSerializer.SerializeToElement(refType)
-            };
-            if (refType is nameof(RateCurveNode) or nameof(SpotNode) or nameof(VolatilityNode))
-            {
-                synthetic["name"] = JsonSerializer.SerializeToElement(refName);
-            }
-
-            toAdd.Add(synthetic);
-        }
-
-        private static void AddBasketSpotNodesIfMissing(
-            List<IReadOnlyDictionary<string, JsonElement>> toAdd,
-            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
-            IReadOnlyDictionary<string, JsonElement> definition)
-        {
-            foreach (var dependencyKey in BasketSpotNode.GetDependencyNames(definition))
-            {
-                if (dependencyKey.StartsWith($"{nameof(BasketSpotNode)}::", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                var name = dependencyKey[(dependencyKey.IndexOf("::", StringComparison.Ordinal) + 2)..];
-                AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(SpotNode), name, new Dictionary<string, JsonElement>
-                {
-                    ["name"] = JsonSerializer.SerializeToElement(name),
-                    ["source"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(EquitySource), name))
-                });
-            }
-        }
-
-        private static Dictionary<string, JsonElement> EnrichBasketDefinition(
-            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
-            IReadOnlyDictionary<string, JsonElement> definition)
-        {
-            if (!definition.TryGetValue("constituents", out var constituents) || constituents.ValueKind != JsonValueKind.Array)
-            {
-                return new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase);
-            }
-
-            var normalizedConstituents = constituents.EnumerateArray()
-                .Select(constituent => constituent.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(constituent.GetString())
-                    ? definitionsByKey.ContainsKey(GraphKey.Of(nameof(BasketSpotNode), constituent.GetString()))
-                        ? GraphKey.Of(nameof(BasketSpotNode), constituent.GetString())
-                        : GraphKey.Of(nameof(SpotNode), constituent.GetString())
-                    : constituent.GetRawText())
-                .ToArray();
-            return new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase)
-            {
-                ["constituents"] = JsonSerializer.SerializeToElement(normalizedConstituents)
-            };
-        }
-
-        private static Dictionary<string, JsonElement> EnrichEquityOptionDefinition(
-            List<IReadOnlyDictionary<string, JsonElement>> toAdd,
-            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
-            IReadOnlyDictionary<string, JsonElement> definition)
-        {
-            var underlyer = GetStringProperty(definition, "underlyer");
-            var currency = GetUnderlyerCurrency(definitionsByKey, underlyer);
-            var rateSourceName = GetRateSourceName(definitionsByKey, currency);
-
-            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(SpotNode), underlyer, new Dictionary<string, JsonElement>
-            {
-                ["name"] = JsonSerializer.SerializeToElement(underlyer)
-            });
-            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(VolatilityNode), underlyer, new Dictionary<string, JsonElement>
-            {
-                ["name"] = JsonSerializer.SerializeToElement(underlyer)
-            });
-            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(RateCurveNode), rateSourceName, new Dictionary<string, JsonElement>
-            {
-                ["name"] = JsonSerializer.SerializeToElement(rateSourceName)
-            });
-            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(ForwardCurveNode), underlyer, new Dictionary<string, JsonElement>
-            {
-                ["spot"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(SpotNode), underlyer)),
-                ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveNode), rateSourceName))
-            });
-
-            return new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase)
-            {
-                ["forward"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(ForwardCurveNode), underlyer)),
-                ["volatility"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(VolatilityNode), underlyer)),
-                ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveNode), rateSourceName))
-            };
-        }
-
-        private static string GetUnderlyerCurrency(
-            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
-            string underlyer)
-        {
-            var sourceKey = GraphKey.Of(nameof(EquitySource), underlyer);
-            var sourceDefinition = definitionsByKey.TryGetValue(sourceKey, out var definition)
-                ? definition
-                : throw new InvalidDataException($"EquityOption references an unknown underlyer '{underlyer}'.");
-
-            return GetOptionalString(sourceDefinition, "currency") ?? "USD";
-        }
-
-        private static string GetRateSourceName(
-            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
-            string currency)
-        {
-            var matches = definitionsByKey.Values
-                .Where(definition => GetType(definition) == nameof(CurrencyRateSource))
-                .Where(definition => string.Equals(GetOptionalString(definition, "currency") ?? GetNodeName(definition), currency, StringComparison.OrdinalIgnoreCase))
-                .Select(GetNodeName)
-                .ToList();
-            return matches.Count switch
-            {
-                1 => matches[0],
-                0 => throw new InvalidDataException($"No CurrencyRateSource found for currency '{currency}'."),
-                _ => throw new InvalidDataException($"Multiple CurrencyRateSource definitions found for currency '{currency}'.")
-            };
-        }
-
-        private static string GetOptionalString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
-        {
-            return definition.TryGetValue(propertyName, out var property) && property.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(property.GetString())
-                ? property.GetString()
-                : null;
-        }
-
-        private static void AddSyntheticIfMissing(
-            List<IReadOnlyDictionary<string, JsonElement>> toAdd,
-            Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
-            string type,
-            string name,
-            Dictionary<string, JsonElement> extraProperties)
-        {
-            var key = GraphKey.Of(type, name);
-            if (definitionsByKey.ContainsKey(key))
-            {
-                return;
-            }
-
-            var synthetic = new Dictionary<string, JsonElement>(extraProperties, StringComparer.OrdinalIgnoreCase)
-            {
-                ["type"] = JsonSerializer.SerializeToElement(type)
-            };
-            toAdd.Add(synthetic);
         }
 
         private static IReadOnlyDictionary<string, JsonElement> LoadDefinition(string path)
