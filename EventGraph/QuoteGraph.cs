@@ -16,7 +16,7 @@ namespace EventGraph
             ArgumentNullException.ThrowIfNull(nodes);
 
             Nodes = [.. nodes];
-            QuoteNodes = [.. Nodes.OfType<ISpotQuoteNode>()];
+            QuoteNodes = [.. Nodes.OfType<ISpotSourceNode>()];
             var indices = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < Nodes.Count; i++)
             {
@@ -46,7 +46,7 @@ namespace EventGraph
 
         public IReadOnlyList<IGraphNode> Nodes { get; }
 
-        public IReadOnlyList<ISpotQuoteNode> QuoteNodes { get; }
+        public IReadOnlyList<ISpotSourceNode> QuoteNodes { get; }
 
         public IReadOnlyDictionary<string, int> NodeIndexByName => nodeIndexByName;
 

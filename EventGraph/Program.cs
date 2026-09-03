@@ -26,7 +26,7 @@ namespace EventGraph
             var optionNodes = nodes.OfType<IEquityOptionNode>()
                 .OrderBy(option => option.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
-            var baskets = nodes.OfType<BasketAggregate>()
+            var baskets = nodes.OfType<BasketSpotNode>()
                 .OrderBy(basket => basket.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 

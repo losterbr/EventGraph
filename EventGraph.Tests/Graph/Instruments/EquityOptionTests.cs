@@ -10,7 +10,7 @@ namespace EventGraph.Tests
             var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = CreateDiscountCurve();
-            var forward = new ForwardCurve(spotNode, discountFactor);
+            var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
             var maturity = DateTime.Today.AddYears(1);
 
@@ -28,7 +28,7 @@ namespace EventGraph.Tests
             var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = CreateDiscountCurve();
-            var forward = new ForwardCurve(spotNode, discountFactor);
+            var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
 
             var option = new EquityOption("AAPL_PUT", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0, EquityOptionType.Put);
@@ -43,7 +43,7 @@ namespace EventGraph.Tests
             var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = CreateDiscountCurve();
-            var forward = new ForwardCurve(spotNode, discountFactor);
+            var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
 
             _ = Assert.Throws<ArgumentException>(() => new EquityOption(" ", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0));
@@ -55,7 +55,7 @@ namespace EventGraph.Tests
             var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = CreateDiscountCurve();
-            var forward = new ForwardCurve(spotNode, discountFactor);
+            var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
 
             _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquityOption("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today, 100.0));
@@ -67,7 +67,7 @@ namespace EventGraph.Tests
             var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = CreateDiscountCurve();
-            var forward = new ForwardCurve(spotNode, discountFactor);
+            var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
 
             _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquityOption("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 0.0));
@@ -79,7 +79,7 @@ namespace EventGraph.Tests
             var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0, "USD");
             var spotNode = new SpotNode(equity);
             var usdDiscountFactor = CreateDiscountCurve();
-            var forward = new ForwardCurve(spotNode, usdDiscountFactor);
+            var forward = new ForwardCurveNode(spotNode, usdDiscountFactor);
             var volatility = new VolatilityNode(equity);
             var eurDiscountFactor = CreateDiscountCurve("EUR");
 
@@ -94,7 +94,7 @@ namespace EventGraph.Tests
             var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = CreateDiscountCurve();
-            var forward = new ForwardCurve(spotNode, discountFactor);
+            var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
 
             _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquityOption("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0, (EquityOptionType)99));
@@ -106,7 +106,7 @@ namespace EventGraph.Tests
             var equity = new EquitySource("AAPL", 1_000_000_000.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = CreateDiscountCurve();
-            var forward = new ForwardCurve(spotNode, discountFactor);
+            var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
 
             var option = new EquityOption("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 1.0);
@@ -121,7 +121,7 @@ namespace EventGraph.Tests
             var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = CreateDiscountCurve();
-            var forward = new ForwardCurve(spotNode, discountFactor);
+            var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
             var option = new EquityOption("AAPL_CALL", forward, volatility, discountFactor, DateTime.Today.AddYears(1), 100.0);
             QuoteTick? update = null;
@@ -139,16 +139,16 @@ namespace EventGraph.Tests
             var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = CreateDiscountCurve();
-            var forward = new ForwardCurve(spotNode, discountFactor);
+            var forward = new ForwardCurveNode(spotNode, discountFactor);
             var volatility = new VolatilityNode(equity);
-            using var document = JsonDocument.Parse("{\"name\":\"AAPL_CALL\",\"forward\":\"ForwardCurve::AAPL\",\"volatility\":\"VolatilityNode::AAPL\",\"discountCurve\":\"RateCurveNode::USD\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Put\"}");
+            using var document = JsonDocument.Parse("{\"name\":\"AAPL_CALL\",\"forward\":\"ForwardCurveNode::AAPL\",\"volatility\":\"VolatilityNode::AAPL\",\"discountCurve\":\"RateCurveNode::USD\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Put\"}");
             var definition = document.RootElement
                 .EnumerateObject()
                 .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
 
             var option = new EquityOption(definition, new Dictionary<string, IGraphNode>
             {
-                ["ForwardCurve::AAPL"] = forward,
+                ["ForwardCurveNode::AAPL"] = forward,
                 ["VolatilityNode::AAPL"] = volatility,
                 ["RateCurveNode::USD"] = discountFactor
             });

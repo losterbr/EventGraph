@@ -8,9 +8,9 @@ namespace EventGraph
     /// </summary>
     public sealed class RateCurveNode : IDiscountCurveNode
     {
-        private readonly CurrencyRateSource source;
+        private readonly IRateSourceNode source;
 
-        public RateCurveNode(CurrencyRateSource source)
+        public RateCurveNode(IRateSourceNode source)
         {
             this.source = source ?? throw new ArgumentNullException(nameof(source));
             DiscountFactor = date => Math.Exp(-this.source.InterestRate * (date - DateTime.Today).TotalDays / 365.0);

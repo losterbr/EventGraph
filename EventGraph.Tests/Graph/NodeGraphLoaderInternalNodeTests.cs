@@ -87,7 +87,7 @@ namespace EventGraph.Tests
                 Assert.Contains(graph.Nodes, node => node is SpotNode);
                 Assert.Contains(graph.Nodes, node => node is VolatilityNode);
                 Assert.Contains(graph.Nodes, node => node is RateCurveNode);
-                Assert.Contains(graph.Nodes, node => node is ForwardCurve);
+                Assert.Contains(graph.Nodes, node => node is ForwardCurveNode);
                 Assert.Contains(graph.Nodes, node => node is EquityOption);
             }
             finally
@@ -121,7 +121,7 @@ namespace EventGraph.Tests
                 """);
                 File.WriteAllText(Path.Combine(directory, "forward.json"), /*lang=json,strict*/ """
                 {
-                  "type": "ForwardCurve",
+                  "type": "ForwardCurveNode",
                   "spot": "SpotNode::AAPL",
                   "discountCurve": "RateCurveNode::USD"
                 }
@@ -129,7 +129,7 @@ namespace EventGraph.Tests
 
                 var graph = NodeGraphLoader.LoadGraph(directory);
 
-                Assert.Contains(graph.Nodes, node => node is ForwardCurve);
+                Assert.Contains(graph.Nodes, node => node is ForwardCurveNode);
                 Assert.Contains(graph.Nodes, node => node is SpotNode);
                 Assert.Contains(graph.Nodes, node => node is RateCurveNode);
             }
@@ -147,7 +147,7 @@ namespace EventGraph.Tests
             {
                 File.WriteAllText(Path.Combine(directory, "bad.json"), /*lang=json,strict*/ """
                 {
-                  "type": "BasketAggregate",
+                  "type": "BasketSpotNode",
                   "constituents": [],
                   "weights": []
                 }

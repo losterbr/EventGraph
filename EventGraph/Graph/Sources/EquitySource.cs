@@ -9,7 +9,7 @@ namespace EventGraph
     /// <summary>
     /// Provides an equity's spot and volatility source data.
     /// </summary>
-    public class EquitySource : ISpotQuoteNode, IVolQuoteNode
+    public class EquitySource : ISpotSourceNode, IVolSourceNode
     {
         public event EventHandler<QuoteTick> Tick;
 

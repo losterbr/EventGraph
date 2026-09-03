@@ -7,7 +7,7 @@ namespace EventGraph
     /// <summary>
     /// Provides a currency's flat interest rate as source data.
     /// </summary>
-    public sealed class CurrencyRateSource : IGraphNode
+    public sealed class CurrencyRateSource : IRateSourceNode
     {
         public CurrencyRateSource(IReadOnlyDictionary<string, JsonElement> definition)
             : this(

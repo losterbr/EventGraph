@@ -20,10 +20,10 @@ namespace EventGraph
         private static readonly Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyList<string>>> DependencyResolvers =
             new(StringComparer.OrdinalIgnoreCase)
             {
-                [nameof(BasketAggregate)] = BasketAggregate.GetDependencyNames,
+                [nameof(BasketSpotNode)] = BasketSpotNode.GetDependencyNames,
                 [nameof(SpotNode)] = definition => [GetSpotDependencyName(definition)],
                 [nameof(VolatilityNode)] = definition => [GraphKey.Of(nameof(EquitySource), GetNodeName(definition))],
-                [nameof(ForwardCurve)] = ForwardCurve.GetDependencyNames,
+                [nameof(ForwardCurveNode)] = ForwardCurveNode.GetDependencyNames,
                 [nameof(RateCurveNode)] = definition => [GraphKey.Of(nameof(CurrencyRateSource), GetNodeName(definition))],
                 [nameof(EquityOption)] = EquityOption.GetDependencyNames
             };
@@ -33,11 +33,11 @@ namespace EventGraph
             {
                 [nameof(EquitySource)] = (definition, _) => new EquitySource(definition),
                 [nameof(CurrencyRateSource)] = (definition, _) => new CurrencyRateSource(definition),
-                [nameof(SpotNode)] = (definition, nodesByName) => new SpotNode(ResolveByKey<ISpotQuoteNode>(GetSpotDependencyName(definition), nodesByName)),
+                [nameof(SpotNode)] = (definition, nodesByName) => new SpotNode(ResolveByKey<ISpotNode>(GetSpotDependencyName(definition), nodesByName)),
                 [nameof(VolatilityNode)] = (definition, nodesByName) => new VolatilityNode(Resolve<EquitySource>(definition, nodesByName, nameof(EquitySource))),
-                [nameof(BasketAggregate)] = (definition, nodesByName) => new BasketAggregate(definition, nodesByName),
-                [nameof(RateCurveNode)] = (definition, nodesByName) => new RateCurveNode(Resolve<CurrencyRateSource>(definition, nodesByName, nameof(CurrencyRateSource))),
-                [nameof(ForwardCurve)] = (definition, nodesByName) => new ForwardCurve(definition, nodesByName),
+                [nameof(BasketSpotNode)] = (definition, nodesByName) => new BasketSpotNode(definition, nodesByName),
+                [nameof(RateCurveNode)] = (definition, nodesByName) => new RateCurveNode(Resolve<IRateSourceNode>(definition, nodesByName, nameof(CurrencyRateSource))),
+                [nameof(ForwardCurveNode)] = (definition, nodesByName) => new ForwardCurveNode(definition, nodesByName),
                 [nameof(EquityOption)] = (definition, nodesByName) => new EquityOption(definition, nodesByName)
             };
 
@@ -89,12 +89,12 @@ namespace EventGraph
                 : name.GetString();
         }
 
-            private static string GetSpotDependencyName(IReadOnlyDictionary<string, JsonElement> definition)
-            {
-                return definition.TryGetValue("source", out var source) && source.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(source.GetString())
+        private static string GetSpotDependencyName(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return definition.TryGetValue("source", out var source) && source.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(source.GetString())
                 ? source.GetString()
                 : GraphKey.Of(nameof(EquitySource), GetNodeName(definition));
-            }
+        }
 
         private static TNode Resolve<TNode>(
             IReadOnlyDictionary<string, JsonElement> definition,

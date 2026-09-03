@@ -6,15 +6,10 @@ namespace EventGraph
     /// <summary>
     /// Pass-through node that exposes a graph node's ticking spot.
     /// </summary>
-    public sealed class SpotNode : ISpotQuoteNode
+    public sealed class SpotNode(ISpotNode sourceNode) : ISpotSourceNode
     {
-        private readonly ISpotQuoteNode source;
+        private readonly ISpotNode source = sourceNode ?? throw new ArgumentNullException(nameof(sourceNode));
         private EventHandler<QuoteTick> tick;
-
-        public SpotNode(ISpotQuoteNode source)
-        {
-            this.source = source ?? throw new ArgumentNullException(nameof(source));
-        }
 
         public event EventHandler<QuoteTick> Tick
         {

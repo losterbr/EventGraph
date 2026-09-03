@@ -14,6 +14,7 @@ namespace EventGraph.Tests
             Assert.Equal("USD", source.Currency);
             Assert.Equal(nameof(CurrencyRateSource), source.Type);
             Assert.Empty(source.Dependencies);
+            Assert.IsAssignableFrom<IRateSourceNode>(source);
         }
 
         [Fact]

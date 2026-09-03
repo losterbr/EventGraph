@@ -69,8 +69,8 @@ namespace EventGraph.Tests
         {
             var source = new EquitySource("VOL", 100.0, 0.25);
 
-            var volNode = Assert.IsAssignableFrom<IVolQuoteNode>(source);
-            var spotNode = Assert.IsAssignableFrom<ISpotQuoteNode>(source);
+            var volNode = Assert.IsAssignableFrom<IVolSourceNode>(source);
+            var spotNode = Assert.IsAssignableFrom<ISpotSourceNode>(source);
             Assert.Equal(0.25, volNode.Volatility, 10);
             Assert.Equal(100.0, spotNode.Spot, 10);
             Assert.Equal("USD", spotNode.Currency);

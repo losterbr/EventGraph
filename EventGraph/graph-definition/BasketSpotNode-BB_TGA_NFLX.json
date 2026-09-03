@@ -1,5 +1,5 @@
 {
-  "type": "BasketAggregate",
+  "type": "BasketSpotNode",
   "name": "BB_TGA_NFLX",
   "constituents": ["B_TSLA_GOOG_AMZN", "NFLX"],
   "weights": [0.65, 0.35]

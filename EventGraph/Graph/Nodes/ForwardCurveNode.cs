@@ -8,21 +8,21 @@ namespace EventGraph
     /// <summary>
     /// Derives a forward curve from an equity's spot and a discount factor curve.
     /// </summary>
-    public sealed class ForwardCurve : IForwardCurveNode
+    public sealed class ForwardCurveNode : IForwardCurveNode
     {
-        private readonly ISpotQuoteNode spotNode;
+        private readonly ISpotSourceNode spotNode;
         private readonly IDiscountCurveNode discountCurveNode;
 
-        public ForwardCurve(
+        public ForwardCurveNode(
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
             : this(
-                GetNode<ISpotQuoteNode>(definition, "spot", nodesByName),
+                GetNode<ISpotSourceNode>(definition, "spot", nodesByName),
                 GetNode<IDiscountCurveNode>(definition, "discountCurve", nodesByName))
         {
         }
 
-        public ForwardCurve(ISpotQuoteNode spotNode, IDiscountCurveNode discountCurveNode)
+        public ForwardCurveNode(ISpotSourceNode spotNode, IDiscountCurveNode discountCurveNode)
         {
             ArgumentNullException.ThrowIfNull(spotNode);
             ArgumentNullException.ThrowIfNull(discountCurveNode);
@@ -41,7 +41,7 @@ namespace EventGraph
 
         public string Name => spotNode.Name;
 
-        public string Type => nameof(ForwardCurve);
+        public string Type => nameof(ForwardCurveNode);
 
         public string Currency => discountCurveNode.Currency;
 
@@ -68,12 +68,12 @@ namespace EventGraph
             var nodeName = GetString(definition, propertyName);
             return nodesByName != null && nodesByName.TryGetValue(nodeName, out var node) && node is TNode typedNode
                 ? typedNode
-                : throw new InvalidDataException($"ForwardCurve references an invalid {propertyName} '{nodeName}'.");
+                : throw new InvalidDataException($"ForwardCurveNode references an invalid {propertyName} '{nodeName}'.");
         }
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
-            return JsonDefinitionReader.GetString(definition, propertyName, nameof(ForwardCurve));
+            return JsonDefinitionReader.GetString(definition, propertyName, nameof(ForwardCurveNode));
         }
     }
 }

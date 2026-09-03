@@ -10,13 +10,13 @@ namespace EventGraph
     /// <summary>
     /// Aggregates multiple simulated quotes into a weighted basket value.
     /// </summary>
-    public class BasketAggregate : ISpotQuoteNode
+    public class BasketSpotNode : ISpotNode
     {
         public event EventHandler<QuoteTick> Tick;
 
         private const double Epsilon = 1e-9;
-        private readonly Dictionary<ISpotQuoteNode, int[]> constituentIndicesByNode;
-        private readonly IReadOnlyList<ISpotQuoteNode> constituents;
+        private readonly Dictionary<ISpotSourceNode, int[]> constituentIndicesByNode;
+        private readonly IReadOnlyList<ISpotSourceNode> constituents;
         private readonly bool[] hasLatestValue;
         private readonly double[] latestValues;
         private readonly object stateLock = new();
@@ -24,7 +24,7 @@ namespace EventGraph
         private readonly int requiredConstituentCount;
         private int availableConstituentCount;
 
-        public BasketAggregate(
+        public BasketSpotNode(
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
             : this(
@@ -34,12 +34,12 @@ namespace EventGraph
         {
         }
 
-        public BasketAggregate(IReadOnlyList<ISpotQuoteNode> constituents, IReadOnlyList<double> weights = null)
+        public BasketSpotNode(IReadOnlyList<ISpotSourceNode> constituents, IReadOnlyList<double> weights = null)
             : this(constituents == null ? null : $"B {string.Join(",", constituents.Select(x => x.Name))}", constituents, weights)
         {
         }
 
-        public BasketAggregate(string name, IReadOnlyList<ISpotQuoteNode> constituents, IReadOnlyList<double> weights = null)
+        public BasketSpotNode(string name, IReadOnlyList<ISpotSourceNode> constituents, IReadOnlyList<double> weights = null)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -67,7 +67,7 @@ namespace EventGraph
             hasLatestValue = new bool[this.constituents.Count];
             latestValues = new double[this.constituents.Count];
             this.weights = new double[this.constituents.Count];
-            var activeIndicesByNode = new Dictionary<ISpotQuoteNode, List<int>>(ReferenceEqualityComparer.Instance);
+            var activeIndicesByNode = new Dictionary<ISpotSourceNode, List<int>>(ReferenceEqualityComparer.Instance);
 
             if (weights != null)
             {
@@ -102,7 +102,7 @@ namespace EventGraph
                 }
             }
 
-            constituentIndicesByNode = new Dictionary<ISpotQuoteNode, int[]>(ReferenceEqualityComparer.Instance);
+            constituentIndicesByNode = new Dictionary<ISpotSourceNode, int[]>(ReferenceEqualityComparer.Instance);
             foreach (var pair in activeIndicesByNode)
             {
                 constituentIndicesByNode[pair.Key] = [.. pair.Value];
@@ -113,7 +113,7 @@ namespace EventGraph
 
         public string Name { get; }
 
-        public string Type => nameof(BasketAggregate);
+        public string Type => nameof(BasketSpotNode);
 
         public double Spot { get; private set; }
 
@@ -132,19 +132,19 @@ namespace EventGraph
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
-            return JsonDefinitionReader.GetString(definition, propertyName, nameof(BasketAggregate));
+            return JsonDefinitionReader.GetString(definition, propertyName, nameof(BasketSpotNode));
         }
 
-        private static List<ISpotQuoteNode> GetConstituents(
+        private static List<ISpotSourceNode> GetConstituents(
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
         {
             if (definition == null || !definition.TryGetValue("constituents", out var constituentsDefinition) || constituentsDefinition.ValueKind != JsonValueKind.Array)
             {
-                throw new InvalidDataException("BasketAggregate requires a constituents array.");
+                throw new InvalidDataException("BasketSpotNode requires a constituents array.");
             }
 
-            var constituents = new List<ISpotQuoteNode>();
+            var constituents = new List<ISpotSourceNode>();
             foreach (var name in constituentsDefinition.EnumerateArray())
             {
                 var key = name.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(name.GetString())
@@ -152,7 +152,7 @@ namespace EventGraph
                     : null;
                 if (key == null || !nodesByName.TryGetValue(key, out var node) || node is not SpotNode constituent)
                 {
-                    throw new InvalidDataException($"BasketAggregate references an unknown spot node '{name}'.");
+                    throw new InvalidDataException($"BasketSpotNode references an unknown spot node '{name}'.");
                 }
 
                 constituents.Add(constituent);
@@ -165,7 +165,7 @@ namespace EventGraph
         {
             if (definition == null || !definition.TryGetValue("weights", out var weights) || weights.ValueKind != JsonValueKind.Array)
             {
-                throw new InvalidDataException("BasketAggregate requires a weights array.");
+                throw new InvalidDataException("BasketSpotNode requires a weights array.");
             }
 
             var values = new List<double>();
@@ -173,7 +173,7 @@ namespace EventGraph
             {
                 if (weight.ValueKind != JsonValueKind.Number || !weight.TryGetDouble(out var value))
                 {
-                    throw new InvalidDataException("BasketAggregate weights must be numeric.");
+                    throw new InvalidDataException("BasketSpotNode weights must be numeric.");
                 }
 
                 values.Add(value);
@@ -200,8 +200,8 @@ namespace EventGraph
         }
 
         private static void AddActiveIndex(
-            Dictionary<ISpotQuoteNode, List<int>> activeIndicesByNode,
-            ISpotQuoteNode constituent,
+            Dictionary<ISpotSourceNode, List<int>> activeIndicesByNode,
+            ISpotSourceNode constituent,
             int index)
         {
             if (!activeIndicesByNode.TryGetValue(constituent, out var indices))
@@ -226,7 +226,7 @@ namespace EventGraph
 
         private void ConstituentTicked(object sender, QuoteTick e)
         {
-            if (sender is not ISpotQuoteNode node || !constituentIndicesByNode.TryGetValue(node, out var indices))
+            if (sender is not ISpotSourceNode node || !constituentIndicesByNode.TryGetValue(node, out var indices))
             {
                 return;
             }

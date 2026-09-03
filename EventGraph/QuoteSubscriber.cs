@@ -37,7 +37,7 @@ namespace EventGraph
         public void Subscribe(ITickingNode node)
         {
             node.Tick += NodeTicked;
-            nodeColors[node] = node is BasketAggregate
+            nodeColors[node] = node is BasketSpotNode
                 ? basketColorOverride ?? SourceColors[nextBasketColor++ % SourceColors.Length]
                 : SourceColors[nextSourceColor++ % SourceColors.Length];
             if (!quiet)

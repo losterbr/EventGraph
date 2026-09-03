@@ -12,8 +12,8 @@ namespace EventGraph.Tests
             Assert.Contains(nameof(CurrencyRateSource), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(RateCurveNode), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(VolatilityNode), NodeRegistry.SupportedTypes);
-            Assert.Contains(nameof(BasketAggregate), NodeRegistry.SupportedTypes);
-            Assert.Contains(nameof(ForwardCurve), NodeRegistry.SupportedTypes);
+            Assert.Contains(nameof(BasketSpotNode), NodeRegistry.SupportedTypes);
+            Assert.Contains(nameof(ForwardCurveNode), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(EquityOption), NodeRegistry.SupportedTypes);
         }
 
@@ -66,7 +66,7 @@ namespace EventGraph.Tests
             var spot = new SpotNode(source);
             using var definition = JsonDocument.Parse("""
         {
-          "type": "BasketAggregate",
+          "type": "BasketSpotNode",
           "name": "BASKET",
           "constituents": ["A"],
           "weights": [1]
@@ -77,7 +77,7 @@ namespace EventGraph.Tests
                 ToDictionary(definition),
                 new Dictionary<string, IGraphNode> { [GraphKey.Of(nameof(SpotNode), spot.Name)] = spot });
 
-            var basket = Assert.IsType<BasketAggregate>(node);
+            var basket = Assert.IsType<BasketSpotNode>(node);
             Assert.Equal("BASKET", basket.Name);
         }
 

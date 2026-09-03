@@ -6,7 +6,7 @@ namespace EventGraph
     /// <summary>
     /// Pass-through node that exposes an equity's constant volatility.
     /// </summary>
-    public sealed class VolatilityNode : IVolQuoteNode
+    public sealed class VolatilityNode : IVolSourceNode
     {
         private readonly EquitySource source;
 

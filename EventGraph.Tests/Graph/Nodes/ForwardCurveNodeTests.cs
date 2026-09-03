@@ -12,10 +12,10 @@ namespace EventGraph.Tests
             var discountFactor = new RateCurveNode(new CurrencyRateSource("USD", 0.05));
             var maturity = DateTime.Today.AddYears(1);
 
-            var forward = new ForwardCurve(spotNode, discountFactor);
+            var forward = new ForwardCurveNode(spotNode, discountFactor);
 
             Assert.Equal(equity.Spot / discountFactor.DiscountFactor(maturity), forward.Forward(maturity), precision: 12);
-            Assert.Equal(nameof(ForwardCurve), forward.Type);
+            Assert.Equal(nameof(ForwardCurveNode), forward.Type);
             Assert.Equal("USD", forward.Currency);
             Assert.Equal([spotNode, discountFactor], forward.Dependencies);
         }
@@ -25,7 +25,7 @@ namespace EventGraph.Tests
         {
             var discountFactor = new RateCurveNode(new CurrencyRateSource("USD", 0.05));
 
-            _ = Assert.Throws<ArgumentNullException>(() => new ForwardCurve(null, discountFactor));
+            _ = Assert.Throws<ArgumentNullException>(() => new ForwardCurveNode(null, discountFactor));
         }
 
         [Fact]
@@ -34,7 +34,7 @@ namespace EventGraph.Tests
             var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
 
-            _ = Assert.Throws<ArgumentNullException>(() => new ForwardCurve(spotNode, null));
+            _ = Assert.Throws<ArgumentNullException>(() => new ForwardCurveNode(spotNode, null));
         }
 
         [Fact]
@@ -44,7 +44,7 @@ namespace EventGraph.Tests
             var spotNode = new SpotNode(equity);
             var eurDiscountFactor = new RateCurveNode(new CurrencyRateSource("EUR", 0.05));
 
-            var exception = Assert.Throws<ArgumentException>(() => new ForwardCurve(spotNode, eurDiscountFactor));
+            var exception = Assert.Throws<ArgumentException>(() => new ForwardCurveNode(spotNode, eurDiscountFactor));
 
             Assert.Contains("currencies must match", exception.Message, StringComparison.OrdinalIgnoreCase);
         }
@@ -55,7 +55,7 @@ namespace EventGraph.Tests
             var equity = new EquitySource("AAPL", 100.0, 0.2, 0.0);
             var spotNode = new SpotNode(equity);
             var discountFactor = new RateCurveNode(new CurrencyRateSource("USD", 0.05));
-            var forward = new ForwardCurve(spotNode, discountFactor);
+            var forward = new ForwardCurveNode(spotNode, discountFactor);
             QuoteTick? update = null;
             forward.Tick += (_, message) => update = message;
 
@@ -76,7 +76,7 @@ namespace EventGraph.Tests
                 .EnumerateObject()
                 .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
 
-            var forward = new ForwardCurve(definition, new Dictionary<string, IGraphNode>
+            var forward = new ForwardCurveNode(definition, new Dictionary<string, IGraphNode>
             {
                 ["SpotNode::AAPL"] = spotNode,
                 ["RateCurveNode::USD"] = discountFactor

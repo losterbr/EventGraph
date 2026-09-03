@@ -85,19 +85,21 @@ namespace EventGraph.Tests
                 WriteDefinition(directory, "b.json", "B");
                 File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ """
             {
-              "type": "BasketAggregate",
+              "type": "BasketSpotNode",
               "name": "EquityBasket",
               "constituents": ["A", "B"],
               "weights": [0.25, 0.75]
             }
             """);
 
-                var nodes = NodeGraphLoader.LoadNodes(directory);
+                var nodes = NodeGraphLoader.LoadGraph(directory).Nodes;
 
-                var basket = Assert.Single(nodes.OfType<BasketAggregate>());
+                var basket = Assert.Single(nodes.OfType<BasketSpotNode>());
                 Assert.Equal("EquityBasket", basket.Name);
                 Assert.Equal("A=0.25, B=0.75", basket.GetWeights());
                 Assert.All(basket.Dependencies, dependency => Assert.IsType<SpotNode>(dependency));
+                var output = Assert.Single(nodes.OfType<SpotNode>().Where(node => node.Name == basket.Name));
+                Assert.Equal([basket], output.Dependencies);
             }
             finally
             {
@@ -115,7 +117,7 @@ namespace EventGraph.Tests
                 WriteDefinition(directory, "a.json", "A");
                 File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ """
             {
-              "type": "BasketAggregate",
+              "type": "BasketSpotNode",
               "name": "EquityBasket",
               "constituents": ["A", "B"],
               "weights": [0.25, 0.75]
@@ -124,11 +126,12 @@ namespace EventGraph.Tests
 
                 var graph = NodeGraphLoader.LoadGraph(directory);
 
-                Assert.Equal(["A", "B", "A", "B", "EquityBasket"], graph.Nodes.Select(node => node.Name));
+                Assert.Equal(["A", "B", "A", "B", "EquityBasket", "EquityBasket"], graph.Nodes.Select(node => node.Name));
                 Assert.Equal(0, graph.GetIndex("EquitySource::A"));
                 Assert.Equal(1, graph.NodeIndexByName["EquitySource::B"]);
-                Assert.Equal([2, 3], graph.DependenciesByNode[graph.GetIndex("EquityBasket")]);
+                Assert.Equal([2, 3], graph.DependenciesByNode[graph.GetIndex("BasketSpotNode::EquityBasket")]);
                 Assert.Empty(graph.DependenciesByNode[graph.GetIndex("EquitySource::A")]);
+                Assert.Equal([graph.GetIndex("BasketSpotNode::EquityBasket")], graph.DependenciesByNode[graph.GetIndex("SpotNode::EquityBasket")]);
             }
             finally
             {
@@ -142,7 +145,7 @@ namespace EventGraph.Tests
             var directory = CreateDirectory();
             try
             {
-                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"B\",\"constituents\":[\"Missing\"],\"weights\":[1]}");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketSpotNode\",\"name\":\"B\",\"constituents\":[\"Missing\"],\"weights\":[1]}");
 
                 _ = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
             }
@@ -177,7 +180,7 @@ namespace EventGraph.Tests
             try
             {
                 WriteDefinition(directory, "source.json", "A");
-                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketAggregate\",\"name\":\"Basket\",\"constituents\":[\"A\"]}");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketSpotNode\",\"name\":\"Basket\",\"constituents\":[\"A\"]}");
 
                 var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
 

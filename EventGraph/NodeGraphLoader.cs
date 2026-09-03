@@ -11,7 +11,7 @@ namespace EventGraph
     /// </summary>
     public static class NodeGraphLoader
     {
-        public static IReadOnlyList<ISpotQuoteNode> LoadNodes(string directoryPath)
+        public static IReadOnlyList<ISpotSourceNode> LoadNodes(string directoryPath)
         {
             return LoadGraph(directoryPath).QuoteNodes;
         }
@@ -64,12 +64,12 @@ namespace EventGraph
             foreach (var definition in definitionsByKey.Values)
             {
                 var type = GetType(definition);
-                if (type == nameof(ForwardCurve))
+                if (type == nameof(ForwardCurveNode))
                 {
                     AddIfMissing(toAdd, definitionsByKey, definition, "discountCurve");
                     AddIfMissing(toAdd, definitionsByKey, definition, "spot");
                 }
-                else if (type == nameof(BasketAggregate))
+                else if (type == nameof(BasketSpotNode))
                 {
                     AddBasketSpotNodesIfMissing(toAdd, definitionsByKey, definition);
                 }
@@ -191,7 +191,7 @@ namespace EventGraph
         {
             return type switch
             {
-                nameof(ForwardCurve) => GetReferencedNodeName(definition, "spot"),
+                nameof(ForwardCurveNode) => GetReferencedNodeName(definition, "spot"),
                 _ => throw new InvalidDataException($"Graph definitions of type '{type}' must provide a non-empty string name.")
             };
         }
@@ -258,10 +258,17 @@ namespace EventGraph
             Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
             IReadOnlyDictionary<string, JsonElement> definition)
         {
-            foreach (var dependencyKey in BasketAggregate.GetDependencyNames(definition))
+            var basketName = GetNodeName(definition);
+            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(SpotNode), basketName, new Dictionary<string, JsonElement>
+            {
+                ["name"] = JsonSerializer.SerializeToElement(basketName),
+                ["source"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(BasketSpotNode), basketName))
+            });
+
+            foreach (var dependencyKey in BasketSpotNode.GetDependencyNames(definition))
             {
                 var name = dependencyKey[(dependencyKey.IndexOf("::", StringComparison.Ordinal) + 2)..];
-                var basketKey = GraphKey.Of(nameof(BasketAggregate), name);
+                var basketKey = GraphKey.Of(nameof(BasketSpotNode), name);
                 var sourceKey = definitionsByKey.ContainsKey(basketKey)
                     ? basketKey
                     : GraphKey.Of(nameof(EquitySource), name);
@@ -294,7 +301,7 @@ namespace EventGraph
             {
                 ["name"] = JsonSerializer.SerializeToElement(rateSourceName)
             });
-            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(ForwardCurve), underlyer, new Dictionary<string, JsonElement>
+            AddSyntheticIfMissing(toAdd, definitionsByKey, nameof(ForwardCurveNode), underlyer, new Dictionary<string, JsonElement>
             {
                 ["spot"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(SpotNode), underlyer)),
                 ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveNode), rateSourceName))
@@ -302,7 +309,7 @@ namespace EventGraph
 
             return new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase)
             {
-                ["forward"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(ForwardCurve), underlyer)),
+                ["forward"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(ForwardCurveNode), underlyer)),
                 ["volatility"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(VolatilityNode), underlyer)),
                 ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveNode), rateSourceName))
             };

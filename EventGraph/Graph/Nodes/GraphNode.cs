@@ -24,9 +24,9 @@ namespace EventGraph
     }
 
     /// <summary>
-    /// Represents the spot quote-producing node type.
+    /// Represents a graph node that provides a spot value for another node to transform.
     /// </summary>
-    public interface ISpotQuoteNode : ITickingNode
+    public interface ISpotNode : ITickingNode
     {
         double Spot { get; }
 
@@ -34,11 +34,28 @@ namespace EventGraph
     }
 
     /// <summary>
+    /// Represents a graph node that exposes a spot quote for downstream consumers.
+    /// </summary>
+    public interface ISpotSourceNode : ISpotNode
+    {
+    }
+
+    /// <summary>
     /// Represents a graph node that provides a volatility quote.
     /// </summary>
-    public interface IVolQuoteNode : IGraphNode
+    public interface IVolSourceNode : IGraphNode
     {
         double Volatility { get; }
+    }
+
+    /// <summary>
+    /// Represents a graph node that provides a flat interest rate quote.
+    /// </summary>
+    public interface IRateSourceNode : IGraphNode
+    {
+        double InterestRate { get; }
+
+        string Currency { get; }
     }
 
     /// <summary>
