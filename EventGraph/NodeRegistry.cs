@@ -37,6 +37,12 @@ namespace EventGraph
                 [nameof(EquityOptionNode)] = new DelegateGraphDefinitionEnricher(EquityOptionNode.EnrichDefinition)
             };
 
+        private static readonly Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, string>> NameResolvers =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                [nameof(ForwardCurveNode)] = ForwardCurveNode.InferName
+            };
+
         private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>> Factories =
             new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>>(StringComparer.OrdinalIgnoreCase)
             {
@@ -83,6 +89,19 @@ namespace EventGraph
             return DefinitionEnrichers.TryGetValue(type, out var enricher)
                 ? enricher.Enrich(context, definition)
                 : definition;
+        }
+
+        internal static string GetNodeKey(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            ArgumentNullException.ThrowIfNull(definition);
+
+            var type = GetType(definition);
+            var name = definition.TryGetValue("name", out var nameProperty) && nameProperty.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(nameProperty.GetString())
+                ? nameProperty.GetString()
+                : NameResolvers.TryGetValue(type, out var nameResolver)
+                    ? nameResolver(definition)
+                    : throw new InvalidDataException($"Graph definitions of type '{type}' must provide a non-empty string name.");
+            return GraphKey.Of(type, name);
         }
 
         public static IGraphNode CreateNode(

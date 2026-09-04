@@ -42,7 +42,7 @@ namespace EventGraph
             var definitionsByKey = new Dictionary<string, IReadOnlyDictionary<string, JsonElement>>(StringComparer.OrdinalIgnoreCase);
             foreach (var definition in definitions)
             {
-                var key = GetNodeKey(definition);
+                var key = NodeRegistry.GetNodeKey(definition);
                 if (definitionsByKey.ContainsKey(key))
                 {
                     throw new InvalidDataException($"Duplicate graph node key '{key}' detected in '{directoryPath}'.");
@@ -63,7 +63,7 @@ namespace EventGraph
             var enrichmentContext = new GraphDefinitionEnrichmentContext(definitionsByKey, toAdd);
             foreach (var definition in definitionsByKey.Values.ToList())
             {
-                definitionsByKey[GetNodeKey(definition)] = NodeRegistry.EnrichDefinition(enrichmentContext, definition);
+                definitionsByKey[NodeRegistry.GetNodeKey(definition)] = NodeRegistry.EnrichDefinition(enrichmentContext, definition);
             }
 
             foreach (var definition in toAdd)
@@ -74,7 +74,7 @@ namespace EventGraph
                     throw new InvalidDataException($"Source node type '{type}' must be defined by a JSON file and cannot be synthesized.");
                 }
 
-                var key = GetNodeKey(definition);
+                var key = NodeRegistry.GetNodeKey(definition);
                 if (!definitionsByKey.ContainsKey(key))
                 {
                     definitionsByKey[key] = definition;
@@ -86,7 +86,7 @@ namespace EventGraph
             var dependentsByKey = definitionsByKey.Keys.ToDictionary(key => key, _ => new List<string>(), StringComparer.OrdinalIgnoreCase);
             foreach (var definition in definitionsByKey.Values)
             {
-                var key = GetNodeKey(definition);
+                var key = NodeRegistry.GetNodeKey(definition);
                 foreach (var dependencyKey in NodeRegistry.GetDependencyNames(definition))
                 {
                     if (ResolveDependencyKey(dependencyKey, definitionsByKey) is not { } resolvedKey)
@@ -163,39 +163,6 @@ namespace EventGraph
                 .Where(key => key.EndsWith($"::{dependencyKey}", StringComparison.OrdinalIgnoreCase))
                 .ToList();
             return matches.Count == 1 ? matches[0] : null;
-        }
-
-        private static string GetNodeKey(IReadOnlyDictionary<string, JsonElement> definition)
-        {
-            var type = GetType(definition);
-            return !definition.TryGetValue("name", out var name) || name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString())
-                ? GraphKey.Of(type, InferInternalNodeName(definition, type))
-                : GraphKey.Of(type, name.GetString());
-        }
-
-        private static string InferInternalNodeName(IReadOnlyDictionary<string, JsonElement> definition, string type)
-        {
-            return type switch
-            {
-                nameof(ForwardCurveNode) => GetReferencedNodeName(definition, "spot"),
-                _ => throw new InvalidDataException($"Graph definitions of type '{type}' must provide a non-empty string name.")
-            };
-        }
-
-        private static string GetReferencedNodeName(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
-        {
-            var reference = GetStringProperty(definition, propertyName);
-            var separator = reference.IndexOf("::", StringComparison.Ordinal);
-            return separator < 0
-                ? reference
-                : reference[(separator + 2)..];
-        }
-
-        private static string GetStringProperty(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
-        {
-            return !definition.TryGetValue(propertyName, out var property) || property.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(property.GetString())
-                ? throw new InvalidDataException($"Every graph definition must provide a non-empty string '{propertyName}' property.")
-                : property.GetString();
         }
 
         private static IReadOnlyDictionary<string, JsonElement> LoadDefinition(string path)

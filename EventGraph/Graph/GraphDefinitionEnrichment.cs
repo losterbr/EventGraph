@@ -91,6 +91,15 @@ namespace EventGraph
             return JsonDefinitionReader.GetString(definition, propertyName, "graph definition");
         }
 
+        public static string GetReferencedNodeName(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
+        {
+            var reference = GetString(definition, propertyName);
+            var separator = reference.IndexOf("::", StringComparison.Ordinal);
+            return separator < 0
+                ? reference
+                : reference[(separator + 2)..];
+        }
+
         public static string GetOptionalString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
             return definition.TryGetValue(propertyName, out var property) && property.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(property.GetString())
