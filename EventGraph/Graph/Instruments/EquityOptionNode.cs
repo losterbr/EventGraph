@@ -159,7 +159,7 @@ namespace EventGraph
 
         public double Price { get; private set; }
 
-        public string Currency => discountCurveNode.Currency;
+        public string Currency => forwardNode.Currency;
 
         private void ForwardTicked(object sender, QuoteTick e)
         {
