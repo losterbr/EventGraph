@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace EventGraph
 {
@@ -17,5 +18,10 @@ namespace EventGraph
         public double Volatility => source.Volatility;
 
         public IReadOnlyList<IGraphNode> Dependencies => [source];
+
+        internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return [GraphKey.Of(nameof(EquitySource), GraphDefinitionEnrichmentContext.GetNodeName(definition))];
+        }
     }
 }

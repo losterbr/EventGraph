@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace EventGraph
 {
@@ -41,6 +42,18 @@ namespace EventGraph
         public string Currency => source.Currency;
 
         public IReadOnlyList<IGraphNode> Dependencies => [source];
+
+        internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return [GetDependencyName(definition)];
+        }
+
+        internal static string GetDependencyName(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return definition.TryGetValue("source", out var source) && source.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(source.GetString())
+                ? source.GetString()
+                : GraphKey.Of(nameof(EquitySource), GraphDefinitionEnrichmentContext.GetNodeName(definition));
+        }
 
         private void SourceTicked(object sender, QuoteTick e)
         {

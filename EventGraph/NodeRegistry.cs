@@ -21,10 +21,10 @@ namespace EventGraph
             new(StringComparer.OrdinalIgnoreCase)
             {
                 [nameof(BasketSpotNode)] = BasketSpotNode.GetDependencyNames,
-                [nameof(SpotNode)] = definition => [GetSpotDependencyName(definition)],
-                [nameof(VolatilityNode)] = definition => [GraphKey.Of(nameof(EquitySource), GetNodeName(definition))],
+                [nameof(SpotNode)] = SpotNode.GetDependencyNames,
+                [nameof(VolatilityNode)] = VolatilityNode.GetDependencyNames,
                 [nameof(ForwardCurveNode)] = ForwardCurveNode.GetDependencyNames,
-                [nameof(RateCurveNode)] = definition => [GraphKey.Of(nameof(CurrencyRateSource), GetNodeName(definition))],
+                [nameof(RateCurveNode)] = RateCurveNode.GetDependencyNames,
                 [nameof(EquityOptionNode)] = EquityOptionNode.GetDependencyNames
             };
 
@@ -42,7 +42,7 @@ namespace EventGraph
             {
                 [nameof(EquitySource)] = (definition, _) => new EquitySource(definition),
                 [nameof(CurrencyRateSource)] = (definition, _) => new CurrencyRateSource(definition),
-                [nameof(SpotNode)] = (definition, nodesByName) => new SpotNode(ResolveByKey<ISpotSourceNode>(GetSpotDependencyName(definition), nodesByName)),
+                [nameof(SpotNode)] = (definition, nodesByName) => new SpotNode(ResolveByKey<ISpotSourceNode>(SpotNode.GetDependencyName(definition), nodesByName)),
                 [nameof(VolatilityNode)] = (definition, nodesByName) => new VolatilityNode(Resolve<IVolSourceNode>(definition, nodesByName, nameof(EquitySource))),
                 [nameof(BasketSpotNode)] = (definition, nodesByName) => new BasketSpotNode(definition, nodesByName),
                 [nameof(RateCurveNode)] = (definition, nodesByName) => new RateCurveNode(Resolve<IRateSourceNode>(definition, nodesByName, nameof(CurrencyRateSource))),
@@ -109,13 +109,6 @@ namespace EventGraph
             return !definition.TryGetValue("name", out var name) || name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString())
                 ? throw new InvalidDataException("Every graph definition must provide a non-empty string name.")
                 : name.GetString();
-        }
-
-        private static string GetSpotDependencyName(IReadOnlyDictionary<string, JsonElement> definition)
-        {
-            return definition.TryGetValue("source", out var source) && source.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(source.GetString())
-                ? source.GetString()
-                : GraphKey.Of(nameof(EquitySource), GetNodeName(definition));
         }
 
         private static TNode Resolve<TNode>(

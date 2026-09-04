@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace EventGraph
 {
@@ -27,5 +28,10 @@ namespace EventGraph
         public Func<DateTime, double> DiscountFactor { get; }
 
         public IReadOnlyList<IGraphNode> Dependencies => [source];
+
+        internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return [GraphKey.Of(nameof(CurrencyRateSource), GraphDefinitionEnrichmentContext.GetNodeName(definition))];
+        }
     }
 }
