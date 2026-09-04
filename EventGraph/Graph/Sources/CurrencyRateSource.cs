@@ -49,6 +49,13 @@ namespace EventGraph
 
         public IReadOnlyList<IGraphNode> Dependencies => [];
 
+        internal static IGraphNode Create(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, IGraphNode> _)
+        {
+            return new CurrencyRateSource(definition);
+        }
+
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
             return JsonDefinitionReader.GetString(definition, propertyName, nameof(CurrencyRateSource));

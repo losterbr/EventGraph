@@ -33,5 +33,12 @@ namespace EventGraph
         {
             return [GraphKey.Of(nameof(CurrencyRateSource), GraphDefinitionEnrichmentContext.GetNodeName(definition))];
         }
+
+        internal static IGraphNode Create(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
+        {
+            return new RateCurveNode(GraphNodeResolver.ResolveByName<IRateSourceNode>(definition, nodesByName, nameof(CurrencyRateSource)));
+        }
     }
 }

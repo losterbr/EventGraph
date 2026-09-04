@@ -40,14 +40,14 @@ namespace EventGraph
         private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>> Factories =
             new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>>(StringComparer.OrdinalIgnoreCase)
             {
-                [nameof(EquitySource)] = (definition, _) => new EquitySource(definition),
-                [nameof(CurrencyRateSource)] = (definition, _) => new CurrencyRateSource(definition),
-                [nameof(SpotNode)] = (definition, nodesByName) => new SpotNode(ResolveByKey<ISpotSourceNode>(SpotNode.GetDependencyName(definition), nodesByName)),
-                [nameof(VolatilityNode)] = (definition, nodesByName) => new VolatilityNode(Resolve<IVolSourceNode>(definition, nodesByName, nameof(EquitySource))),
-                [nameof(BasketSpotNode)] = (definition, nodesByName) => new BasketSpotNode(definition, nodesByName),
-                [nameof(RateCurveNode)] = (definition, nodesByName) => new RateCurveNode(Resolve<IRateSourceNode>(definition, nodesByName, nameof(CurrencyRateSource))),
-                [nameof(ForwardCurveNode)] = (definition, nodesByName) => new ForwardCurveNode(definition, nodesByName),
-                [nameof(EquityOptionNode)] = (definition, nodesByName) => new EquityOptionNode(definition, nodesByName)
+                [nameof(EquitySource)] = EquitySource.Create,
+                [nameof(CurrencyRateSource)] = CurrencyRateSource.Create,
+                [nameof(SpotNode)] = SpotNode.Create,
+                [nameof(VolatilityNode)] = VolatilityNode.Create,
+                [nameof(BasketSpotNode)] = BasketSpotNode.Create,
+                [nameof(RateCurveNode)] = RateCurveNode.Create,
+                [nameof(ForwardCurveNode)] = ForwardCurveNode.Create,
+                [nameof(EquityOptionNode)] = EquityOptionNode.Create
             };
 
         public static IReadOnlyCollection<string> SupportedTypes => [.. Factories.Keys];
@@ -104,32 +104,5 @@ namespace EventGraph
                 : type.GetString();
         }
 
-        private static string GetNodeName(IReadOnlyDictionary<string, JsonElement> definition)
-        {
-            return !definition.TryGetValue("name", out var name) || name.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(name.GetString())
-                ? throw new InvalidDataException("Every graph definition must provide a non-empty string name.")
-                : name.GetString();
-        }
-
-        private static TNode Resolve<TNode>(
-            IReadOnlyDictionary<string, JsonElement> definition,
-            IReadOnlyDictionary<string, IGraphNode> nodesByName,
-            string sourceType)
-            where TNode : class, IGraphNode
-        {
-            var name = GetNodeName(definition);
-            var key = GraphKey.Of(sourceType, name);
-            return nodesByName != null && nodesByName.TryGetValue(key, out var node) && node is TNode typedNode
-                ? typedNode
-                : throw new InvalidDataException($"Could not resolve '{key}' as {typeof(TNode).Name}.");
-        }
-
-        private static TNode ResolveByKey<TNode>(string key, IReadOnlyDictionary<string, IGraphNode> nodesByName)
-            where TNode : class, IGraphNode
-        {
-            return nodesByName != null && nodesByName.TryGetValue(key, out var node) && node is TNode typedNode
-                ? typedNode
-                : throw new InvalidDataException($"Could not resolve '{key}' as {typeof(TNode).Name}.");
-        }
     }
 }

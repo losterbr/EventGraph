@@ -85,6 +85,13 @@ namespace EventGraph
 
         public IReadOnlyList<IGraphNode> Dependencies => [forwardNode, volatilitySource, discountCurveNode];
 
+        internal static IGraphNode Create(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
+        {
+            return new EquityOptionNode(definition, nodesByName);
+        }
+
         internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
         {
             return [GetString(definition, "forward"), GetString(definition, "volatility"), GetString(definition, "discountCurve")];

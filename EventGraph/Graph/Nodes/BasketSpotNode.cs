@@ -116,6 +116,13 @@ namespace EventGraph
 
         public IReadOnlyList<IGraphNode> Dependencies => constituents;
 
+        internal static IGraphNode Create(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
+        {
+            return new BasketSpotNode(definition, nodesByName);
+        }
+
         internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
         {
             return !definition.TryGetValue("constituents", out var constituents) || constituents.ValueKind != JsonValueKind.Array

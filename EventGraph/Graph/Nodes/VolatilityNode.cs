@@ -23,5 +23,12 @@ namespace EventGraph
         {
             return [GraphKey.Of(nameof(EquitySource), GraphDefinitionEnrichmentContext.GetNodeName(definition))];
         }
+
+        internal static IGraphNode Create(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
+        {
+            return new VolatilityNode(GraphNodeResolver.ResolveByName<IVolSourceNode>(definition, nodesByName, nameof(EquitySource)));
+        }
     }
 }

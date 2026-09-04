@@ -49,6 +49,13 @@ namespace EventGraph
 
         public IReadOnlyList<IGraphNode> Dependencies => [spotNode, discountCurveNode];
 
+        internal static IGraphNode Create(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
+        {
+            return new ForwardCurveNode(definition, nodesByName);
+        }
+
         internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
         {
             return [GetString(definition, "spot"), GetString(definition, "discountCurve")];

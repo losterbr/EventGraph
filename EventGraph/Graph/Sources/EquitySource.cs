@@ -77,6 +77,13 @@ namespace EventGraph
 
         public IReadOnlyList<IGraphNode> Dependencies => [];
 
+        internal static IGraphNode Create(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, IGraphNode> _)
+        {
+            return new EquitySource(definition);
+        }
+
         internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
             GraphDefinitionEnrichmentContext context,
             IReadOnlyDictionary<string, JsonElement> definition)

@@ -55,6 +55,13 @@ namespace EventGraph
                 : GraphKey.Of(nameof(EquitySource), GraphDefinitionEnrichmentContext.GetNodeName(definition));
         }
 
+        internal static IGraphNode Create(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyDictionary<string, IGraphNode> nodesByName)
+        {
+            return new SpotNode(GraphNodeResolver.ResolveByKey<ISpotSourceNode>(GetDependencyName(definition), nodesByName));
+        }
+
         private void SourceTicked(object sender, QuoteTick e)
         {
             tick?.Invoke(this, new QuoteTick(Name, e.Value));
