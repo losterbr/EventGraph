@@ -5,7 +5,8 @@
         "git add": true,
         "git commit": true,
         "./scripts/quality.sh": true,
-        "dotnet build": true
+        "dotnet build": true,
+        "test": true
     },
     "coverage-gutters.coverageFileNames": [
         "coverage.cobertura.xml",
