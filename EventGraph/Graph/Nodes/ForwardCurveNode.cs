@@ -56,9 +56,14 @@ namespace EventGraph
             return new ForwardCurveNode(definition, nodesByName);
         }
 
-        internal static string InferName(IReadOnlyDictionary<string, JsonElement> definition)
+        internal static string GetNodeName(IReadOnlyDictionary<string, JsonElement> definition)
         {
             return GraphDefinitionEnrichmentContext.GetReferencedNodeName(definition, "spot");
+        }
+
+        internal static bool IsSource()
+        {
+            return false;
         }
 
         internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)

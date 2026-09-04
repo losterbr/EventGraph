@@ -5,25 +5,6 @@ using System.Text.Json;
 
 namespace EventGraph
 {
-    internal interface IGraphDefinitionEnricher
-    {
-        IReadOnlyDictionary<string, JsonElement> Enrich(
-            GraphDefinitionEnrichmentContext context,
-            IReadOnlyDictionary<string, JsonElement> definition);
-    }
-
-    internal sealed class DelegateGraphDefinitionEnricher(
-        Func<GraphDefinitionEnrichmentContext, IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, JsonElement>> enrich)
-        : IGraphDefinitionEnricher
-    {
-        public IReadOnlyDictionary<string, JsonElement> Enrich(
-            GraphDefinitionEnrichmentContext context,
-            IReadOnlyDictionary<string, JsonElement> definition)
-        {
-            return enrich(context, definition);
-        }
-    }
-
     internal sealed class GraphDefinitionEnrichmentContext(
         Dictionary<string, IReadOnlyDictionary<string, JsonElement>> definitionsByKey,
         List<IReadOnlyDictionary<string, JsonElement>> definitionsToAdd)

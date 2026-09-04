@@ -84,6 +84,21 @@ namespace EventGraph
             return new EquitySource(definition);
         }
 
+        internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> _)
+        {
+            return [];
+        }
+
+        internal static string GetNodeName(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return GraphDefinitionEnrichmentContext.GetNodeName(definition);
+        }
+
+        internal static bool IsSource()
+        {
+            return true;
+        }
+
         internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
             GraphDefinitionEnrichmentContext context,
             IReadOnlyDictionary<string, JsonElement> definition)

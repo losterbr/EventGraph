@@ -56,6 +56,28 @@ namespace EventGraph
             return new CurrencyRateSource(definition);
         }
 
+        internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> _)
+        {
+            return [];
+        }
+
+        internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
+            GraphDefinitionEnrichmentContext _,
+            IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return definition;
+        }
+
+        internal static string GetNodeName(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return GraphDefinitionEnrichmentContext.GetNodeName(definition);
+        }
+
+        internal static bool IsSource()
+        {
+            return true;
+        }
+
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
             return JsonDefinitionReader.GetString(definition, propertyName, nameof(CurrencyRateSource));

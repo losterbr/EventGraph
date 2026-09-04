@@ -123,6 +123,16 @@ namespace EventGraph
             return new BasketSpotNode(definition, nodesByName);
         }
 
+        internal static string GetNodeName(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return GraphDefinitionEnrichmentContext.GetNodeName(definition);
+        }
+
+        internal static bool IsSource()
+        {
+            return false;
+        }
+
         internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
         {
             return !definition.TryGetValue("constituents", out var constituents) || constituents.ValueKind != JsonValueKind.Array

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 namespace EventGraph
@@ -11,71 +12,38 @@ namespace EventGraph
     /// </summary>
     public static class NodeRegistry
     {
-        private static readonly HashSet<string> SourceTypes = new(StringComparer.OrdinalIgnoreCase)
-        {
-            nameof(EquitySource),
-            nameof(CurrencyRateSource)
-        };
-
-        private static readonly Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyList<string>>> DependencyResolvers =
-            new(StringComparer.OrdinalIgnoreCase)
+        private static readonly IReadOnlyDictionary<string, GraphNodeRegistration> Registrations =
+            new[]
             {
-                [nameof(BasketSpotNode)] = BasketSpotNode.GetDependencyNames,
-                [nameof(SpotNode)] = SpotNode.GetDependencyNames,
-                [nameof(VolatilityNode)] = VolatilityNode.GetDependencyNames,
-                [nameof(ForwardCurveNode)] = ForwardCurveNode.GetDependencyNames,
-                [nameof(RateCurveNode)] = RateCurveNode.GetDependencyNames,
-                [nameof(EquityOptionNode)] = EquityOptionNode.GetDependencyNames
-            };
+                typeof(EquitySource),
+                typeof(CurrencyRateSource),
+                typeof(SpotNode),
+                typeof(VolatilityNode),
+                typeof(BasketSpotNode),
+                typeof(RateCurveNode),
+                typeof(ForwardCurveNode),
+                typeof(EquityOptionNode)
+            }
+            .Select(type => new GraphNodeRegistration(type))
+            .ToDictionary(registration => registration.NodeType, StringComparer.OrdinalIgnoreCase);
 
-        private static readonly Dictionary<string, IGraphDefinitionEnricher> DefinitionEnrichers =
-            new(StringComparer.OrdinalIgnoreCase)
-            {
-                [nameof(EquitySource)] = new DelegateGraphDefinitionEnricher(EquitySource.EnrichDefinition),
-                [nameof(ForwardCurveNode)] = new DelegateGraphDefinitionEnricher(ForwardCurveNode.EnrichDefinition),
-                [nameof(BasketSpotNode)] = new DelegateGraphDefinitionEnricher(BasketSpotNode.EnrichDefinition),
-                [nameof(EquityOptionNode)] = new DelegateGraphDefinitionEnricher(EquityOptionNode.EnrichDefinition)
-            };
-
-        private static readonly Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, string>> NameResolvers =
-            new(StringComparer.OrdinalIgnoreCase)
-            {
-                [nameof(ForwardCurveNode)] = ForwardCurveNode.InferName
-            };
-
-        private static readonly IReadOnlyDictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>> Factories =
-            new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyDictionary<string, IGraphNode>, IGraphNode>>(StringComparer.OrdinalIgnoreCase)
-            {
-                [nameof(EquitySource)] = EquitySource.Create,
-                [nameof(CurrencyRateSource)] = CurrencyRateSource.Create,
-                [nameof(SpotNode)] = SpotNode.Create,
-                [nameof(VolatilityNode)] = VolatilityNode.Create,
-                [nameof(BasketSpotNode)] = BasketSpotNode.Create,
-                [nameof(RateCurveNode)] = RateCurveNode.Create,
-                [nameof(ForwardCurveNode)] = ForwardCurveNode.Create,
-                [nameof(EquityOptionNode)] = EquityOptionNode.Create
-            };
-
-        public static IReadOnlyCollection<string> SupportedTypes => [.. Factories.Keys];
+        public static IReadOnlyCollection<string> SupportedTypes => [.. Registrations.Keys];
 
         public static bool IsSupportedType(string type)
         {
-            return !string.IsNullOrWhiteSpace(type) && Factories.ContainsKey(type);
+            return !string.IsNullOrWhiteSpace(type) && Registrations.ContainsKey(type);
         }
 
         public static bool IsSourceType(string type)
         {
-            return !string.IsNullOrWhiteSpace(type) && SourceTypes.Contains(type);
+            return !string.IsNullOrWhiteSpace(type) && Registrations.TryGetValue(type, out var registration) && registration.IsSource;
         }
 
         public static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
         {
             ArgumentNullException.ThrowIfNull(definition);
 
-            var type = GetType(definition);
-            return DependencyResolvers.TryGetValue(type, out var resolver)
-                ? resolver(definition)
-                : [];
+            return GetRegistration(definition).GetDependencyNames(definition);
         }
 
         internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
@@ -85,23 +53,15 @@ namespace EventGraph
             ArgumentNullException.ThrowIfNull(context);
             ArgumentNullException.ThrowIfNull(definition);
 
-            var type = GetType(definition);
-            return DefinitionEnrichers.TryGetValue(type, out var enricher)
-                ? enricher.Enrich(context, definition)
-                : definition;
+            return GetRegistration(definition).EnrichDefinition(context, definition);
         }
 
         internal static string GetNodeKey(IReadOnlyDictionary<string, JsonElement> definition)
         {
             ArgumentNullException.ThrowIfNull(definition);
 
-            var type = GetType(definition);
-            var name = definition.TryGetValue("name", out var nameProperty) && nameProperty.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(nameProperty.GetString())
-                ? nameProperty.GetString()
-                : NameResolvers.TryGetValue(type, out var nameResolver)
-                    ? nameResolver(definition)
-                    : throw new InvalidDataException($"Graph definitions of type '{type}' must provide a non-empty string name.");
-            return GraphKey.Of(type, name);
+            var registration = GetRegistration(definition);
+            return GraphKey.Of(registration.NodeType, registration.GetNodeName(definition));
         }
 
         public static IGraphNode CreateNode(
@@ -110,10 +70,7 @@ namespace EventGraph
         {
             ArgumentNullException.ThrowIfNull(definition);
 
-            var type = GetType(definition);
-            return !Factories.TryGetValue(type, out var factory)
-                ? throw new InvalidDataException($"Unsupported graph node type: '{type}'.")
-                : factory(definition, nodesByName);
+            return GetRegistration(definition).Create(definition, nodesByName);
         }
 
         private static string GetType(IReadOnlyDictionary<string, JsonElement> definition)
@@ -121,6 +78,14 @@ namespace EventGraph
             return !definition.TryGetValue("type", out var type) || type.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(type.GetString())
                 ? throw new InvalidDataException("Every graph definition must provide a non-empty string type.")
                 : type.GetString();
+        }
+
+        private static GraphNodeRegistration GetRegistration(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            var type = GetType(definition);
+            return Registrations.TryGetValue(type, out var registration)
+                ? registration
+                : throw new InvalidDataException($"Unsupported graph node type: '{type}'.");
         }
 
     }

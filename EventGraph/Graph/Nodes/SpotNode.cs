@@ -62,6 +62,23 @@ namespace EventGraph
             return new SpotNode(GraphNodeResolver.ResolveByKey<ISpotSourceNode>(GetDependencyName(definition), nodesByName));
         }
 
+        internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
+            GraphDefinitionEnrichmentContext _,
+            IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return definition;
+        }
+
+        internal static string GetNodeName(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return GraphDefinitionEnrichmentContext.GetNodeName(definition);
+        }
+
+        internal static bool IsSource()
+        {
+            return false;
+        }
+
         private void SourceTicked(object sender, QuoteTick e)
         {
             tick?.Invoke(this, new QuoteTick(Name, e.Value));

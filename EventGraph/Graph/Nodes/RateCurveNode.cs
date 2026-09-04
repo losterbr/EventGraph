@@ -40,5 +40,22 @@ namespace EventGraph
         {
             return new RateCurveNode(GraphNodeResolver.ResolveByName<IRateSourceNode>(definition, nodesByName, nameof(CurrencyRateSource)));
         }
+
+        internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
+            GraphDefinitionEnrichmentContext _,
+            IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return definition;
+        }
+
+        internal static string GetNodeName(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return GraphDefinitionEnrichmentContext.GetNodeName(definition);
+        }
+
+        internal static bool IsSource()
+        {
+            return false;
+        }
     }
 }

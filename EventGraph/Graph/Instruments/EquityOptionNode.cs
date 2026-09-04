@@ -93,6 +93,16 @@ namespace EventGraph
             return new EquityOptionNode(definition, nodesByName);
         }
 
+        internal static string GetNodeName(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return GraphDefinitionEnrichmentContext.GetNodeName(definition);
+        }
+
+        internal static bool IsSource()
+        {
+            return false;
+        }
+
         internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
         {
             return [GetString(definition, "forward"), GetString(definition, "volatility"), GetString(definition, "discountCurve")];
