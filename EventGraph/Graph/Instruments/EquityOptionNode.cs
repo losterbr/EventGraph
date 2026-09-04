@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 namespace EventGraph
@@ -104,7 +105,7 @@ namespace EventGraph
             var underlyer = GraphDefinitionEnrichmentContext.GetString(definition, "underlyer");
             var sourceDefinition = context.GetDefinition(GraphKey.Of(nameof(EquitySource), underlyer));
             var currency = GraphDefinitionEnrichmentContext.GetOptionalString(sourceDefinition, "currency") ?? "USD";
-            var rateSourceName = context.GetRateSourceName(currency);
+            var rateSourceName = GetRateSourceName(context.Definitions, currency);
 
             context.AddSyntheticIfMissing(nameof(SpotNode), underlyer);
             context.AddSyntheticIfMissing(nameof(VolatilityNode), underlyer);
@@ -120,6 +121,23 @@ namespace EventGraph
                 ["forward"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(ForwardCurveNode), underlyer)),
                 ["volatility"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(VolatilityNode), underlyer)),
                 ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveNode), rateSourceName))
+            };
+        }
+
+        private static string GetRateSourceName(
+            IEnumerable<IReadOnlyDictionary<string, JsonElement>> definitions,
+            string currency)
+        {
+            var matches = definitions
+                .Where(definition => string.Equals(GraphDefinitionEnrichmentContext.GetType(definition), nameof(CurrencyRateSource), StringComparison.Ordinal))
+                .Where(definition => string.Equals(GraphDefinitionEnrichmentContext.GetOptionalString(definition, "currency") ?? GraphDefinitionEnrichmentContext.GetNodeName(definition), currency, StringComparison.OrdinalIgnoreCase))
+                .Select(GraphDefinitionEnrichmentContext.GetNodeName)
+                .ToList();
+            return matches.Count switch
+            {
+                1 => matches[0],
+                0 => throw new InvalidDataException($"No CurrencyRateSource found for currency '{currency}'."),
+                _ => throw new InvalidDataException($"Multiple CurrencyRateSource definitions found for currency '{currency}'.")
             };
         }
 

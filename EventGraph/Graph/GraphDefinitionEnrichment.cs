@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 
 namespace EventGraph
@@ -41,6 +40,8 @@ namespace EventGraph
                 : throw new InvalidDataException($"Graph definition '{key}' was not found.");
         }
 
+        public IEnumerable<IReadOnlyDictionary<string, JsonElement>> Definitions => definitionsByKey.Values;
+
         public void AddSyntheticIfMissing(string type, string name, Dictionary<string, JsonElement> properties = null)
         {
             var key = GraphKey.Of(type, name);
@@ -69,21 +70,6 @@ namespace EventGraph
             var type = reference[..separator];
             var name = reference[(separator + 2)..];
             AddSyntheticIfMissing(type, name);
-        }
-
-        public string GetRateSourceName(string currency)
-        {
-            var matches = definitionsByKey.Values
-                .Where(definition => string.Equals(GetType(definition), nameof(CurrencyRateSource), StringComparison.Ordinal))
-                .Where(definition => string.Equals(GetOptionalString(definition, "currency") ?? GetNodeName(definition), currency, StringComparison.OrdinalIgnoreCase))
-                .Select(GetNodeName)
-                .ToList();
-            return matches.Count switch
-            {
-                1 => matches[0],
-                0 => throw new InvalidDataException($"No CurrencyRateSource found for currency '{currency}'."),
-                _ => throw new InvalidDataException($"Multiple CurrencyRateSource definitions found for currency '{currency}'.")
-            };
         }
 
         public static string GetType(IReadOnlyDictionary<string, JsonElement> definition)
