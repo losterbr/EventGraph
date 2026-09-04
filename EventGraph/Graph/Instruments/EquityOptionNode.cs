@@ -169,7 +169,7 @@ namespace EventGraph
 
         private double CalculatePrice()
         {
-            var timeToMaturity = (Maturity - DateTime.Today).TotalDays / 365.0;
+            var timeToMaturity = DateHelpers.YearFraction(DateTime.Today, Maturity);
             var volatility = volatilitySource.Volatility;
             var forward = forwardNode.Forward(Maturity);
             var discountFactor = discountCurveNode.DiscountFactor(Maturity);
@@ -190,8 +190,8 @@ namespace EventGraph
         private static DateTime GetMaturity(IReadOnlyDictionary<string, JsonElement> definition)
         {
             var maturity = GetString(definition, "maturity");
-            return string.Equals(maturity, "1Y", StringComparison.OrdinalIgnoreCase)
-                ? DateTime.Today.AddYears(1)
+            return DateHelpers.TryAddTenor(DateTime.Today, maturity, out var maturityDate)
+                ? maturityDate
                 : DateTime.Parse(maturity, CultureInfo.InvariantCulture);
         }
 

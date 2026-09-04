@@ -14,7 +14,7 @@ namespace EventGraph
         public RateCurveNode(IRateSourceNode source)
         {
             this.source = source ?? throw new ArgumentNullException(nameof(source));
-            DiscountFactor = date => Math.Exp(-this.source.InterestRate * (date - DateTime.Today).TotalDays / 365.0);
+            DiscountFactor = date => Math.Exp(-this.source.InterestRate * DateHelpers.YearFraction(DateTime.Today, date));
         }
 
         public string Name => source.Name;
