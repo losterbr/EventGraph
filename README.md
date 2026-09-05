@@ -16,6 +16,7 @@ EventGraph is a small .NET sample that demonstrates an event-driven market quote
 flowchart LR
 	equity["EquitySource [ISpotSourceNode, IVolSourceNode]"]
 	rate["CurrencyRateSource [IRateSourceNode]"]
+	basketDefinition["BasketDefinition"]
 
 	equity --> spot["SpotNode [ISpotNode]"]
 	equity --> volatility["VolatilityNode [IVolNode]"]
@@ -28,6 +29,7 @@ flowchart LR
 	discount --> option
 
 	spot -->|one or more constituents| basket["BasketSpotNode [ISpotNode]"]
+	basketDefinition -.->|compiled into| basket
 	basket --> forward
 ```
 
@@ -46,7 +48,7 @@ An `EquitySource` JSON definition in `EventGraph/graph-definition` uses the foll
 }
 ```
 
-The `type` field selects the node implementation. Each `EquitySource` includes static `currency` metadata, currently set to `USD` for all assets. Each node constructor owns the interpretation and validation of its complete JSON property dictionary, so adding or removing a property only requires changing that node's code. A `BasketSpotNode` definition uses `name`, `constituents`, and `weights`; the loader materializes a `SpotNode` for each constituent before constructing the basket. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
+The `type` field selects either a runtime node implementation or a static definition type. Each `EquitySource` includes static `currency` metadata, currently set to `USD` for all assets. A `BasketDefinition` uses `name`, `constituents`, and `weights`; before graph construction, the loader compiles it into a `BasketSpotNode` and materializes a `SpotNode` for each constituent. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
 
 A `CurrencyRateSource` provides a named flat `interestRate` (for example, `0.02` for 2%). The loader materializes a dependent `RateCurveNode` when a forward curve or equity option needs a discount curve. Its `DiscountFactor` property is a `date -> double` function implemented as `exp(-interestRate * (date - today) / 365)`.
 

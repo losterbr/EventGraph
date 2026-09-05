@@ -263,8 +263,8 @@ namespace EventGraph.Tests
             try
             {
                 File.WriteAllText(Path.Combine(directory, "a.json"), /*lang=json,strict*/ "{\"type\":\"EquitySource\",\"name\":\"A\",\"spot\":10,\"volatility\":0,\"meanTickTimeSeconds\":1}");
-                File.WriteAllText(Path.Combine(directory, "b.json"), /*lang=json,strict*/ "{\"type\":\"BasketSpotNode\",\"name\":\"B\",\"constituents\":[\"A\"],\"weights\":[1.0]}");
-                File.WriteAllText(Path.Combine(directory, "c.json"), /*lang=json,strict*/ "{\"type\":\"BasketSpotNode\",\"name\":\"C\",\"constituents\":[\"B\"],\"weights\":[1.0]}");
+                File.WriteAllText(Path.Combine(directory, "b.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"B\",\"constituents\":[\"A\"],\"weights\":[1.0]}");
+                File.WriteAllText(Path.Combine(directory, "c.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"C\",\"constituents\":[\"B\"],\"weights\":[1.0]}");
 
                 var nodes = NodeGraphLoader.LoadGraph(directory).Nodes;
 
@@ -296,8 +296,8 @@ namespace EventGraph.Tests
             {
                 File.WriteAllText(Path.Combine(directory, "alpha.json"), /*lang=json,strict*/ "{\"type\":\"EquitySource\",\"name\":\"ALPHA\",\"spot\":10,\"volatility\":0,\"meanTickTimeSeconds\":1}");
                 File.WriteAllText(Path.Combine(directory, "beta.json"), /*lang=json,strict*/ "{\"type\":\"EquitySource\",\"name\":\"BETA\",\"spot\":20,\"volatility\":0,\"meanTickTimeSeconds\":1}");
-                File.WriteAllText(Path.Combine(directory, "mix.json"), /*lang=json,strict*/ "{\"type\":\"BasketSpotNode\",\"name\":\"MIX\",\"constituents\":[\"ALPHA\",\"BETA\"],\"weights\":[0.5,0.5]}");
-                File.WriteAllText(Path.Combine(directory, "combo.json"), /*lang=json,strict*/ "{\"type\":\"BasketSpotNode\",\"name\":\"COMBO\",\"constituents\":[\"MIX\"],\"weights\":[1.0]}");
+                File.WriteAllText(Path.Combine(directory, "mix.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"MIX\",\"constituents\":[\"ALPHA\",\"BETA\"],\"weights\":[0.5,0.5]}");
+                File.WriteAllText(Path.Combine(directory, "combo.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"COMBO\",\"constituents\":[\"MIX\"],\"weights\":[1.0]}");
 
                 var nodes = NodeGraphLoader.LoadNodes(directory);
                 var order = nodes.Select(node => node.Name).ToList();

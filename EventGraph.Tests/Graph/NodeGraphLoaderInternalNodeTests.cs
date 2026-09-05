@@ -149,7 +149,7 @@ namespace EventGraph.Tests
             {
                 File.WriteAllText(Path.Combine(directory, "bad.json"), /*lang=json,strict*/ """
                 {
-                  "type": "BasketSpotNode",
+                  "type": "BasketDefinition",
                   "constituents": [],
                   "weights": []
                 }

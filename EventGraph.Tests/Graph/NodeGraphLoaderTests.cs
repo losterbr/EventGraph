@@ -64,7 +64,7 @@ namespace EventGraph.Tests
                 WriteDefinition(directory, "b.json", "B");
                 File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ """
             {
-              "type": "BasketSpotNode",
+              "type": "BasketDefinition",
               "name": "EquityBasket",
               "constituents": ["A", "B"],
               "weights": [0.25, 0.75]
@@ -77,6 +77,7 @@ namespace EventGraph.Tests
                 Assert.Equal("EquityBasket", basket.Name);
                 Assert.Equal("A=0.25, B=0.75", basket.GetWeights());
                 Assert.All(basket.Dependencies, dependency => Assert.IsType<SpotNode>(dependency));
+                Assert.DoesNotContain(nodes, node => node.Type == nameof(BasketDefinition));
             }
             finally
             {
@@ -94,7 +95,7 @@ namespace EventGraph.Tests
                 WriteDefinition(directory, "a.json", "A");
                 File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ """
             {
-              "type": "BasketSpotNode",
+              "type": "BasketDefinition",
               "name": "EquityBasket",
               "constituents": ["A", "B"],
               "weights": [0.25, 0.75]
@@ -121,7 +122,7 @@ namespace EventGraph.Tests
             var directory = CreateDirectory();
             try
             {
-                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketSpotNode\",\"name\":\"B\",\"constituents\":[\"Missing\"],\"weights\":[1]}");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"B\",\"constituents\":[\"Missing\"],\"weights\":[1]}");
 
                 _ = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
             }
@@ -156,7 +157,7 @@ namespace EventGraph.Tests
             try
             {
                 WriteDefinition(directory, "source.json", "A");
-                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketSpotNode\",\"name\":\"Basket\",\"constituents\":[\"A\"]}");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"Basket\",\"constituents\":[\"A\"]}");
 
                 var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
 

@@ -39,8 +39,22 @@ namespace EventGraph
                 throw new InvalidOperationException($"No JSON graph definitions were found in: {directoryPath}");
             }
 
-            var definitionsByKey = new Dictionary<string, IReadOnlyDictionary<string, JsonElement>>(StringComparer.OrdinalIgnoreCase);
+            var nodeDefinitions = new List<IReadOnlyDictionary<string, JsonElement>>();
             foreach (var definition in definitions)
+            {
+                nodeDefinitions.AddRange(CompileDefinition(definition));
+            }
+
+            var unsupportedType = nodeDefinitions
+                .Select(GetType)
+                .FirstOrDefault(type => !NodeRegistry.IsSupportedType(type));
+            if (unsupportedType != null)
+            {
+                throw new InvalidDataException($"Unsupported graph node type: '{unsupportedType}'.");
+            }
+
+            var definitionsByKey = new Dictionary<string, IReadOnlyDictionary<string, JsonElement>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var definition in nodeDefinitions)
             {
                 var key = NodeRegistry.GetNodeKey(definition);
                 if (definitionsByKey.ContainsKey(key))
@@ -49,14 +63,6 @@ namespace EventGraph
                 }
 
                 definitionsByKey[key] = definition;
-            }
-
-            var unsupportedType = definitions
-                .Select(GetType)
-                .FirstOrDefault(type => !NodeRegistry.IsSupportedType(type));
-            if (unsupportedType != null)
-            {
-                throw new InvalidDataException($"Unsupported graph node type: '{unsupportedType}'.");
             }
 
             var toAdd = new List<IReadOnlyDictionary<string, JsonElement>>();
@@ -147,6 +153,26 @@ namespace EventGraph
             return !definition.TryGetValue("type", out var type) || type.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(type.GetString())
                 ? throw new InvalidDataException("Every graph definition must provide a non-empty string type.")
                 : type.GetString();
+        }
+
+        private static IReadOnlyList<IReadOnlyDictionary<string, JsonElement>> CompileDefinition(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            if (!string.Equals(GetType(definition), nameof(BasketDefinition), StringComparison.OrdinalIgnoreCase))
+            {
+                return [definition];
+            }
+
+            var basketDefinition = new BasketDefinitionProvider(definition).Definition;
+            return
+            [
+                new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["type"] = JsonSerializer.SerializeToElement(nameof(BasketSpotNode)),
+                    ["name"] = JsonSerializer.SerializeToElement(basketDefinition.Name),
+                    ["constituents"] = JsonSerializer.SerializeToElement(basketDefinition.Constituents),
+                    ["weights"] = JsonSerializer.SerializeToElement(basketDefinition.Weights)
+                }
+            ];
         }
 
         private static string ResolveDependencyKey(
