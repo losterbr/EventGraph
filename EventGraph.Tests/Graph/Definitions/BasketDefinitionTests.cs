@@ -17,10 +17,11 @@ namespace EventGraph.Tests
         [Fact]
         public void BasketDefinitionProviderProvidesBasketDefinition()
         {
-            var provider = new BasketDefinitionProvider("BASKET", ["A", "B"], [0.25, 0.75]);
+            var provider = new BasketDefinitionProvider("BASKET", "USD", ["A", "B"], [0.25, 0.75]);
 
             _ = Assert.IsAssignableFrom<IDefinitionProvider<BasketDefinition>>(provider);
             Assert.Equal("BASKET", provider.Definition.Name);
+            Assert.Equal("USD", provider.Definition.Currency);
             Assert.Equal(["A", "B"], provider.Definition.Constituents);
             Assert.Equal([0.25, 0.75], provider.Definition.Weights);
         }
@@ -28,7 +29,7 @@ namespace EventGraph.Tests
         [Fact]
         public void BasketDefinitionProviderReadsJsonDefinitions()
         {
-            using var document = JsonDocument.Parse("{\"name\":\"BASKET\",\"constituents\":[\"A\",\"B\"],\"weights\":[0.25,0.75]}");
+            using var document = JsonDocument.Parse("{\"name\":\"BASKET\",\"currency\":\"USD\",\"constituents\":[\"A\",\"B\"],\"weights\":[0.25,0.75]}");
             var definition = document.RootElement
                 .EnumerateObject()
                 .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
@@ -36,8 +37,22 @@ namespace EventGraph.Tests
             var provider = new BasketDefinitionProvider(definition);
 
             Assert.Equal("BASKET", provider.Definition.Name);
+            Assert.Equal("USD", provider.Definition.Currency);
             Assert.Equal(["A", "B"], provider.Definition.Constituents);
             Assert.Equal([0.25, 0.75], provider.Definition.Weights);
+        }
+
+        [Fact]
+        public void BasketDefinitionProviderRequiresCurrency()
+        {
+            using var document = JsonDocument.Parse("{\"name\":\"BASKET\",\"constituents\":[\"A\"],\"weights\":[1]}");
+            var definition = document.RootElement
+                .EnumerateObject()
+                .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
+
+            var exception = Assert.Throws<InvalidDataException>(() => new BasketDefinitionProvider(definition));
+
+            Assert.Contains("currency", exception.Message, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

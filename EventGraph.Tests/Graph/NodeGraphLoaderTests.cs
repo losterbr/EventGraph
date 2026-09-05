@@ -66,6 +66,7 @@ namespace EventGraph.Tests
             {
               "type": "BasketDefinition",
               "name": "EquityBasket",
+              "currency": "USD",
               "constituents": ["A", "B"],
               "weights": [0.25, 0.75]
             }
@@ -97,6 +98,7 @@ namespace EventGraph.Tests
             {
               "type": "BasketDefinition",
               "name": "EquityBasket",
+              "currency": "USD",
               "constituents": ["A", "B"],
               "weights": [0.25, 0.75]
             }
@@ -122,9 +124,28 @@ namespace EventGraph.Tests
             var directory = CreateDirectory();
             try
             {
-                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"B\",\"constituents\":[\"Missing\"],\"weights\":[1]}");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"B\",\"currency\":\"USD\",\"constituents\":[\"Missing\"],\"weights\":[1]}");
 
                 _ = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
+        [Fact]
+        public void LoadNodesRejectsBasketWithConstituentInDifferentCurrency()
+        {
+            var directory = CreateDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ "{\"type\":\"EquitySource\",\"name\":\"EUR_ASSET\",\"currency\":\"EUR\",\"spot\":100,\"volatility\":0.2,\"meanTickTimeSeconds\":1}");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"USD_BASKET\",\"currency\":\"USD\",\"constituents\":[\"EUR_ASSET\"],\"weights\":[1]}");
+
+                var exception = Assert.Throws<ArgumentException>(() => NodeGraphLoader.LoadNodes(directory));
+
+                Assert.Contains("same currency", exception.Message, StringComparison.OrdinalIgnoreCase);
             }
             finally
             {
@@ -157,7 +178,7 @@ namespace EventGraph.Tests
             try
             {
                 WriteDefinition(directory, "source.json", "A");
-                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"Basket\",\"constituents\":[\"A\"]}");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"Basket\",\"currency\":\"USD\",\"constituents\":[\"A\"]}");
 
                 var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
 

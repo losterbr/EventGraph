@@ -12,13 +12,13 @@ namespace EventGraph
     public sealed class BasketDefinitionProvider : IDefinitionProvider<BasketDefinition>
     {
         public BasketDefinitionProvider(IReadOnlyDictionary<string, JsonElement> definition)
-            : this(GetString(definition, "name"), GetConstituents(definition), GetWeights(definition))
+            : this(GetString(definition, "name"), GetString(definition, "currency"), GetConstituents(definition), GetWeights(definition))
         {
         }
 
-        public BasketDefinitionProvider(string name, IReadOnlyList<string> constituents, IReadOnlyList<double> weights)
+        public BasketDefinitionProvider(string name, string currency, IReadOnlyList<string> constituents, IReadOnlyList<double> weights)
         {
-            Definition = new BasketDefinition(name, constituents, weights);
+            Definition = new BasketDefinition(name, currency, constituents, weights);
         }
 
         public BasketDefinition Definition { get; }

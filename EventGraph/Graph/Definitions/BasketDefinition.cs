@@ -11,11 +11,16 @@ namespace EventGraph
     {
         private const double Epsilon = 1e-9;
 
-        public BasketDefinition(string name, IReadOnlyList<string> constituents, IReadOnlyList<double> weights)
+        public BasketDefinition(string name, string currency, IReadOnlyList<string> constituents, IReadOnlyList<double> weights)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
                 throw new ArgumentException("Basket name cannot be empty.", nameof(name));
+            }
+
+            if (string.IsNullOrWhiteSpace(currency))
+            {
+                throw new ArgumentException("Currency cannot be empty.", nameof(currency));
             }
 
             if (constituents == null || constituents.Count == 0)
@@ -39,11 +44,14 @@ namespace EventGraph
             }
 
             Name = name;
+            Currency = currency;
             Constituents = [.. constituents];
             Weights = [.. weights];
         }
 
         public string Name { get; }
+
+        public string Currency { get; }
 
         public IReadOnlyList<string> Constituents { get; }
 

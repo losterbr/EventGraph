@@ -169,6 +169,7 @@ namespace EventGraph
                 {
                     ["type"] = JsonSerializer.SerializeToElement(nameof(BasketSpotNode)),
                     ["name"] = JsonSerializer.SerializeToElement(basketDefinition.Name),
+                    ["currency"] = JsonSerializer.SerializeToElement(basketDefinition.Currency),
                     ["constituents"] = JsonSerializer.SerializeToElement(basketDefinition.Constituents),
                     ["weights"] = JsonSerializer.SerializeToElement(basketDefinition.Weights)
                 }

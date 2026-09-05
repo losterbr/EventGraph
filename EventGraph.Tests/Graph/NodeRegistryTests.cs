@@ -68,6 +68,7 @@ namespace EventGraph.Tests
         {
           "type": "BasketSpotNode",
           "name": "BASKET",
+          "currency": "USD",
           "constituents": ["A"],
           "weights": [1]
         }

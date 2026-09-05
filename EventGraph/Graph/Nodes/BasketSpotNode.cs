@@ -32,16 +32,21 @@ namespace EventGraph
         }
 
         private BasketSpotNode(BasketDefinition definition, IReadOnlyDictionary<string, IGraphNode> nodesByName)
-            : this(definition.Name, GetConstituents(definition.Constituents, nodesByName), definition.Weights)
+            : this(definition.Name, definition.Currency, GetConstituents(definition.Constituents, nodesByName), definition.Weights)
         {
         }
 
         public BasketSpotNode(IReadOnlyList<ISpotNode> constituents, IReadOnlyList<double> weights = null)
-            : this(constituents == null ? null : $"B {string.Join(",", constituents.Select(x => x.Name))}", constituents, weights)
+            : this(constituents == null ? null : $"B {string.Join(",", constituents.Select(x => x.Name))}", null, constituents, weights)
         {
         }
 
         public BasketSpotNode(string name, IReadOnlyList<ISpotNode> constituents, IReadOnlyList<double> weights = null)
+            : this(name, null, constituents, weights)
+        {
+        }
+
+        private BasketSpotNode(string name, string currency, IReadOnlyList<ISpotNode> constituents, IReadOnlyList<double> weights)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -55,13 +60,13 @@ namespace EventGraph
 
             this.constituents = [.. constituents];
             Name = name;
-            var currency = GetDefinition(this.constituents[0]).Currency;
-            if (this.constituents.Any(constituent => !string.Equals(GetDefinition(constituent).Currency, currency, StringComparison.OrdinalIgnoreCase)))
+            var basketCurrency = currency ?? GetDefinition(this.constituents[0]).Currency;
+            if (this.constituents.Any(constituent => !string.Equals(GetDefinition(constituent).Currency, basketCurrency, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new ArgumentException("Basket constituents must use the same currency.", nameof(constituents));
             }
 
-            definition = new SpotDefinition(name, currency);
+            definition = new SpotDefinition(name, basketCurrency);
 
             hasLatestValue = new bool[this.constituents.Count];
             latestValues = new double[this.constituents.Count];

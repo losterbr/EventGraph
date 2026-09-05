@@ -84,6 +84,7 @@ namespace EventGraph.Tests
             using var definition = JsonDocument.Parse("""
         {
           "name": "PAIR_TRADE",
+                    "currency": "USD",
           "constituents": ["A", "B"],
           "weights": [2, -1]
         }
@@ -219,8 +220,8 @@ namespace EventGraph.Tests
 
         [Theory]
         [InlineData("{}", "name")]
-        [InlineData(/*lang=json,strict*/ "{\"name\":\"BASKET\"}", "constituents")]
-        [InlineData(/*lang=json,strict*/ "{\"name\":\"BASKET\",\"constituents\":[\"Missing\"],\"weights\":[1]}", "unknown spot node")]
+        [InlineData(/*lang=json,strict*/ "{\"name\":\"BASKET\",\"currency\":\"USD\"}", "constituents")]
+        [InlineData(/*lang=json,strict*/ "{\"name\":\"BASKET\",\"currency\":\"USD\",\"constituents\":[\"Missing\"],\"weights\":[1]}", "unknown spot node")]
         public void BasketAggregateRejectsInvalidDefinitions(string json, string expectedMessage)
         {
             using var definition = JsonDocument.Parse(json);
@@ -237,7 +238,7 @@ namespace EventGraph.Tests
         {
             var source = new EquitySource("A", 100.0, 0.0, 0.0);
             var spot = new SpotNode(source);
-            using var definition = JsonDocument.Parse("{\"name\":\"BASKET\",\"constituents\":[\"A\"],\"weights\":[\"bad\"]}");
+            using var definition = JsonDocument.Parse("{\"name\":\"BASKET\",\"currency\":\"USD\",\"constituents\":[\"A\"],\"weights\":[\"bad\"]}");
 
             var exception = Assert.Throws<InvalidDataException>(() => new BasketSpotNode(
                 ToDictionary(definition),
