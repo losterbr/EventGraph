@@ -21,6 +21,38 @@ namespace EventGraph
             : throw new InvalidDataException($"Could not enrich graph definition '{requiredBy}': required graph definition '{key}' was not found.");
         }
 
+        public IReadOnlyDictionary<string, JsonElement> GetUnderlyingDefinition(string name, string requiredBy)
+        {
+            var basketKey = GraphKey.Of(nameof(BasketSpotNode), name);
+            return ContainsDefinition(basketKey)
+                ? GetDefinition(basketKey, requiredBy)
+                : GetDefinition(GraphKey.Of(nameof(EquitySource), name), requiredBy);
+        }
+
+        public string EnsureSpotNode(string name)
+        {
+            var basketKey = GraphKey.Of(nameof(BasketSpotNode), name);
+            if (ContainsDefinition(basketKey))
+            {
+                return basketKey;
+            }
+
+            AddSyntheticIfMissing(nameof(SpotNode), name);
+            return GraphKey.Of(nameof(SpotNode), name);
+        }
+
+        public string EnsureVolatilityNode(string name)
+        {
+            if (ContainsDefinition(GraphKey.Of(nameof(BasketSpotNode), name)))
+            {
+                AddSyntheticIfMissing(nameof(BasketVolatilityNode), name);
+                return GraphKey.Of(nameof(BasketVolatilityNode), name);
+            }
+
+            AddSyntheticIfMissing(nameof(VolatilityNode), name);
+            return GraphKey.Of(nameof(VolatilityNode), name);
+        }
+
         public IEnumerable<IReadOnlyDictionary<string, JsonElement>> Definitions => definitionsByKey.Values;
 
         public void AddSyntheticIfMissing(string type, string name, Dictionary<string, JsonElement> properties = null)

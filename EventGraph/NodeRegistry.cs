@@ -20,6 +20,7 @@ namespace EventGraph
                 typeof(SpotNode),
                 typeof(VolatilityNode),
                 typeof(BasketSpotNode),
+                typeof(BasketVolatilityNode),
                 typeof(RateCurveNode),
                 typeof(ForwardCurveNode),
                 typeof(EquityOptionNode)

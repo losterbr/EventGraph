@@ -114,23 +114,23 @@ namespace EventGraph
         {
             var optionKey = GraphKey.Of(nameof(EquityOptionNode), GetNodeName(definition));
             var underlyer = GraphDefinitionEnrichmentContext.GetString(definition, "underlyer");
-            var sourceDefinition = context.GetDefinition(GraphKey.Of(nameof(EquitySource), underlyer), optionKey);
-            var currency = GraphDefinitionEnrichmentContext.GetOptionalString(sourceDefinition, "currency") ?? "USD";
+            var underlyerDefinition = context.GetUnderlyingDefinition(underlyer, optionKey);
+            var currency = GraphDefinitionEnrichmentContext.GetOptionalString(underlyerDefinition, "currency") ?? "USD";
             var rateSourceName = GetRateSourceName(context.Definitions, currency);
+            var spotKey = context.EnsureSpotNode(underlyer);
+            var volatilityKey = context.EnsureVolatilityNode(underlyer);
 
-            context.AddSyntheticIfMissing(nameof(SpotNode), underlyer);
-            context.AddSyntheticIfMissing(nameof(VolatilityNode), underlyer);
             context.AddSyntheticIfMissing(nameof(RateCurveNode), rateSourceName);
             context.AddSyntheticIfMissing(nameof(ForwardCurveNode), underlyer, new Dictionary<string, JsonElement>
             {
-                ["spot"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(SpotNode), underlyer)),
+                ["spot"] = JsonSerializer.SerializeToElement(spotKey),
                 ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveNode), rateSourceName))
             });
 
             return new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase)
             {
                 ["forward"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(ForwardCurveNode), underlyer)),
-                ["volatility"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(VolatilityNode), underlyer)),
+                ["volatility"] = JsonSerializer.SerializeToElement(volatilityKey),
                 ["discountCurve"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(RateCurveNode), rateSourceName))
             };
         }

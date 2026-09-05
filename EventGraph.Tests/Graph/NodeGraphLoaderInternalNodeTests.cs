@@ -142,6 +142,32 @@ namespace EventGraph.Tests
         }
 
         [Fact]
+        public void LoadGraphMaterializesBasketVolatilityForBasketOptions()
+        {
+            var directory = CreateDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(directory, "aapl.json"), /*lang=json,strict*/ "{\"type\":\"EquitySource\",\"name\":\"AAPL\",\"currency\":\"USD\",\"spot\":225,\"volatility\":0.28,\"meanTickTimeSeconds\":4.5}");
+                File.WriteAllText(Path.Combine(directory, "usd.json"), /*lang=json,strict*/ "{\"type\":\"CurrencyRateSource\",\"name\":\"USD\",\"interestRate\":0.02}");
+                File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"TECH\",\"currency\":\"USD\",\"constituents\":[\"AAPL\"],\"weights\":[1]}");
+                File.WriteAllText(Path.Combine(directory, "option.json"), /*lang=json,strict*/ "{\"type\":\"EquityOptionDefinition\",\"name\":\"TECH_1Y_CALL\",\"underlyer\":\"TECH\",\"maturity\":\"1Y\",\"strike\":225,\"optionType\":\"Call\"}");
+
+                var graph = NodeGraphLoader.LoadGraph(directory);
+
+                var basket = Assert.Single(graph.Nodes.OfType<BasketSpotNode>());
+                var volatility = Assert.Single(graph.Nodes.OfType<BasketVolatilityNode>());
+                Assert.Equal("TECH", volatility.Name);
+                Assert.Equal(0.30, volatility.Volatility);
+                Assert.Equal([basket], volatility.Dependencies);
+                Assert.Contains(graph.Nodes, node => node is EquityOptionNode);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
+        [Fact]
         public void LoadGraphRejectsInternalNodeWithoutNameWhenTypeCannotInferIt()
         {
             var directory = CreateDirectory();

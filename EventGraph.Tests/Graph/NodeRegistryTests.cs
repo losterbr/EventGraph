@@ -13,6 +13,7 @@ namespace EventGraph.Tests
             Assert.Contains(nameof(RateCurveNode), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(VolatilityNode), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(BasketSpotNode), NodeRegistry.SupportedTypes);
+            Assert.Contains(nameof(BasketVolatilityNode), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(ForwardCurveNode), NodeRegistry.SupportedTypes);
             Assert.Contains(nameof(EquityOptionNode), NodeRegistry.SupportedTypes);
         }
@@ -31,6 +32,7 @@ namespace EventGraph.Tests
             Assert.True(NodeRegistry.IsSourceType(nameof(CurrencyRateSource)));
             Assert.False(NodeRegistry.IsSourceType(nameof(SpotNode)));
             Assert.False(NodeRegistry.IsSourceType(nameof(VolatilityNode)));
+            Assert.False(NodeRegistry.IsSourceType(nameof(BasketVolatilityNode)));
             Assert.False(NodeRegistry.IsSourceType(nameof(RateCurveNode)));
 
             foreach (var type in NodeRegistry.SupportedTypes.Where(NodeRegistry.IsSourceType))

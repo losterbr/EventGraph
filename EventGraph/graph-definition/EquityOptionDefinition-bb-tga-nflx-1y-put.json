@@ -1,0 +1,8 @@
+{
+  "type": "EquityOptionDefinition",
+  "name": "BB_TGA_NFLX_1Y_PUT",
+  "underlyer": "BB_TGA_NFLX",
+  "maturity": "1Y",
+  "strike": 500.0,
+  "optionType": "Put"
+}
