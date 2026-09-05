@@ -29,8 +29,16 @@ namespace EventGraph
     public interface ISpotValueNode : ITickingNode
     {
         double Spot { get; }
+    }
 
-        string Currency { get; }
+    /// <summary>
+    /// Provides static constituent names and weights for a basket definition.
+    /// </summary>
+    public interface IBasketDefinitionSourceNode : IGraphNode
+    {
+        IReadOnlyList<string> Constituents { get; }
+
+        IReadOnlyList<double> Weights { get; }
     }
 
     /// <summary>

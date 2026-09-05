@@ -9,7 +9,7 @@ namespace EventGraph
     /// <summary>
     /// Provides an equity's spot and volatility source data.
     /// </summary>
-    public class EquitySource : ISpotSourceNode, IVolSourceNode
+    public class EquitySource : ISpotSourceNode, IVolSourceNode, ISpotDefinitionProvider
     {
         public event EventHandler<QuoteTick> Tick;
 
@@ -61,7 +61,7 @@ namespace EventGraph
             Name = name;
             Spot = spot;
             Volatility = vol;
-            Currency = currency;
+            Definition = new SpotDefinition(currency);
             this.meanTickTimeSeconds = meanTickTimeSeconds;
         }
 
@@ -71,7 +71,7 @@ namespace EventGraph
 
         public double Spot { get; private set; }
 
-        public string Currency { get; }
+        public SpotDefinition Definition { get; }
 
         public double Volatility { get; }
 

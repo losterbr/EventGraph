@@ -11,7 +11,8 @@ namespace EventGraph.Tests
 
             Assert.Equal("AAPL", spotNode.Name);
             Assert.Equal(100.0, spotNode.Spot);
-            Assert.Equal("USD", spotNode.Currency);
+            Assert.Equal("USD", spotNode.Definition.Currency);
+            _ = Assert.IsAssignableFrom<IDefinitionProvider<SpotDefinition>>(spotNode);
             Assert.Equal(nameof(SpotNode), spotNode.Type);
             Assert.Equal([equity], spotNode.Dependencies);
         }

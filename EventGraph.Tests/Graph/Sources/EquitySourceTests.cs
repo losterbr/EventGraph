@@ -15,7 +15,7 @@ namespace EventGraph.Tests
             var source = new EquitySource(definition);
 
             Assert.Equal("AAPL", source.Name);
-            Assert.Equal("USD", source.Currency);
+            Assert.Equal("USD", source.Definition.Currency);
             Assert.Equal(225.0, source.Spot);
             Assert.Equal(0.28, source.Volatility);
             Assert.Equal(nameof(EquitySource), source.Type);
@@ -31,7 +31,7 @@ namespace EventGraph.Tests
 
             var source = new EquitySource(definition);
 
-            Assert.Equal("USD", source.Currency);
+            Assert.Equal("USD", source.Definition.Currency);
         }
 
         [Fact]
