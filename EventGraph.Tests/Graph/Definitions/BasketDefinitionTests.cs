@@ -54,5 +54,18 @@ namespace EventGraph.Tests
 
             Assert.Contains("currency", exception.Message, StringComparison.OrdinalIgnoreCase);
         }
+
+        [Fact]
+        public void EquityOptionDefinitionProviderProvidesEquityOptionDefinition()
+        {
+            var provider = new EquityOptionDefinitionProvider("AAPL_1Y_CALL", "AAPL", "1Y", 225.0, "Call");
+
+            _ = Assert.IsAssignableFrom<IDefinitionProvider<EquityOptionDefinition>>(provider);
+            Assert.Equal("AAPL_1Y_CALL", provider.Definition.Name);
+            Assert.Equal("AAPL", provider.Definition.Underlyer);
+            Assert.Equal("1Y", provider.Definition.Maturity);
+            Assert.Equal(225.0, provider.Definition.Strike);
+            Assert.Equal("Call", provider.Definition.OptionType);
+        }
     }
 }

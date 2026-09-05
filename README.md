@@ -17,6 +17,7 @@ flowchart LR
 	equity["EquitySource [ISpotSourceNode, IVolSourceNode]"]
 	rate["CurrencyRateSource [IRateSourceNode]"]
 	basketDefinition["BasketDefinition"]
+	optionDefinition["EquityOptionDefinition"]
 
 	equity --> spot["SpotNode [ISpotNode]"]
 	equity --> volatility["VolatilityNode [IVolNode]"]
@@ -25,6 +26,7 @@ flowchart LR
 	spot --> forward["ForwardCurveNode [IForwardCurveNode]"]
 	discount --> forward
 	forward --> option["EquityOptionNode [IEquityOptionNode]"]
+	optionDefinition -.->|compiled into| option
 	volatility --> option
 	discount --> option
 
@@ -52,7 +54,7 @@ The `type` field selects either a runtime node implementation or a static defini
 
 A `CurrencyRateSource` provides a named flat `interestRate` (for example, `0.02` for 2%). The loader materializes a dependent `RateCurveNode` when a forward curve or equity option needs a discount curve. Its `DiscountFactor` property is a `date -> double` function implemented as `exp(-interestRate * (date - today) / 365)`.
 
-An `EquityOptionNode` definition uses `constituent`, `discountFactor`, `maturity`, and `strike`. The current example uses `maturity: "1Y"`, meaning today plus one year, and sets the strike to the equity's current spot. The initial approximation sets the forward equal to spot and uses the forward Black-Scholes form: `discountFactor * (forward * N(d1) - strike * N(d2))`, with the rate-curve discount factor at maturity.
+An `EquityOptionDefinition` uses `underlyer`, `maturity`, `strike`, and `optionType`. Before graph construction, the loader compiles it into an `EquityOptionNode` and materializes its forward, volatility, and discount-curve dependencies. The current example uses `maturity: "1Y"`, meaning today plus one year, and sets the strike to the equity's current spot. Pricing uses the forward Black-Scholes form: `discountFactor * (forward * N(d1) - strike * N(d2))`, with the rate-curve discount factor at maturity.
 
 Graph loading uses Kahn's algorithm to resolve dependencies. The loader builds an in-degree count for each node, processes dependency-free nodes first, and then releases dependent nodes as their prerequisites are created. This keeps startup ordering deterministic while avoiding repeated full scans of unresolved definitions.
 

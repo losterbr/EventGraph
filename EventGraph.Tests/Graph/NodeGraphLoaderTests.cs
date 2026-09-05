@@ -196,7 +196,7 @@ namespace EventGraph.Tests
             var directory = CreateDirectory();
             try
             {
-                File.WriteAllText(Path.Combine(directory, "option.json"), /*lang=json,strict*/ "{\"type\":\"EquityOptionNode\",\"name\":\"A_CALL\",\"underlyer\":\"A\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Call\"}");
+                File.WriteAllText(Path.Combine(directory, "option.json"), /*lang=json,strict*/ "{\"type\":\"EquityOptionDefinition\",\"name\":\"A_CALL\",\"underlyer\":\"A\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Call\"}");
 
                 var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadGraph(directory));
 

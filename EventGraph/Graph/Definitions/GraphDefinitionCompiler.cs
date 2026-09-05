@@ -9,7 +9,8 @@ namespace EventGraph
         private static readonly Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyList<IReadOnlyDictionary<string, JsonElement>>>> Compilers =
             new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyList<IReadOnlyDictionary<string, JsonElement>>>>(StringComparer.OrdinalIgnoreCase)
             {
-                [nameof(BasketDefinition)] = BasketDefinitionProvider.Compile
+                [nameof(BasketDefinition)] = BasketDefinitionProvider.Compile,
+                [nameof(EquityOptionDefinition)] = EquityOptionDefinitionProvider.Compile
             };
 
         public static IReadOnlyList<IReadOnlyDictionary<string, JsonElement>> Compile(IReadOnlyDictionary<string, JsonElement> definition)

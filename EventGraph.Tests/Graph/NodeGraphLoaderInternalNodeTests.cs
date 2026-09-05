@@ -74,7 +74,7 @@ namespace EventGraph.Tests
                 """);
                 File.WriteAllText(Path.Combine(directory, "option.json"), /*lang=json,strict*/ """
                 {
-                  "type": "EquityOptionNode",
+                  "type": "EquityOptionDefinition",
                   "name": "AAPL_1Y_CALL",
                   "underlyer": "AAPL",
                   "maturity": "1Y",
