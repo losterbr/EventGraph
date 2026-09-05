@@ -26,7 +26,7 @@ namespace EventGraph.Tests
                     .Where(@interface => @interface != typeof(IGraphNode)
                         && @interface != typeof(ITickingNode)
                         && @interface != typeof(ISpotValueNode)
-                        && @interface != typeof(ISpotDefinitionProvider)
+                        && @interface.Name != "ISpotDefinitionOwner"
                         && (!@interface.IsGenericType || @interface.GetGenericTypeDefinition() != typeof(IDefinitionProvider<>)));
 
                 Assert.NotEmpty(sourceInterfaces);

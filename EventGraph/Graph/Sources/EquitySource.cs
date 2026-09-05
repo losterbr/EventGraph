@@ -9,7 +9,7 @@ namespace EventGraph
     /// <summary>
     /// Provides an equity's spot and volatility source data.
     /// </summary>
-    public class EquitySource : ISpotSourceNode, IVolSourceNode, ISpotDefinitionProvider
+    public class EquitySource : ISpotSourceNode, IVolSourceNode, ISpotDefinitionOwner
     {
         public event EventHandler<QuoteTick> Tick;
 
@@ -61,7 +61,7 @@ namespace EventGraph
             Name = definition.Name;
             Spot = spot;
             Volatility = vol;
-            Definition = definition;
+            this.definition = definition;
             this.meanTickTimeSeconds = meanTickTimeSeconds;
         }
 
@@ -71,11 +71,13 @@ namespace EventGraph
 
         public double Spot { get; private set; }
 
-        public SpotDefinition Definition { get; }
+        private readonly SpotDefinition definition;
 
         public double Volatility { get; }
 
         public IReadOnlyList<IGraphNode> Dependencies => [];
+
+        SpotDefinition ISpotDefinitionOwner.Definition => definition;
 
         internal static IGraphNode Create(
             IReadOnlyDictionary<string, JsonElement> definition,

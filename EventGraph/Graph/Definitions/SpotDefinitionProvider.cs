@@ -6,7 +6,7 @@ namespace EventGraph
     /// <summary>
     /// Provides a spot definition loaded from JSON.
     /// </summary>
-    public sealed class SpotDefinitionProvider(string name, string currency = "USD") : ISpotDefinitionProvider
+    public sealed class SpotDefinitionProvider(string name, string currency = "USD") : IDefinitionProvider<SpotDefinition>
     {
         public SpotDefinitionProvider(IReadOnlyDictionary<string, JsonElement> definition)
             : this(GetString(definition, "name"), GetStringOrDefault(definition, "currency", "USD"))

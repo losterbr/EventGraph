@@ -9,7 +9,7 @@ namespace EventGraph
     /// <summary>
     /// Provides a basket definition loaded from JSON.
     /// </summary>
-    public sealed class BasketDefinitionProvider : IBasketDefinitionProvider
+    public sealed class BasketDefinitionProvider : IDefinitionProvider<BasketDefinition>
     {
         public BasketDefinitionProvider(IReadOnlyDictionary<string, JsonElement> definition)
             : this(GetString(definition, "name"), GetConstituents(definition), GetWeights(definition))

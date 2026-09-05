@@ -28,4 +28,9 @@ namespace EventGraph
         public string Currency { get; }
     }
 
+    internal interface ISpotDefinitionOwner
+    {
+        SpotDefinition Definition { get; }
+    }
+
 }

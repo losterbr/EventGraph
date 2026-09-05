@@ -7,7 +7,7 @@ namespace EventGraph
     /// <summary>
     /// Pass-through node that exposes a graph node's ticking spot.
     /// </summary>
-    public sealed class SpotNode(ISpotSourceNode sourceNode) : ISpotNode, ISpotDefinitionProvider
+    public sealed class SpotNode(ISpotSourceNode sourceNode) : ISpotNode, ISpotDefinitionOwner
     {
         private readonly ISpotSourceNode source = sourceNode ?? throw new ArgumentNullException(nameof(sourceNode));
         private EventHandler<QuoteTick> tick;
@@ -39,8 +39,8 @@ namespace EventGraph
 
         public double Spot => source.Spot;
 
-        public SpotDefinition Definition => source is ISpotDefinitionProvider provider
-            ? provider.Definition
+        SpotDefinition ISpotDefinitionOwner.Definition => source is ISpotDefinitionOwner owner
+            ? owner.Definition
             : throw new InvalidOperationException($"Spot source '{source.Name}' does not provide a spot definition.");
 
         public IReadOnlyList<IGraphNode> Dependencies => [source];

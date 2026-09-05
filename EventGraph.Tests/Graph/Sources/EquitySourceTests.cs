@@ -15,23 +15,9 @@ namespace EventGraph.Tests
             var source = new EquitySource(definition);
 
             Assert.Equal("AAPL", source.Name);
-            Assert.Equal("USD", source.Definition.Currency);
             Assert.Equal(225.0, source.Spot);
             Assert.Equal(0.28, source.Volatility);
             Assert.Equal(nameof(EquitySource), source.Type);
-        }
-
-        [Fact]
-        public void EquitySourceDefaultsCurrencyToUsd()
-        {
-            using var document = JsonDocument.Parse("{\"name\":\"AAPL\",\"spot\":225.0,\"volatility\":0.28,\"meanTickTimeSeconds\":4.5}");
-            var definition = document.RootElement
-                .EnumerateObject()
-                .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.OrdinalIgnoreCase);
-
-            var source = new EquitySource(definition);
-
-            Assert.Equal("USD", source.Definition.Currency);
         }
 
         [Fact]

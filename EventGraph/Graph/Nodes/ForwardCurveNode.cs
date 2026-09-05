@@ -26,8 +26,8 @@ namespace EventGraph
         {
             ArgumentNullException.ThrowIfNull(spotNode);
             ArgumentNullException.ThrowIfNull(discountCurveNode);
-            var spotDefinition = spotNode is ISpotDefinitionProvider provider
-                ? provider.Definition
+            var spotDefinition = spotNode is ISpotDefinitionOwner owner
+                ? owner.Definition
                 : throw new ArgumentException("Forward curve spot node must provide a spot definition.", nameof(spotNode));
             if (!string.Equals(spotDefinition.Currency, discountCurveNode.Currency, StringComparison.OrdinalIgnoreCase))
             {

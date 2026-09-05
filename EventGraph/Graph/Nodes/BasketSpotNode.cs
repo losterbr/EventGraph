@@ -10,7 +10,7 @@ namespace EventGraph
     /// <summary>
     /// Aggregates multiple simulated quotes into a weighted basket value.
     /// </summary>
-    public class BasketSpotNode : ISpotNode, ISpotDefinitionProvider
+    public class BasketSpotNode : ISpotNode, ISpotDefinitionOwner
     {
         public event EventHandler<QuoteTick> Tick;
 
@@ -55,8 +55,8 @@ namespace EventGraph
 
             this.constituents = [.. constituents];
             Name = name;
-            Definition = GetDefinition(this.constituents[0]);
-            if (this.constituents.Any(constituent => !string.Equals(GetDefinition(constituent).Currency, Definition.Currency, StringComparison.OrdinalIgnoreCase)))
+            definition = GetDefinition(this.constituents[0]);
+            if (this.constituents.Any(constituent => !string.Equals(GetDefinition(constituent).Currency, definition.Currency, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new ArgumentException("Basket constituents must use the same currency.", nameof(constituents));
             }
@@ -114,9 +114,11 @@ namespace EventGraph
 
         public double Spot { get; private set; }
 
-        public SpotDefinition Definition { get; }
+        private readonly SpotDefinition definition;
 
         public IReadOnlyList<IGraphNode> Dependencies => constituents;
+
+        SpotDefinition ISpotDefinitionOwner.Definition => definition;
 
         internal static IGraphNode Create(
             IReadOnlyDictionary<string, JsonElement> definition,
@@ -172,8 +174,8 @@ namespace EventGraph
 
         private static SpotDefinition GetDefinition(ISpotNode node)
         {
-            return node is ISpotDefinitionProvider provider
-                ? provider.Definition
+            return node is ISpotDefinitionOwner owner
+                ? owner.Definition
                 : throw new ArgumentException($"Basket constituent '{node.Name}' does not provide a spot definition.", nameof(node));
         }
 

@@ -24,7 +24,7 @@ namespace EventGraph.Tests
 
                 var source = Assert.Single(sources);
                 Assert.Equal("JSON", source.Name);
-                Assert.Equal("USD", Assert.IsAssignableFrom<ISpotDefinitionProvider>(source).Definition.Currency);
+                Assert.IsNotAssignableFrom<IDefinitionProvider<SpotDefinition>>(source);
                 Assert.Equal(nameof(SpotNode), source.Type);
                 Assert.Equal(123.0, source.Spot);
             }

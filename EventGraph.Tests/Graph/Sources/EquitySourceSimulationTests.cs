@@ -73,7 +73,6 @@ namespace EventGraph.Tests
             var spotNode = Assert.IsAssignableFrom<ISpotSourceNode>(source);
             Assert.Equal(0.25, volNode.Volatility, 10);
             Assert.Equal(100.0, spotNode.Spot, 10);
-            Assert.Equal("USD", source.Definition.Currency);
         }
 
         [Fact]
@@ -122,14 +121,6 @@ namespace EventGraph.Tests
         public void SimulatedAssetSourceRejectsInfiniteVolatility()
         {
             _ = Assert.Throws<ArgumentOutOfRangeException>(() => new EquitySource("A", 100.0, double.PositiveInfinity));
-        }
-
-        [Fact]
-        public void SimulatedAssetSourceDefaultsCurrencyToUsd()
-        {
-            var source = new EquitySource("A", 100.0, 0.1);
-
-            Assert.Equal("USD", source.Definition.Currency);
         }
 
         [Fact]
