@@ -3,7 +3,7 @@ namespace EventGraph.Tests
     public class NodeGraphLoaderTests
     {
         [Fact]
-        public void LoadNodesCreatesNodesFromJson()
+        public void LoadGraphCreatesNodesFromJson()
         {
             var directory = CreateDirectory();
             try
@@ -20,7 +20,7 @@ namespace EventGraph.Tests
             }
             """);
 
-                var sources = NodeGraphLoader.LoadNodes(directory);
+                var sources = NodeGraphLoader.LoadGraph(directory).QuoteNodes;
 
                 var source = Assert.Single(sources);
                 Assert.Equal("JSON", source.Name);
@@ -35,7 +35,7 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesReadsFilesInStableOrder()
+        public void LoadGraphReadsFilesInStableOrder()
         {
             var directory = CreateDirectory();
             try
@@ -43,7 +43,7 @@ namespace EventGraph.Tests
                 WriteDefinition(directory, "b.json", "B");
                 WriteDefinition(directory, "a.json", "A");
 
-                var sources = NodeGraphLoader.LoadNodes(directory);
+                var sources = NodeGraphLoader.LoadGraph(directory).QuoteNodes;
 
                 Assert.Equal("A", sources[0].Name);
                 Assert.Equal("B", sources[1].Name);
@@ -55,7 +55,7 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesCreatesBasketFromNamedSourcesAndWeights()
+        public void LoadGraphCreatesBasketFromNamedSourcesAndWeights()
         {
             var directory = CreateDirectory();
             try
@@ -119,14 +119,14 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesRejectsBasketWithUnknownSource()
+        public void LoadGraphRejectsBasketWithUnknownSource()
         {
             var directory = CreateDirectory();
             try
             {
                 File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"B\",\"currency\":\"USD\",\"constituents\":[\"Missing\"],\"weights\":[1]}");
 
-                _ = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+                _ = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadGraph(directory));
             }
             finally
             {
@@ -135,7 +135,7 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesRejectsBasketWithConstituentInDifferentCurrency()
+        public void LoadGraphRejectsBasketWithConstituentInDifferentCurrency()
         {
             var directory = CreateDirectory();
             try
@@ -143,7 +143,7 @@ namespace EventGraph.Tests
                 File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ "{\"type\":\"EquitySource\",\"name\":\"EUR_ASSET\",\"currency\":\"EUR\",\"spot\":100,\"volatility\":0.2,\"meanTickTimeSeconds\":1}");
                 File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"USD_BASKET\",\"currency\":\"USD\",\"constituents\":[\"EUR_ASSET\"],\"weights\":[1]}");
 
-                var exception = Assert.Throws<ArgumentException>(() => NodeGraphLoader.LoadNodes(directory));
+                var exception = Assert.Throws<ArgumentException>(() => NodeGraphLoader.LoadGraph(directory));
 
                 Assert.Contains("same currency", exception.Message, StringComparison.OrdinalIgnoreCase);
             }
@@ -154,14 +154,14 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesReportsMissingSourcePropertyFromSourceNode()
+        public void LoadGraphReportsMissingSourcePropertyFromSourceNode()
         {
             var directory = CreateDirectory();
             try
             {
                 File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ "{\"type\":\"EquitySource\",\"name\":\"A\",\"spot\":100}");
 
-                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadGraph(directory));
 
                 Assert.Contains("volatility", exception.Message);
             }
@@ -172,7 +172,7 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesReportsMissingBasketPropertyFromBasketNode()
+        public void LoadGraphReportsMissingBasketPropertyFromBasketNode()
         {
             var directory = CreateDirectory();
             try
@@ -180,7 +180,7 @@ namespace EventGraph.Tests
                 WriteDefinition(directory, "source.json", "A");
                 File.WriteAllText(Path.Combine(directory, "basket.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"Basket\",\"currency\":\"USD\",\"constituents\":[\"A\"]}");
 
-                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadGraph(directory));
 
                 Assert.Contains("weights", exception.Message);
             }
@@ -191,14 +191,14 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesReportsOptionWhenItsEquitySourceIsMissing()
+        public void LoadGraphReportsOptionWhenItsEquitySourceIsMissing()
         {
             var directory = CreateDirectory();
             try
             {
                 File.WriteAllText(Path.Combine(directory, "option.json"), /*lang=json,strict*/ "{\"type\":\"EquityOptionNode\",\"name\":\"A_CALL\",\"underlyer\":\"A\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Call\"}");
 
-                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadGraph(directory));
 
                 Assert.Equal(
                     "Could not enrich graph definition 'EquityOptionNode::A_CALL': required graph definition 'EquitySource::A' was not found.",
@@ -211,20 +211,20 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesRejectsMissingDirectory()
+        public void LoadGraphRejectsMissingDirectory()
         {
             _ = Assert.Throws<DirectoryNotFoundException>(() =>
-                NodeGraphLoader.LoadNodes(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString())));
+                NodeGraphLoader.LoadGraph(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString())));
         }
 
         [Fact]
-        public void LoadNodesRejectsBlankDirectoryPath()
+        public void LoadGraphRejectsBlankDirectoryPath()
         {
-            _ = Assert.Throws<ArgumentException>(() => NodeGraphLoader.LoadNodes(" "));
+            _ = Assert.Throws<ArgumentException>(() => NodeGraphLoader.LoadGraph(" "));
         }
 
         [Fact]
-        public void LoadNodesRejectsDuplicateNames()
+        public void LoadGraphRejectsDuplicateNames()
         {
             var directory = CreateDirectory();
             try
@@ -232,7 +232,7 @@ namespace EventGraph.Tests
                 WriteDefinition(directory, "a.json", "DUPLICATE");
                 WriteDefinition(directory, "b.json", "duplicate");
 
-                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadGraph(directory));
 
                 Assert.Contains("Duplicate graph node key", exception.Message);
             }
@@ -243,14 +243,14 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesRejectsDefinitionsWithoutTypes()
+        public void LoadGraphRejectsDefinitionsWithoutTypes()
         {
             var directory = CreateDirectory();
             try
             {
                 File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ "{\"name\":\"A\"}");
 
-                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadGraph(directory));
 
                 Assert.Contains("type", exception.Message);
             }
@@ -261,13 +261,13 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesRejectsEmptyDirectory()
+        public void LoadGraphRejectsEmptyDirectory()
         {
             var directory = CreateDirectory();
             try
             {
                 _ = Assert.Throws<InvalidOperationException>(() =>
-                    NodeGraphLoader.LoadNodes(directory));
+                    NodeGraphLoader.LoadGraph(directory));
             }
             finally
             {
@@ -276,7 +276,7 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesRejectsInvalidJson()
+        public void LoadGraphRejectsInvalidJson()
         {
             var directory = CreateDirectory();
             try
@@ -284,7 +284,7 @@ namespace EventGraph.Tests
                 File.WriteAllText(Path.Combine(directory, "source.json"), "not json");
 
                 _ = Assert.Throws<InvalidDataException>(() =>
-                    NodeGraphLoader.LoadNodes(directory));
+                    NodeGraphLoader.LoadGraph(directory));
             }
             finally
             {
@@ -293,7 +293,7 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesRejectsJsonArrays()
+        public void LoadGraphRejectsJsonArrays()
         {
             var directory = CreateDirectory();
             try
@@ -301,7 +301,7 @@ namespace EventGraph.Tests
                 File.WriteAllText(Path.Combine(directory, "source.json"), "[]");
 
                 var exception = Assert.Throws<InvalidDataException>(() =>
-                    NodeGraphLoader.LoadNodes(directory));
+                    NodeGraphLoader.LoadGraph(directory));
 
                 Assert.Contains("JSON object", exception.Message);
             }
@@ -312,14 +312,14 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void LoadNodesRejectsUnsupportedTypes()
+        public void LoadGraphRejectsUnsupportedTypes()
         {
             var directory = CreateDirectory();
             try
             {
                 File.WriteAllText(Path.Combine(directory, "source.json"), /*lang=json,strict*/ "{\"type\":\"UnknownNode\",\"name\":\"A\"}");
 
-                _ = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+                _ = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadGraph(directory));
             }
             finally
             {

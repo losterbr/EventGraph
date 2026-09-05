@@ -299,7 +299,7 @@ namespace EventGraph.Tests
                 File.WriteAllText(Path.Combine(directory, "mix.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"MIX\",\"currency\":\"USD\",\"constituents\":[\"ALPHA\",\"BETA\"],\"weights\":[0.5,0.5]}");
                 File.WriteAllText(Path.Combine(directory, "combo.json"), /*lang=json,strict*/ "{\"type\":\"BasketDefinition\",\"name\":\"COMBO\",\"currency\":\"USD\",\"constituents\":[\"MIX\"],\"weights\":[1.0]}");
 
-                var nodes = NodeGraphLoader.LoadNodes(directory);
+                var nodes = NodeGraphLoader.LoadGraph(directory).QuoteNodes;
                 var order = nodes.Select(node => node.Name).ToList();
 
                 Assert.True(order.IndexOf("ALPHA") < order.IndexOf("MIX"));

@@ -23,6 +23,22 @@ namespace EventGraph
 
         public BasketDefinition Definition { get; }
 
+        internal static IReadOnlyList<IReadOnlyDictionary<string, JsonElement>> Compile(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            var basketDefinition = new BasketDefinitionProvider(definition).Definition;
+            return
+            [
+                new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["type"] = JsonSerializer.SerializeToElement(nameof(BasketSpotNode)),
+                    ["name"] = JsonSerializer.SerializeToElement(basketDefinition.Name),
+                    ["currency"] = JsonSerializer.SerializeToElement(basketDefinition.Currency),
+                    ["constituents"] = JsonSerializer.SerializeToElement(basketDefinition.Constituents),
+                    ["weights"] = JsonSerializer.SerializeToElement(basketDefinition.Weights)
+                }
+            ];
+        }
+
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
             return JsonDefinitionReader.GetString(definition, propertyName, nameof(BasketDefinitionProvider));

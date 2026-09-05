@@ -11,11 +11,6 @@ namespace EventGraph
     /// </summary>
     public static class NodeGraphLoader
     {
-        public static IReadOnlyList<ISpotNode> LoadNodes(string directoryPath)
-        {
-            return LoadGraph(directoryPath).QuoteNodes;
-        }
-
         public static QuoteGraph LoadGraph(string directoryPath)
         {
             if (string.IsNullOrWhiteSpace(directoryPath))
@@ -42,7 +37,7 @@ namespace EventGraph
             var nodeDefinitions = new List<IReadOnlyDictionary<string, JsonElement>>();
             foreach (var definition in definitions)
             {
-                nodeDefinitions.AddRange(CompileDefinition(definition));
+                nodeDefinitions.AddRange(GraphDefinitionCompiler.Compile(definition));
             }
 
             var unsupportedType = nodeDefinitions
@@ -153,27 +148,6 @@ namespace EventGraph
             return !definition.TryGetValue("type", out var type) || type.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(type.GetString())
                 ? throw new InvalidDataException("Every graph definition must provide a non-empty string type.")
                 : type.GetString();
-        }
-
-        private static IReadOnlyList<IReadOnlyDictionary<string, JsonElement>> CompileDefinition(IReadOnlyDictionary<string, JsonElement> definition)
-        {
-            if (!string.Equals(GetType(definition), nameof(BasketDefinition), StringComparison.OrdinalIgnoreCase))
-            {
-                return [definition];
-            }
-
-            var basketDefinition = new BasketDefinitionProvider(definition).Definition;
-            return
-            [
-                new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase)
-                {
-                    ["type"] = JsonSerializer.SerializeToElement(nameof(BasketSpotNode)),
-                    ["name"] = JsonSerializer.SerializeToElement(basketDefinition.Name),
-                    ["currency"] = JsonSerializer.SerializeToElement(basketDefinition.Currency),
-                    ["constituents"] = JsonSerializer.SerializeToElement(basketDefinition.Constituents),
-                    ["weights"] = JsonSerializer.SerializeToElement(basketDefinition.Weights)
-                }
-            ];
         }
 
         private static string ResolveDependencyKey(
