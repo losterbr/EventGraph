@@ -43,6 +43,18 @@ namespace EventGraph.Tests
         }
 
         [Fact]
+        public void BasketProvidesDefinitionWithItsOwnName()
+        {
+            var basket = new BasketSpotNode("TECH", [new SpotNode(new EquitySource("AAPL", 100.0, 0.2, 0.0))]);
+
+            var owner = basket.GetType().GetInterface("ISpotDefinitionOwner", ignoreCase: false)!;
+            var definition = (SpotDefinition)owner.GetProperty("Definition")!.GetValue(basket)!;
+
+            Assert.Equal("TECH", definition.Name);
+            Assert.Equal("USD", definition.Currency);
+        }
+
+        [Fact]
         public async Task BasketAggregateAllowsNegativeWeightsWhenTheySumToOne()
         {
             var quotes = new[]

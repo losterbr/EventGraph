@@ -5,7 +5,7 @@ namespace EventGraph
     /// <summary>
     /// Defines immutable metadata for a spot value.
     /// </summary>
-    public sealed record SpotDefinition
+    public sealed class SpotDefinition
     {
         public SpotDefinition(string name, string currency)
         {

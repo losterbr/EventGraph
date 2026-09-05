@@ -55,11 +55,13 @@ namespace EventGraph
 
             this.constituents = [.. constituents];
             Name = name;
-            definition = GetDefinition(this.constituents[0]);
-            if (this.constituents.Any(constituent => !string.Equals(GetDefinition(constituent).Currency, definition.Currency, StringComparison.OrdinalIgnoreCase)))
+            var currency = GetDefinition(this.constituents[0]).Currency;
+            if (this.constituents.Any(constituent => !string.Equals(GetDefinition(constituent).Currency, currency, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new ArgumentException("Basket constituents must use the same currency.", nameof(constituents));
             }
+
+            definition = new SpotDefinition(name, currency);
 
             hasLatestValue = new bool[this.constituents.Count];
             latestValues = new double[this.constituents.Count];
@@ -129,7 +131,7 @@ namespace EventGraph
 
         internal static string GetNodeName(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            return GraphDefinitionEnrichmentContext.GetNodeName(definition);
+            return new BasketDefinitionProvider(definition).Definition.Name;
         }
 
         internal static bool IsSource()
