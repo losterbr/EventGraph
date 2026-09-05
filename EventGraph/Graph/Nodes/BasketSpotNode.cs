@@ -27,10 +27,12 @@ namespace EventGraph
         public BasketSpotNode(
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
-            : this(
-                GetString(definition, "name"),
-                GetConstituents(definition, nodesByName),
-                GetWeights(definition))
+            : this(new BasketDefinitionProvider(definition).Definition, nodesByName)
+        {
+        }
+
+        private BasketSpotNode(BasketDefinition definition, IReadOnlyDictionary<string, IGraphNode> nodesByName)
+            : this(definition.Name, GetConstituents(definition.Constituents, nodesByName), definition.Weights)
         {
         }
 
@@ -135,28 +137,18 @@ namespace EventGraph
 
         internal static IReadOnlyList<string> GetDependencyNames(IReadOnlyDictionary<string, JsonElement> definition)
         {
-            return !definition.TryGetValue("constituents", out var constituents) || constituents.ValueKind != JsonValueKind.Array
-                ? []
-                : [.. constituents.EnumerateArray()
-                .Where(name => name.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(name.GetString()))
-                .Select(name => GetDependencyKey(name.GetString()))];
+            return [.. new BasketDefinitionProvider(definition).Definition.Constituents.Select(GetDependencyKey)];
         }
 
         internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
             GraphDefinitionEnrichmentContext context,
             IReadOnlyDictionary<string, JsonElement> definition)
         {
-            if (!definition.TryGetValue("constituents", out var constituents) || constituents.ValueKind != JsonValueKind.Array)
-            {
-                return definition;
-            }
-
-            var normalizedConstituents = constituents.EnumerateArray()
-                .Select(constituent => constituent.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(constituent.GetString())
-                    ? context.ContainsDefinition(GraphKey.Of(nameof(BasketSpotNode), constituent.GetString()))
-                        ? GraphKey.Of(nameof(BasketSpotNode), constituent.GetString())
-                        : GraphKey.Of(nameof(SpotNode), constituent.GetString())
-                    : constituent.GetRawText())
+            var basketDefinition = new BasketDefinitionProvider(definition).Definition;
+            var normalizedConstituents = basketDefinition.Constituents
+                .Select(constituent => context.ContainsDefinition(GraphKey.Of(nameof(BasketSpotNode), constituent))
+                    ? GraphKey.Of(nameof(BasketSpotNode), constituent)
+                    : GraphKey.Of(nameof(SpotNode), constituent))
                 .ToArray();
             var enrichedDefinition = new Dictionary<string, JsonElement>(definition, StringComparer.OrdinalIgnoreCase)
             {
@@ -178,11 +170,6 @@ namespace EventGraph
             return enrichedDefinition;
         }
 
-        private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
-        {
-            return JsonDefinitionReader.GetString(definition, propertyName, nameof(BasketSpotNode));
-        }
-
         private static SpotDefinition GetDefinition(ISpotNode node)
         {
             return node is ISpotDefinitionProvider provider
@@ -191,23 +178,16 @@ namespace EventGraph
         }
 
         private static List<ISpotNode> GetConstituents(
-            IReadOnlyDictionary<string, JsonElement> definition,
+            IReadOnlyList<string> references,
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
         {
-            if (definition == null || !definition.TryGetValue("constituents", out var constituentsDefinition) || constituentsDefinition.ValueKind != JsonValueKind.Array)
-            {
-                throw new InvalidDataException("BasketSpotNode requires a constituents array.");
-            }
-
             var constituents = new List<ISpotNode>();
-            foreach (var name in constituentsDefinition.EnumerateArray())
+            foreach (var reference in references)
             {
-                var key = name.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(name.GetString())
-                    ? GetDependencyKey(name.GetString())
-                    : null;
+                var key = GetDependencyKey(reference);
                 if (key == null || !nodesByName.TryGetValue(key, out var node) || node is not ISpotNode constituent)
                 {
-                    throw new InvalidDataException($"BasketSpotNode references an unknown spot node '{name}'.");
+                    throw new InvalidDataException($"BasketSpotNode references an unknown spot node '{reference}'.");
                 }
 
                 constituents.Add(constituent);
@@ -221,27 +201,6 @@ namespace EventGraph
             return reference.Contains("::", StringComparison.Ordinal)
                 ? reference
                 : GraphKey.Of(nameof(SpotNode), reference);
-        }
-
-        private static List<double> GetWeights(IReadOnlyDictionary<string, JsonElement> definition)
-        {
-            if (definition == null || !definition.TryGetValue("weights", out var weights) || weights.ValueKind != JsonValueKind.Array)
-            {
-                throw new InvalidDataException("BasketSpotNode requires a weights array.");
-            }
-
-            var values = new List<double>();
-            foreach (var weight in weights.EnumerateArray())
-            {
-                if (weight.ValueKind != JsonValueKind.Number || !weight.TryGetDouble(out var value))
-                {
-                    throw new InvalidDataException("BasketSpotNode weights must be numeric.");
-                }
-
-                values.Add(value);
-            }
-
-            return values;
         }
 
         public void Connect()
