@@ -169,6 +169,26 @@ namespace EventGraph.Tests
         }
 
         [Fact]
+        public void LoadNodesReportsOptionWhenItsEquitySourceIsMissing()
+        {
+            var directory = CreateDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(directory, "option.json"), /*lang=json,strict*/ "{\"type\":\"EquityOptionNode\",\"name\":\"A_CALL\",\"underlyer\":\"A\",\"maturity\":\"1Y\",\"strike\":100,\"optionType\":\"Call\"}");
+
+                var exception = Assert.Throws<InvalidDataException>(() => NodeGraphLoader.LoadNodes(directory));
+
+                Assert.Equal(
+                    "Could not enrich graph definition 'EquityOptionNode::A_CALL': required graph definition 'EquitySource::A' was not found.",
+                    exception.Message);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
+        [Fact]
         public void LoadNodesRejectsMissingDirectory()
         {
             _ = Assert.Throws<DirectoryNotFoundException>(() =>

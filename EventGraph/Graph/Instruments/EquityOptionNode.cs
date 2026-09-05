@@ -112,8 +112,9 @@ namespace EventGraph
             GraphDefinitionEnrichmentContext context,
             IReadOnlyDictionary<string, JsonElement> definition)
         {
+            var optionKey = GraphKey.Of(nameof(EquityOptionNode), GetNodeName(definition));
             var underlyer = GraphDefinitionEnrichmentContext.GetString(definition, "underlyer");
-            var sourceDefinition = context.GetDefinition(GraphKey.Of(nameof(EquitySource), underlyer));
+            var sourceDefinition = context.GetDefinition(GraphKey.Of(nameof(EquitySource), underlyer), optionKey);
             var currency = GraphDefinitionEnrichmentContext.GetOptionalString(sourceDefinition, "currency") ?? "USD";
             var rateSourceName = GetRateSourceName(context.Definitions, currency);
 

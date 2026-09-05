@@ -14,11 +14,11 @@ namespace EventGraph
             return definitionsByKey.ContainsKey(key);
         }
 
-        public IReadOnlyDictionary<string, JsonElement> GetDefinition(string key)
+        public IReadOnlyDictionary<string, JsonElement> GetDefinition(string key, string requiredBy)
         {
             return definitionsByKey.TryGetValue(key, out var definition)
                 ? definition
-                : throw new InvalidDataException($"Graph definition '{key}' was not found.");
+            : throw new InvalidDataException($"Could not enrich graph definition '{requiredBy}': required graph definition '{key}' was not found.");
         }
 
         public IEnumerable<IReadOnlyDictionary<string, JsonElement>> Definitions => definitionsByKey.Values;
