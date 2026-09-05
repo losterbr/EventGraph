@@ -18,11 +18,10 @@ namespace EventGraph
 
         public EquitySource(IReadOnlyDictionary<string, JsonElement> definition)
             : this(
-                GetString(definition, "name"),
+                new SpotDefinitionProvider(definition).Definition,
                 GetDouble(definition, "spot"),
                 GetDouble(definition, "volatility"),
-                GetDouble(definition, "meanTickTimeSeconds"),
-                GetStringOrDefault(definition, "currency", "USD"))
+                GetDouble(definition, "meanTickTimeSeconds"))
         {
         }
 
@@ -32,11 +31,17 @@ namespace EventGraph
             double vol,
             double meanTickTimeSeconds = 1.0,
             string currency = "USD")
+            : this(new SpotDefinition(name, currency), spot, vol, meanTickTimeSeconds)
         {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentException("Spot name cannot be empty.", nameof(name));
-            }
+        }
+
+        public EquitySource(
+            SpotDefinition definition,
+            double spot,
+            double vol,
+            double meanTickTimeSeconds = 1.0)
+        {
+            ArgumentNullException.ThrowIfNull(definition);
 
             if (double.IsNaN(spot) || double.IsInfinity(spot))
             {
@@ -53,15 +58,10 @@ namespace EventGraph
                 throw new ArgumentOutOfRangeException(nameof(meanTickTimeSeconds), "Mean tick time must be a non-negative finite number.");
             }
 
-            if (string.IsNullOrWhiteSpace(currency))
-            {
-                throw new ArgumentException("Currency cannot be empty.", nameof(currency));
-            }
-
-            Name = name;
+            Name = definition.Name;
             Spot = spot;
             Volatility = vol;
-            Definition = new SpotDefinition(currency);
+            Definition = definition;
             this.meanTickTimeSeconds = meanTickTimeSeconds;
         }
 
@@ -111,22 +111,9 @@ namespace EventGraph
             return definition;
         }
 
-        private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
-        {
-            return JsonDefinitionReader.GetString(definition, propertyName, nameof(EquitySource));
-        }
-
         private static double GetDouble(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
         {
             return JsonDefinitionReader.GetDouble(definition, propertyName, nameof(EquitySource));
-        }
-
-        private static string GetStringOrDefault(
-            IReadOnlyDictionary<string, JsonElement> definition,
-            string propertyName,
-            string defaultValue)
-        {
-            return JsonDefinitionReader.GetStringOrDefault(definition, propertyName, defaultValue, nameof(EquitySource));
         }
 
         private double IncrStdDev(double tMilliSeconds)

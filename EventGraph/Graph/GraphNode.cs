@@ -32,16 +32,6 @@ namespace EventGraph
     }
 
     /// <summary>
-    /// Provides static constituent names and weights for a basket definition.
-    /// </summary>
-    public interface IBasketDefinitionSourceNode : IGraphNode
-    {
-        IReadOnlyList<string> Constituents { get; }
-
-        IReadOnlyList<double> Weights { get; }
-    }
-
-    /// <summary>
     /// Represents a graph source that provides a spot value for a SpotNode to expose.
     /// </summary>
     public interface ISpotSourceNode : ISpotValueNode
