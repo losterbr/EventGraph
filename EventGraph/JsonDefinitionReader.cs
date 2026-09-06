@@ -33,5 +33,16 @@ namespace EventGraph
                 ? throw new InvalidDataException($"{nodeTypeName} requires a numeric '{propertyName}' property.")
                 : value;
         }
+
+        public static double GetDoubleOrDefault(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            string propertyName,
+            double defaultValue,
+            string nodeTypeName)
+        {
+            return definition == null || !definition.ContainsKey(propertyName)
+                ? defaultValue
+                : GetDouble(definition, propertyName, nodeTypeName);
+        }
     }
 }

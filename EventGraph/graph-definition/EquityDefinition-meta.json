@@ -1,5 +1,5 @@
 {
-  "type": "EquitySource",
+  "type": "EquityDefinition",
   "name": "META",
   "currency": "USD",
   "spot": 750.0,

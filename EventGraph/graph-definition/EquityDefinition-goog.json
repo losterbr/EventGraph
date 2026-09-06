@@ -1,5 +1,5 @@
 {
-  "type": "EquitySource",
+  "type": "EquityDefinition",
   "name": "GOOG",
   "currency": "USD",
   "spot": 190.0,

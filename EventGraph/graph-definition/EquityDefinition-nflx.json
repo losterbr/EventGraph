@@ -1,5 +1,5 @@
 {
-  "type": "EquitySource",
+  "type": "EquityDefinition",
   "name": "NFLX",
   "currency": "USD",
   "spot": 1200.0,

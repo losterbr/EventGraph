@@ -14,10 +14,16 @@ EventGraph is a small .NET sample that demonstrates an event-driven market quote
 
 ```mermaid
 flowchart LR
-	equity["EquitySource [ISpotSourceNode, IVolSourceNode]"]
-	rate["CurrencyRateSource [IRateSourceNode]"]
+	equityDefinition["EquityDefinition"]
+	rateDefinition["CurrencyRateDefinition"]
 	basketDefinition["BasketDefinition"]
 	optionDefinition["EquityOptionDefinition"]
+
+	equity["EquitySource [ISpotSourceNode, IVolSourceNode]"]
+	rate["CurrencyRateSource [IRateSourceNode]"]
+
+	equityDefinition -.->|compiled into| equity
+	rateDefinition -.->|compiled into| rate
 
 	equity --> spot["SpotNode [ISpotNode]"]
 	equity --> volatility["VolatilityNode [IVolNode]"]
@@ -42,11 +48,11 @@ flowchart LR
 
 ### Graph definitions
 
-An `EquitySource` JSON definition in `EventGraph/graph-definition` uses the following fields:
+An `EquityDefinition` JSON definition in `EventGraph/graph-definition` uses the following fields:
 
 ```json
 {
-	"type": "EquitySource",
+	"type": "EquityDefinition",
 	"name": "TSLA",
 	"currency": "USD",
 	"spot": 800.0,
@@ -55,9 +61,9 @@ An `EquitySource` JSON definition in `EventGraph/graph-definition` uses the foll
 }
 ```
 
-The `type` field selects either a runtime node implementation or a static definition type. Each `EquitySource` includes static `currency` metadata, currently set to `USD` for all assets. A `BasketDefinition` uses `name`, `constituents`, and `weights`; before graph construction, the loader compiles it into a `BasketSpotNode` and materializes a `SpotNode` for each constituent. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
+Every JSON file in `graph-definition/` is a static `*Definition` specification compiled into live nodes and sources by `GraphDefinitionCompiler`. Each `EquityDefinition` compiles into an `EquitySource`. A `BasketDefinition` uses `name`, `currency`, `constituents`, and `weights`; before graph construction, the loader compiles it into a `BasketSpotNode` and materializes a `SpotNode` for each constituent. The application loads all JSON definitions from this folder at startup, in filename order. Terminal colors are assigned by `QuoteSubscriber`, not stored as node properties.
 
-A `CurrencyRateSource` provides a named flat `interestRate` (for example, `0.02` for 2%). The loader materializes a dependent `RateCurveNode` when a forward curve or equity option needs a discount curve. Its `DiscountFactor` property is a `date -> double` function implemented as `exp(-interestRate * (date - today) / 365)`.
+A `CurrencyRateDefinition` provides a named flat `interestRate` (for example, `0.02` for 2%) and compiles into a `CurrencyRateSource`. The loader materializes a dependent `RateCurveNode` when a forward curve or equity option needs a discount curve. Its `DiscountFactor` property is a `date -> double` function implemented as `exp(-interestRate * (date - today) / 365)`.
 
 An `EquityOptionDefinition` uses `underlyer`, `maturity`, `strike`, and `optionType`. Before graph construction, the loader compiles it into an `EquityOptionNode` and materializes its forward, volatility, and discount-curve dependencies. An equity underlyer uses `VolatilityNode`; a basket underlyer uses `BasketVolatilityNode`, currently fixed at 30%. The current example uses `maturity: "1Y"`, meaning today plus one year, and sets the strike to the equity's current spot. Pricing uses the forward Black-Scholes form: `discountFactor * (forward * N(d1) - strike * N(d2))`, with the rate-curve discount factor at maturity.
 

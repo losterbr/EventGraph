@@ -7,8 +7,10 @@ namespace EventGraph
     internal static class GraphDefinitionCompiler
     {
         private static readonly Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyList<IReadOnlyDictionary<string, JsonElement>>>> Compilers =
-            new Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, IReadOnlyList<IReadOnlyDictionary<string, JsonElement>>>>(StringComparer.OrdinalIgnoreCase)
+            new(StringComparer.OrdinalIgnoreCase)
             {
+                [nameof(EquityDefinition)] = EquityDefinitionProvider.Compile,
+                [nameof(CurrencyRateDefinition)] = CurrencyRateDefinitionProvider.Compile,
                 [nameof(BasketDefinition)] = BasketDefinitionProvider.Compile,
                 [nameof(EquityOptionDefinition)] = EquityOptionDefinitionProvider.Compile
             };

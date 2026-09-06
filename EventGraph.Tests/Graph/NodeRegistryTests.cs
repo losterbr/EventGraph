@@ -111,6 +111,12 @@ namespace EventGraph.Tests
             Assert.Contains("Unsupported graph node type", exception.Message);
         }
 
+        [Fact]
+        public void NodeRegistryGuardsAgainstNullArguments()
+        {
+            _ = Assert.Throws<ArgumentNullException>(() => NodeRegistry.GetDependencyNames(null!));
+        }
+
         private static Dictionary<string, JsonElement> ToDictionary(JsonDocument document)
         {
             return document.RootElement

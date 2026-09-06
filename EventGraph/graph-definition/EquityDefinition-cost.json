@@ -1,5 +1,5 @@
 {
-  "type": "EquitySource",
+  "type": "EquityDefinition",
   "name": "COST",
   "currency": "USD",
   "spot": 980.0,

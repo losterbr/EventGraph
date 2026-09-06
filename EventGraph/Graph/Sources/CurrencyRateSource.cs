@@ -10,11 +10,17 @@ namespace EventGraph
     public sealed class CurrencyRateSource : IRateSourceNode
     {
         public CurrencyRateSource(IReadOnlyDictionary<string, JsonElement> definition)
-            : this(
-                GetString(definition, "name"),
-                GetDouble(definition, "interestRate"),
-                GetStringOrDefault(definition, "currency", GetString(definition, "name")))
+            : this(new CurrencyRateDefinitionProvider(definition).Definition)
         {
+        }
+
+        public CurrencyRateSource(CurrencyRateDefinition definition)
+            : this(
+                definition?.Name,
+                definition?.InterestRate ?? 0,
+                definition?.Currency)
+        {
+            ArgumentNullException.ThrowIfNull(definition);
         }
 
         public CurrencyRateSource(string name, double interestRate, string currency = null)
@@ -76,24 +82,6 @@ namespace EventGraph
         internal static bool IsSource()
         {
             return true;
-        }
-
-        private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
-        {
-            return JsonDefinitionReader.GetString(definition, propertyName, nameof(CurrencyRateSource));
-        }
-
-        private static double GetDouble(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
-        {
-            return JsonDefinitionReader.GetDouble(definition, propertyName, nameof(CurrencyRateSource));
-        }
-
-        private static string GetStringOrDefault(
-            IReadOnlyDictionary<string, JsonElement> definition,
-            string propertyName,
-            string defaultValue)
-        {
-            return JsonDefinitionReader.GetStringOrDefault(definition, propertyName, defaultValue, nameof(CurrencyRateSource));
         }
     }
 }

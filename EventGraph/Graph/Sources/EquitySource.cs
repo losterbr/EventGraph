@@ -17,12 +17,19 @@ namespace EventGraph
         private readonly double meanTickTimeSeconds;
 
         public EquitySource(IReadOnlyDictionary<string, JsonElement> definition)
-            : this(
-                new SpotDefinitionProvider(definition).Definition,
-                GetDouble(definition, "spot"),
-                GetDouble(definition, "volatility"),
-                GetDouble(definition, "meanTickTimeSeconds"))
+            : this(new EquityDefinitionProvider(definition).Definition)
         {
+        }
+
+        public EquitySource(EquityDefinition definition)
+            : this(
+                definition?.Name,
+                definition?.Spot ?? 0,
+                definition?.Volatility ?? 0,
+                definition?.MeanTickTimeSeconds ?? 1.0,
+                definition?.Currency ?? "USD")
+        {
+            ArgumentNullException.ThrowIfNull(definition);
         }
 
         public EquitySource(
@@ -111,11 +118,6 @@ namespace EventGraph
                 ["source"] = JsonSerializer.SerializeToElement(GraphKey.Of(nameof(EquitySource), name))
             });
             return definition;
-        }
-
-        private static double GetDouble(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)
-        {
-            return JsonDefinitionReader.GetDouble(definition, propertyName, nameof(EquitySource));
         }
 
         private double IncrStdDev(double tMilliSeconds)

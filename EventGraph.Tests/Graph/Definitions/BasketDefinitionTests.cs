@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 namespace EventGraph.Tests
@@ -5,13 +9,60 @@ namespace EventGraph.Tests
     public class BasketDefinitionTests
     {
         [Fact]
-        public void SpotDefinitionProviderProvidesSpotDefinition()
+        public void BasketDefinitionInitializesProperties()
         {
-            var provider = new SpotDefinitionProvider("AAPL", "USD");
+            var definition = new BasketDefinition("BASKET", "USD", ["A", "B"], [0.25, 0.75]);
 
-            _ = Assert.IsAssignableFrom<IDefinitionProvider<SpotDefinition>>(provider);
-            Assert.Equal("AAPL", provider.Definition.Name);
-            Assert.Equal("USD", provider.Definition.Currency);
+            Assert.Equal("BASKET", definition.Name);
+            Assert.Equal("USD", definition.Currency);
+            Assert.Equal(["A", "B"], definition.Constituents);
+            Assert.Equal([0.25, 0.75], definition.Weights);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        public void BasketDefinitionRejectsInvalidName(string name)
+        {
+            _ = Assert.Throws<ArgumentException>(() => new BasketDefinition(name, "USD", ["A"], [1.0]));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        public void BasketDefinitionRejectsInvalidCurrency(string currency)
+        {
+            _ = Assert.Throws<ArgumentException>(() => new BasketDefinition("BASKET", currency, ["A"], [1.0]));
+        }
+
+        [Fact]
+        public void BasketDefinitionRejectsNullOrEmptyConstituents()
+        {
+            _ = Assert.Throws<ArgumentException>(() => new BasketDefinition("BASKET", "USD", null!, [1.0]));
+            _ = Assert.Throws<ArgumentException>(() => new BasketDefinition("BASKET", "USD", [], []));
+        }
+
+        [Fact]
+        public void BasketDefinitionRejectsBlankConstituents()
+        {
+            _ = Assert.Throws<ArgumentException>(() => new BasketDefinition("BASKET", "USD", ["A", " "], [0.5, 0.5]));
+        }
+
+        [Fact]
+        public void BasketDefinitionRejectsMismatchedWeights()
+        {
+            _ = Assert.Throws<ArgumentException>(() => new BasketDefinition("BASKET", "USD", ["A", "B"], null!));
+            _ = Assert.Throws<ArgumentException>(() => new BasketDefinition("BASKET", "USD", ["A", "B"], [1.0]));
+        }
+
+        [Fact]
+        public void BasketDefinitionRejectsInvalidWeights()
+        {
+            _ = Assert.Throws<ArgumentException>(() => new BasketDefinition("BASKET", "USD", ["A"], [double.NaN]));
+            _ = Assert.Throws<ArgumentException>(() => new BasketDefinition("BASKET", "USD", ["A"], [double.PositiveInfinity]));
+            _ = Assert.Throws<ArgumentException>(() => new BasketDefinition("BASKET", "USD", ["A", "B"], [0.5, 0.6]));
         }
 
         [Fact]
@@ -56,16 +107,27 @@ namespace EventGraph.Tests
         }
 
         [Fact]
-        public void EquityOptionDefinitionProviderProvidesEquityOptionDefinition()
+        public void BasketDefinitionProviderRejectsInvalidConstituentsJson()
         {
-            var provider = new EquityOptionDefinitionProvider("AAPL_1Y_CALL", "AAPL", "1Y", 225.0, "Call");
+            using var doc1 = JsonDocument.Parse("{\"name\":\"BASKET\",\"currency\":\"USD\",\"weights\":[1]}");
+            _ = Assert.Throws<InvalidDataException>(() => new BasketDefinitionProvider(
+                doc1.RootElement.EnumerateObject().ToDictionary(p => p.Name, p => p.Value.Clone(), StringComparer.OrdinalIgnoreCase)));
 
-            _ = Assert.IsAssignableFrom<IDefinitionProvider<EquityOptionDefinition>>(provider);
-            Assert.Equal("AAPL_1Y_CALL", provider.Definition.Name);
-            Assert.Equal("AAPL", provider.Definition.Underlyer);
-            Assert.Equal("1Y", provider.Definition.Maturity);
-            Assert.Equal(225.0, provider.Definition.Strike);
-            Assert.Equal("Call", provider.Definition.OptionType);
+            using var doc2 = JsonDocument.Parse("{\"name\":\"BASKET\",\"currency\":\"USD\",\"constituents\":[\"\"],\"weights\":[1]}");
+            _ = Assert.Throws<InvalidDataException>(() => new BasketDefinitionProvider(
+                doc2.RootElement.EnumerateObject().ToDictionary(p => p.Name, p => p.Value.Clone(), StringComparer.OrdinalIgnoreCase)));
+        }
+
+        [Fact]
+        public void BasketDefinitionProviderRejectsInvalidWeightsJson()
+        {
+            using var doc1 = JsonDocument.Parse("{\"name\":\"BASKET\",\"currency\":\"USD\",\"constituents\":[\"A\"]}");
+            _ = Assert.Throws<InvalidDataException>(() => new BasketDefinitionProvider(
+                doc1.RootElement.EnumerateObject().ToDictionary(p => p.Name, p => p.Value.Clone(), StringComparer.OrdinalIgnoreCase)));
+
+            using var doc2 = JsonDocument.Parse("{\"name\":\"BASKET\",\"currency\":\"USD\",\"constituents\":[\"A\"],\"weights\":[\"bad\"]}");
+            _ = Assert.Throws<InvalidDataException>(() => new BasketDefinitionProvider(
+                doc2.RootElement.EnumerateObject().ToDictionary(p => p.Name, p => p.Value.Clone(), StringComparer.OrdinalIgnoreCase)));
         }
     }
 }
