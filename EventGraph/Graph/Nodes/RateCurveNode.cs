@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text.Json;
 
 namespace EventGraph
@@ -11,10 +12,11 @@ namespace EventGraph
     {
         private readonly IRateSourceNode source;
 
-        public RateCurveNode(IRateSourceNode source)
+        public RateCurveNode(IRateSourceNode source, DateTime? valuationDate = null)
         {
             this.source = source ?? throw new ArgumentNullException(nameof(source));
-            DiscountFactor = date => Math.Exp(-this.source.InterestRate * DateHelpers.YearFraction(DateTime.Today, date));
+            ValuationDate = (valuationDate ?? DateTime.Today).Date;
+            DiscountFactor = date => Math.Exp(-this.source.InterestRate * DateHelpers.YearFraction(ValuationDate, date));
         }
 
         public string Name => source.Name;
@@ -24,6 +26,8 @@ namespace EventGraph
         public double InterestRate => source.InterestRate;
 
         public string Currency => source.Currency;
+
+        public DateTime ValuationDate { get; }
 
         public Func<DateTime, double> DiscountFactor { get; }
 
@@ -38,7 +42,10 @@ namespace EventGraph
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
         {
-            return new RateCurveNode(GraphNodeResolver.ResolveByName<IRateSourceNode>(definition, nodesByName, nameof(CurrencyRateSource)));
+            var valuationDate = GetValuationDate(definition);
+            return new RateCurveNode(
+                GraphNodeResolver.ResolveByName<IRateSourceNode>(definition, nodesByName, nameof(CurrencyRateSource)),
+                valuationDate);
         }
 
         internal static IReadOnlyDictionary<string, JsonElement> EnrichDefinition(
@@ -56,6 +63,13 @@ namespace EventGraph
         internal static bool IsSource()
         {
             return false;
+        }
+
+        private static DateTime? GetValuationDate(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return definition != null && definition.TryGetValue("valuationDate", out var prop) && prop.ValueKind == JsonValueKind.String && DateTime.TryParse(prop.GetString(), CultureInfo.InvariantCulture, out var date)
+                ? date
+                : null;
         }
     }
 }

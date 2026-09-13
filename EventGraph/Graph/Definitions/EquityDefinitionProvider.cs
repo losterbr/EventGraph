@@ -21,9 +21,16 @@ namespace EventGraph
 
         public EquityDefinition Definition { get; } = new(name, spot, volatility, meanTickTimeSeconds, currency);
 
-        internal static IReadOnlyList<IReadOnlyDictionary<string, JsonElement>> Compile(IReadOnlyDictionary<string, JsonElement> definition)
+        internal static IReadOnlyList<IReadOnlyDictionary<string, JsonElement>> Compile(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            DateTime valuationDate,
+            IReadOnlyDictionary<string, double> initialSpots)
         {
             var equityDefinition = new EquityDefinitionProvider(definition).Definition;
+            var spot = initialSpots != null && initialSpots.TryGetValue(equityDefinition.Name, out var preservedSpot)
+                ? preservedSpot
+                : equityDefinition.Spot;
+
             return
             [
                 new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase)
@@ -31,9 +38,10 @@ namespace EventGraph
                     ["type"] = JsonSerializer.SerializeToElement(nameof(EquitySource)),
                     ["name"] = JsonSerializer.SerializeToElement(equityDefinition.Name),
                     ["currency"] = JsonSerializer.SerializeToElement(equityDefinition.Currency),
-                    ["spot"] = JsonSerializer.SerializeToElement(equityDefinition.Spot),
+                    ["spot"] = JsonSerializer.SerializeToElement(spot),
                     ["volatility"] = JsonSerializer.SerializeToElement(equityDefinition.Volatility),
-                    ["meanTickTimeSeconds"] = JsonSerializer.SerializeToElement(equityDefinition.MeanTickTimeSeconds)
+                    ["meanTickTimeSeconds"] = JsonSerializer.SerializeToElement(equityDefinition.MeanTickTimeSeconds),
+                    ["valuationDate"] = JsonSerializer.SerializeToElement(valuationDate.ToString("O"))
                 }
             ];
         }

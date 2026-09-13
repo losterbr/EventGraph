@@ -24,9 +24,10 @@ namespace EventGraph
                 GetNode<IForwardCurveNode>(definition, "forward", nodesByName),
                 GetNode<IVolNode>(definition, "volatility", nodesByName),
                 GetNode<IDiscountCurveNode>(definition, "discountCurve", nodesByName),
-                GetMaturity(definition),
+                GetMaturity(definition, GetValuationDate(definition) ?? DateTime.Today),
                 GetDouble(definition, "strike"),
-                GetOptionType(definition))
+                GetOptionType(definition),
+                GetValuationDate(definition))
         {
         }
 
@@ -37,7 +38,8 @@ namespace EventGraph
             IDiscountCurveNode discountCurveNode,
             DateTime maturity,
             double strike,
-            EquityOptionType optionType = EquityOptionType.Call)
+            EquityOptionType optionType = EquityOptionType.Call,
+            DateTime? valuationDate = null)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -52,9 +54,10 @@ namespace EventGraph
                 throw new ArgumentException("Option and underlying currencies must match.", nameof(discountCurveNode));
             }
 
-            if (maturity.Date <= DateTime.Today)
+            ValuationDate = (valuationDate ?? DateTime.Today).Date;
+            if (maturity.Date <= ValuationDate)
             {
-                throw new ArgumentOutOfRangeException(nameof(maturity), "Option maturity must be after today.");
+                throw new ArgumentOutOfRangeException(nameof(maturity), "Option maturity must be after valuation date.");
             }
 
             if (strike <= 0.0 || double.IsNaN(strike) || double.IsInfinity(strike))
@@ -84,13 +87,24 @@ namespace EventGraph
 
         public string Type => nameof(EquityOptionNode);
 
+        public DateTime ValuationDate { get; }
+
         public IReadOnlyList<IGraphNode> Dependencies => [forwardNode, volatilitySource, discountCurveNode];
 
         internal static IGraphNode Create(
             IReadOnlyDictionary<string, JsonElement> definition,
             IReadOnlyDictionary<string, IGraphNode> nodesByName)
         {
-            return new EquityOptionNode(definition, nodesByName);
+            var valuationDate = GetValuationDate(definition);
+            return new EquityOptionNode(
+                GetString(definition, "name"),
+                GetNode<IForwardCurveNode>(definition, "forward", nodesByName),
+                GetNode<IVolNode>(definition, "volatility", nodesByName),
+                GetNode<IDiscountCurveNode>(definition, "discountCurve", nodesByName),
+                GetMaturity(definition, valuationDate ?? DateTime.Today),
+                GetDouble(definition, "strike"),
+                GetOptionType(definition),
+                valuationDate);
         }
 
         internal static string GetNodeName(IReadOnlyDictionary<string, JsonElement> definition)
@@ -120,7 +134,11 @@ namespace EventGraph
             var spotKey = context.EnsureSpotNode(underlyer);
             var volatilityKey = context.EnsureVolatilityNode(underlyer);
 
-            context.AddSyntheticIfMissing(nameof(RateCurveNode), rateSourceName);
+            var valuationDateStr = GraphDefinitionEnrichmentContext.GetOptionalString(definition, "valuationDate");
+            var rateProps = valuationDateStr != null
+                ? new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase) { ["valuationDate"] = JsonSerializer.SerializeToElement(valuationDateStr) }
+                : null;
+            context.AddSyntheticIfMissing(nameof(RateCurveNode), rateSourceName, rateProps);
             context.AddSyntheticIfMissing(nameof(ForwardCurveNode), underlyer, new Dictionary<string, JsonElement>
             {
                 ["spot"] = JsonSerializer.SerializeToElement(spotKey),
@@ -170,7 +188,7 @@ namespace EventGraph
 
         private double CalculatePrice()
         {
-            var timeToMaturity = DateHelpers.YearFraction(DateTime.Today, Maturity);
+            var timeToMaturity = DateHelpers.YearFraction(ValuationDate, Maturity);
             var volatility = volatilitySource.Volatility;
             var forward = forwardNode.Forward(Maturity);
             var discountFactor = discountCurveNode.DiscountFactor(Maturity);
@@ -188,10 +206,17 @@ namespace EventGraph
                 : discountFactor * ((Strike * normal.CumulativeDistribution(-d2)) - (forward * normal.CumulativeDistribution(-d1)));
         }
 
-        private static DateTime GetMaturity(IReadOnlyDictionary<string, JsonElement> definition)
+        private static DateTime? GetValuationDate(IReadOnlyDictionary<string, JsonElement> definition)
+        {
+            return definition != null && definition.TryGetValue("valuationDate", out var prop) && prop.ValueKind == JsonValueKind.String && DateTime.TryParse(prop.GetString(), CultureInfo.InvariantCulture, out var date)
+                ? date
+                : null;
+        }
+
+        private static DateTime GetMaturity(IReadOnlyDictionary<string, JsonElement> definition, DateTime valuationDate)
         {
             var maturity = GetString(definition, "maturity");
-            return DateHelpers.TryAddTenor(DateTime.Today, maturity, out var maturityDate)
+            return DateHelpers.TryAddTenor(valuationDate, maturity, out var maturityDate)
                 ? maturityDate
                 : DateTime.Parse(maturity, CultureInfo.InvariantCulture);
         }

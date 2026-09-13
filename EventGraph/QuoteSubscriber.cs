@@ -52,6 +52,17 @@ namespace EventGraph
             }
         }
 
+        public void Unsubscribe(ITickingNode node)
+        {
+            if (node == null)
+            {
+                return;
+            }
+
+            node.Tick -= NodeTicked;
+            _ = nodeColors.Remove(node);
+        }
+
         private void NodeTicked(object sender, QuoteTick e)
         {
             if (!quiet)

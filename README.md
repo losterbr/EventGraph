@@ -69,6 +69,8 @@ An `EquityOptionDefinition` uses `underlyer`, `maturity`, `strike`, and `optionT
 
 Graph loading uses Kahn's algorithm to resolve dependencies. The loader builds an in-degree count for each node, processes dependency-free nodes first, and then releases dependent nodes as their prerequisites are created. This keeps startup ordering deterministic while avoiding repeated full scans of unresolved definitions.
 
+A `GraphSession` coordinates the lifecycle of the active `QuoteGraph` against an external `MarketClock`. When the valuation date advances, the session recompiles a new graph, filters out expired contracts, adjusts relative tenors, reconnects subscriptions, and carries over running spot state.
+
 The loaded graph also exposes stable node indices through `QuoteGraph`, which gives future runtime optimizations a dense representation without replacing the current node model. More specialized graph layouts such as compressed sparse row storage or parallel execution should be considered only after profiling shows that traversal or update propagation is a bottleneck.
 
 ## How it works

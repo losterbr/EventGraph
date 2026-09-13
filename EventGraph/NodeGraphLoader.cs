@@ -11,7 +11,10 @@ namespace EventGraph
     /// </summary>
     public static class NodeGraphLoader
     {
-        public static QuoteGraph LoadGraph(string directoryPath)
+        public static QuoteGraph LoadGraph(
+            string directoryPath,
+            DateTime? valuationDate = null,
+            IReadOnlyDictionary<string, double> initialSpots = null)
         {
             if (string.IsNullOrWhiteSpace(directoryPath))
             {
@@ -34,10 +37,11 @@ namespace EventGraph
                 throw new InvalidOperationException($"No JSON graph definitions were found in: {directoryPath}");
             }
 
+            var effectiveValuationDate = (valuationDate ?? DateTime.Today).Date;
             var nodeDefinitions = new List<IReadOnlyDictionary<string, JsonElement>>();
             foreach (var definition in definitions)
             {
-                nodeDefinitions.AddRange(GraphDefinitionCompiler.Compile(definition));
+                nodeDefinitions.AddRange(GraphDefinitionCompiler.Compile(definition, effectiveValuationDate, initialSpots));
             }
 
             var unsupportedType = nodeDefinitions

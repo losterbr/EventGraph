@@ -19,7 +19,10 @@ namespace EventGraph
 
         public CurrencyRateDefinition Definition { get; } = new(name, interestRate, currency);
 
-        internal static IReadOnlyList<IReadOnlyDictionary<string, JsonElement>> Compile(IReadOnlyDictionary<string, JsonElement> definition)
+        internal static IReadOnlyList<IReadOnlyDictionary<string, JsonElement>> Compile(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            DateTime valuationDate,
+            IReadOnlyDictionary<string, double> _)
         {
             var rateDefinition = new CurrencyRateDefinitionProvider(definition).Definition;
             return
@@ -29,7 +32,8 @@ namespace EventGraph
                     ["type"] = JsonSerializer.SerializeToElement(nameof(CurrencyRateSource)),
                     ["name"] = JsonSerializer.SerializeToElement(rateDefinition.Name),
                     ["currency"] = JsonSerializer.SerializeToElement(rateDefinition.Currency),
-                    ["interestRate"] = JsonSerializer.SerializeToElement(rateDefinition.InterestRate)
+                    ["interestRate"] = JsonSerializer.SerializeToElement(rateDefinition.InterestRate),
+                    ["valuationDate"] = JsonSerializer.SerializeToElement(valuationDate.ToString("O"))
                 }
             ];
         }

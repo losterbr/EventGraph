@@ -18,42 +18,15 @@ namespace EventGraph
             }
 
             var definitionDirectory = Path.Combine(AppContext.BaseDirectory, "graph-definition");
-            var graph = NodeGraphLoader.LoadGraph(definitionDirectory);
-            var nodes = graph.Nodes;
-            var quotes = nodes.OfType<EquitySource>()
-                .OrderBy(quote => quote.Name, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            var optionNodes = nodes.OfType<IEquityOptionNode>()
-                .OrderBy(option => option.Name, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            var baskets = nodes.OfType<BasketSpotNode>()
-                .OrderBy(basket => basket.Name, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
+            var clock = new MarketClock();
             var listener = new QuoteSubscriber(
                 options.Quiet,
                 options.BasketColorSpecified ? options.BasketColor : null);
-            foreach (var quote in quotes)
-            {
-                listener.Subscribe(quote);
-            }
 
-            foreach (var option in optionNodes)
-            {
-                listener.Subscribe(option);
-            }
-
-            GraphValidator.EnsureAcyclic(nodes);
-
-            foreach (var basket in baskets)
-            {
-                listener.Subscribe(basket);
-            }
-
-            foreach (var basket in baskets)
-            {
-                basket.Connect();
-            }
+            using var session = new GraphSession(definitionDirectory, clock, listener);
+            var quotes = session.CurrentGraph.Nodes.OfType<EquitySource>()
+                .OrderBy(quote => quote.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
             var tasks = quotes.Select(quote => quote.Start(options.TickCount)).ToArray();
             await Task.WhenAll(tasks);

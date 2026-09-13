@@ -221,6 +221,14 @@ namespace EventGraph
             }
         }
 
+        public void Disconnect()
+        {
+            foreach (var constituent in constituentIndicesByNode.Keys)
+            {
+                constituent.Tick -= ConstituentTicked;
+            }
+        }
+
         public string GetWeights()
         {
             return string.Join(", ", Enumerable.Range(0, weights.Length)

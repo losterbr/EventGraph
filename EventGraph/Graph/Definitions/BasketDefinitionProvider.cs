@@ -18,7 +18,10 @@ namespace EventGraph
 
         public BasketDefinition Definition { get; } = new(name, currency, constituents, weights);
 
-        internal static IReadOnlyList<IReadOnlyDictionary<string, JsonElement>> Compile(IReadOnlyDictionary<string, JsonElement> definition)
+        internal static IReadOnlyList<IReadOnlyDictionary<string, JsonElement>> Compile(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            DateTime valuationDate,
+            IReadOnlyDictionary<string, double> _)
         {
             var basketDefinition = new BasketDefinitionProvider(definition).Definition;
             return
@@ -29,7 +32,8 @@ namespace EventGraph
                     ["name"] = JsonSerializer.SerializeToElement(basketDefinition.Name),
                     ["currency"] = JsonSerializer.SerializeToElement(basketDefinition.Currency),
                     ["constituents"] = JsonSerializer.SerializeToElement(basketDefinition.Constituents),
-                    ["weights"] = JsonSerializer.SerializeToElement(basketDefinition.Weights)
+                    ["weights"] = JsonSerializer.SerializeToElement(basketDefinition.Weights),
+                    ["valuationDate"] = JsonSerializer.SerializeToElement(valuationDate.ToString("O"))
                 }
             ];
         }

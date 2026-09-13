@@ -21,9 +21,19 @@ namespace EventGraph
 
         public EquityOptionDefinition Definition { get; } = new(name, underlyer, maturity, strike, optionType);
 
-        internal static IReadOnlyList<IReadOnlyDictionary<string, JsonElement>> Compile(IReadOnlyDictionary<string, JsonElement> definition)
+        internal static IReadOnlyList<IReadOnlyDictionary<string, JsonElement>> Compile(
+            IReadOnlyDictionary<string, JsonElement> definition,
+            DateTime valuationDate,
+            IReadOnlyDictionary<string, double> _)
         {
             var optionDefinition = new EquityOptionDefinitionProvider(definition).Definition;
+            var maturityDate = GetMaturityDate(optionDefinition.Maturity, valuationDate);
+            if (maturityDate <= valuationDate)
+            {
+                // Expired option contracts are omitted from the active graph for this valuation date
+                return [];
+            }
+
             return
             [
                 new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase)
@@ -33,9 +43,17 @@ namespace EventGraph
                     ["underlyer"] = JsonSerializer.SerializeToElement(optionDefinition.Underlyer),
                     ["maturity"] = JsonSerializer.SerializeToElement(optionDefinition.Maturity),
                     ["strike"] = JsonSerializer.SerializeToElement(optionDefinition.Strike),
-                    ["optionType"] = JsonSerializer.SerializeToElement(optionDefinition.OptionType)
+                    ["optionType"] = JsonSerializer.SerializeToElement(optionDefinition.OptionType),
+                    ["valuationDate"] = JsonSerializer.SerializeToElement(valuationDate.ToString("O"))
                 }
             ];
+        }
+
+        private static DateTime GetMaturityDate(string maturity, DateTime valuationDate)
+        {
+            return DateHelpers.TryAddTenor(valuationDate, maturity, out var maturityDate)
+                ? maturityDate
+                : DateTime.Parse(maturity, System.Globalization.CultureInfo.InvariantCulture);
         }
 
         private static string GetString(IReadOnlyDictionary<string, JsonElement> definition, string propertyName)

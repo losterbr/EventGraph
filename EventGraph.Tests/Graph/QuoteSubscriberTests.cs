@@ -255,6 +255,35 @@ namespace EventGraph.Tests
         }
 
         [Fact]
+        public async Task QuoteSubscriberUnsubscribeStopsReceivingEvents()
+        {
+            var output = new StringWriter();
+            var originalOut = Console.Out;
+            var originalColor = Console.ForegroundColor;
+
+            try
+            {
+                Console.SetOut(output);
+                var subscriber = new QuoteSubscriber(quiet: false);
+                var source = new EquitySource("AAPL", 100.0, 0.0, 0.0);
+
+                subscriber.Subscribe(source);
+                subscriber.Unsubscribe(source);
+                subscriber.Unsubscribe(null); // guard test
+
+                _ = output.GetStringBuilder().Clear();
+                await source.Start(1);
+
+                Assert.Empty(output.ToString());
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+                Console.ForegroundColor = originalColor;
+            }
+        }
+
+        [Fact]
         public void NodeGraphLoaderResolvesBasketDependenciesRecursively()
         {
             var directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
